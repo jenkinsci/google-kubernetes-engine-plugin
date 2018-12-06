@@ -15,6 +15,10 @@
 package com.google.jenkins.plugins.k8sengine.client;
 
 import com.google.api.services.container.Container;
+import com.google.api.services.container.model.Cluster;
+import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
+import java.io.IOException;
 
 /**
  * Client for communicating with the Google GKE API.
@@ -23,7 +27,7 @@ import com.google.api.services.container.Container;
  *     Engine</a>
  */
 public class ContainerClient {
-  private Container container;
+  private final Container container;
 
   /**
    * Constructs a new {@link ContainerClient} instance.
@@ -32,8 +36,22 @@ public class ContainerClient {
    *     the GKE API.
    */
   public ContainerClient(Container container) {
-    this.container = container;
+    this.container = Preconditions.checkNotNull(container);
   }
 
-  // TODO(craigatgoogle): Implement use-cases of GKE API client interaction.
+  /**
+   * Retrieves a {@link Cluster} from the container client.
+   *
+   * @param projectId The ID of the project the clusters reside in.
+   * @param zone The location of the clusters.
+   * @param cluster The name of the cluster b
+   * @return The retrieved {@link Cluster}.
+   * @throws IOException When an error occurred attempting to get the cluster.
+   */
+  public Cluster getCluster(String projectId, String zone, String cluster) throws IOException {
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(projectId));
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(zone));
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(cluster));
+    return container.projects().zones().clusters().get(projectId, zone, cluster).execute();
+  }
 }

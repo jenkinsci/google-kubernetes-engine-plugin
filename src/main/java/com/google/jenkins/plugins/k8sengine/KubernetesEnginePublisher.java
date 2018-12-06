@@ -55,6 +55,7 @@ public class KubernetesEnginePublisher extends Notifier implements SimpleBuildSt
   private String projectId;
   private String cluster;
   private String namespace;
+  private String zone;
   private String manifestPattern;
   private boolean verifyDeployments;
   private boolean verifyServices;
@@ -95,6 +96,15 @@ public class KubernetesEnginePublisher extends Notifier implements SimpleBuildSt
     this.manifestPattern = manifestPattern;
   }
 
+  public String getZone() {
+    return this.zone;
+  }
+
+  @DataBoundSetter
+  public void setZone(String zone) {
+    this.zone = zone;
+  }
+
   @DataBoundSetter
   public void setVerifyDeployments(boolean verifyDeployments) {
     this.verifyDeployments = verifyDeployments;
@@ -119,11 +129,12 @@ public class KubernetesEnginePublisher extends Notifier implements SimpleBuildSt
       @Nonnull FilePath workspace,
       @Nonnull Launcher launcher,
       @Nonnull TaskListener listener) /*throws InterruptedException, IOException */ {
-    // TODO finish me
+    // TODO(craigatgoogle): finish me
     LOGGER.log(
         Level.INFO,
         String.format(
-            "GKE Deploy, projectId: %s cluster: %s namespace: %s", projectId, cluster, namespace));
+            "GKE Deploy, projectId: %s cluster: %s namespace: %s zone: %s",
+            projectId, cluster, namespace, zone));
   }
 
   @Override
@@ -150,7 +161,7 @@ public class KubernetesEnginePublisher extends Notifier implements SimpleBuildSt
         return FormValidation.error(Messages.KubernetesEnginePublisher_ClusterRequired());
       }
 
-      // TODO check to ensure the cluster exists within GKE cluster
+      // TODO(craigatgoogle): check to ensure the cluster exists within GKE cluster
       return FormValidation.ok();
     }
 
@@ -159,13 +170,21 @@ public class KubernetesEnginePublisher extends Notifier implements SimpleBuildSt
         return FormValidation.error(Messages.KubernetesEnginePublisher_NamespaceRequired());
       }
 
-      // TODO check to ensure the namespace exists within the GKE cluster.
+      // TODO(craigatgoogle): check to ensure the namespace exists within the GKE cluster.
       return FormValidation.ok();
     }
 
     public FormValidation doCheckManifestPattern(@QueryParameter String value) {
       if (Strings.isNullOrEmpty(value)) {
         return FormValidation.error(Messages.KubernetesEnginePublisher_ManifestRequired());
+      }
+
+      return FormValidation.ok();
+    }
+
+    public FormValidation doCheckZone(@QueryParameter String value) {
+      if (Strings.isNullOrEmpty(value)) {
+        return FormValidation.error(Messages.KubernetesEnginePublisher_ZoneRequired());
       }
 
       return FormValidation.ok();
