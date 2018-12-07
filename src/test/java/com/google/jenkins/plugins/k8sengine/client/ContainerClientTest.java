@@ -33,6 +33,7 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.mockito.stubbing.Answer;
 
+/** Tests {@link ContainerClient}. */
 @RunWith(MockitoJUnitRunner.class)
 public class ContainerClientTest {
   private ContainerClient containerClient;
