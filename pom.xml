@@ -135,6 +135,14 @@
     <build>
       <plugins>
 	<plugin>
+  <groupId>org.apache.maven.plugins</groupId>
+  <artifactId>maven-compiler-plugin</artifactId>
+  <version>3.8.0</version>
+  <configuration>
+    <compilerArgument>-Xlint:all</compilerArgument>
+	  </configuration>
+	</plugin>
+	<plugin>
   <groupId>org.codehaus.mojo</groupId>
   <artifactId>tidy-maven-plugin</artifactId>
   <version>1.1.0</version>

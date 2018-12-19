@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google Inc. All Rights Reserved.
+ * Copyright 2019 Google Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,12 +17,18 @@
 package com.google.jenkins.plugins.k8sengine;
 
 import com.cloudbees.plugins.credentials.CredentialsMatchers;
-import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.common.StandardCredentials;
 import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
+import com.cloudbees.plugins.credentials.domains.DomainRequirement;
+import com.google.api.client.http.HttpTransport;
+import com.google.api.services.container.model.Cluster;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableList;
 import com.google.jenkins.plugins.credentials.oauth.GoogleOAuth2Credentials;
+import com.google.jenkins.plugins.k8sengine.client.ClientFactory;
+import com.google.jenkins.plugins.k8sengine.client.ContainerClient;
+import hudson.AbortException;
 import hudson.Extension;
 import hudson.FilePath;
 import hudson.Launcher;
@@ -37,7 +43,10 @@ import hudson.tasks.Notifier;
 import hudson.tasks.Publisher;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
+import java.io.IOException;
 import java.io.Serializable;
+import java.util.Collections;
+import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.annotation.Nonnull;
@@ -53,8 +62,8 @@ public class KubernetesEnginePublisher extends Notifier implements SimpleBuildSt
   private static final Logger LOGGER = Logger.getLogger(KubernetesEnginePublisher.class.getName());
 
   private String projectId;
-  private String cluster;
-  private String namespace;
+  private String clusterName;
+  private String credentialsId;
   private String zone;
   private String manifestPattern;
   private boolean verifyDeployments;
@@ -71,23 +80,23 @@ public class KubernetesEnginePublisher extends Notifier implements SimpleBuildSt
   }
 
   @DataBoundSetter
-  public void setCluster(String cluster) {
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(cluster));
-    this.cluster = cluster;
+  public void setClusterName(String clusterName) {
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(clusterName));
+    this.clusterName = clusterName;
   }
 
-  public String getCluster() {
-    return this.cluster;
+  public String getClusterName() {
+    return this.clusterName;
+  }
+
+  public String getCredentialsId() {
+    return credentialsId;
   }
 
   @DataBoundSetter
-  public void setNamespace(String namespace) {
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(namespace));
-    this.namespace = namespace;
-  }
-
-  public String getNamespace() {
-    return this.namespace;
+  public void setCredentialsId(String credentialsId) {
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(credentialsId));
+    this.credentialsId = credentialsId;
   }
 
   @DataBoundSetter
@@ -128,13 +137,35 @@ public class KubernetesEnginePublisher extends Notifier implements SimpleBuildSt
       @Nonnull Run<?, ?> run,
       @Nonnull FilePath workspace,
       @Nonnull Launcher launcher,
-      @Nonnull TaskListener listener) /*throws InterruptedException, IOException */ {
-    // TODO(craigatgoogle): finish me
+      @Nonnull TaskListener listener)
+      throws AbortException, InterruptedException, IOException {
     LOGGER.log(
         Level.INFO,
         String.format(
-            "GKE Deploy, projectId: %s cluster: %s namespace: %s zone: %s",
-            projectId, cluster, namespace, zone));
+            "GKE Deploying, projectId: %s cluster: %s zone: %s", projectId, clusterName, zone));
+
+    // create a connection to the GKE API client
+    ContainerClient client = getContainerClient(credentialsId);
+
+    // retrieve the cluster
+    Cluster cluster = client.getCluster(projectId, zone, clusterName);
+
+    // generate a kubeconfig for the cluster
+    KubeConfig kubeConfig = KubeConfig.fromCluster(projectId, cluster);
+
+    // run kubectl apply
+    // TODO: decide if the JenkinsRunContext is worth-while
+    KubectlWrapper.runKubectlCommand(
+        new JenkinsRunContext.Builder()
+            .workspace(workspace)
+            .launcher(launcher)
+            .taskListener(listener)
+            .run(run)
+            .build(),
+        kubeConfig,
+        "apply",
+        ImmutableList.<String>of(
+            String.format("-f %s", workspace.child(manifestPattern).getRemote())));
   }
 
   @Override
@@ -156,21 +187,12 @@ public class KubernetesEnginePublisher extends Notifier implements SimpleBuildSt
       return true;
     }
 
-    public FormValidation doCheckCluster(@QueryParameter String value) {
+    public FormValidation doCheckClusterName(@QueryParameter String value) {
       if (Strings.isNullOrEmpty(value)) {
         return FormValidation.error(Messages.KubernetesEnginePublisher_ClusterRequired());
       }
 
       // TODO(craigatgoogle): check to ensure the cluster exists within GKE cluster
-      return FormValidation.ok();
-    }
-
-    public FormValidation doCheckNamespace(@QueryParameter String value) {
-      if (Strings.isNullOrEmpty(value)) {
-        return FormValidation.error(Messages.KubernetesEnginePublisher_NamespaceRequired());
-      }
-
-      // TODO(craigatgoogle): check to ensure the namespace exists within the GKE cluster.
       return FormValidation.ok();
     }
 
@@ -204,11 +226,13 @@ public class KubernetesEnginePublisher extends Notifier implements SimpleBuildSt
       }
 
       return new StandardListBoxModel()
-          .withEmptySelection()
-          .withMatching(
-              CredentialsMatchers.instanceOf(GoogleOAuth2Credentials.class),
-              CredentialsProvider.lookupCredentials(
-                  StandardCredentials.class, context, ACL.SYSTEM));
+          .includeEmptyValue()
+          .includeMatchingAs(
+              ACL.SYSTEM,
+              context,
+              StandardCredentials.class,
+              Collections.<DomainRequirement>emptyList(),
+              CredentialsMatchers.instanceOf(GoogleOAuth2Credentials.class));
     }
 
     public FormValidation doCheckCredentialsId(
@@ -224,9 +248,22 @@ public class KubernetesEnginePublisher extends Notifier implements SimpleBuildSt
             Messages.KubernetesEnginePublisher_CredentialProjectIDRequired());
       }
 
-      // TODO Fill in with a validation using the GKE client.
+      try {
+        getContainerClient(value);
+      } catch (AbortException | RuntimeException e) {
+        return FormValidation.error(Messages.KubernetesEnginePublisher_CredentialAuthFailed());
+      }
 
       return FormValidation.ok();
     }
+  }
+
+  private static ContainerClient getContainerClient(String credentialsId) throws AbortException {
+    return new ClientFactory(
+            Jenkins.getInstance(),
+            ImmutableList.<DomainRequirement>of(),
+            credentialsId,
+            Optional.<HttpTransport>empty())
+        .containerClient();
   }
 }

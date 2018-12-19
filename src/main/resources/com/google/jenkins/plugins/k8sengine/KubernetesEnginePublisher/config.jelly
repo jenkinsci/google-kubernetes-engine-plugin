@@ -4,13 +4,10 @@
     <f:entry field="projectId" title="${%Project ID}">
         <f:textbox/>
     </f:entry>
-    <f:entry field="cluster" title="${%Cluster}">
+    <f:entry field="clusterName" title="${%Cluster}">
         <f:textbox/>
     </f:entry>
     <f:entry field="zone" title="${%Zone}">
-        <f:textbox/>
-    </f:entry>
-    <f:entry field="namespace" title="${%Namespace}">
         <f:textbox/>
     </f:entry>
     <!-- TODO: look in drop-down button to select manifests from file selector -->
