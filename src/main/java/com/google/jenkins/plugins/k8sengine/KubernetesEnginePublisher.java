@@ -55,6 +55,7 @@ import jenkins.model.Jenkins;
 import jenkins.tasks.SimpleBuildStep;
 import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.AncestorInPath;
+import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 
@@ -70,7 +71,12 @@ public class KubernetesEnginePublisher extends Notifier implements SimpleBuildSt
   private boolean verifyDeployments;
   private boolean verifyServices;
   private boolean isTestCleanup;
-  private Optional<KubeConfigAfterBuildStep> afterBuildStep;
+  private Optional<KubeConfigAfterBuildStep> afterBuildStep =
+      Optional.<KubeConfigAfterBuildStep>empty();
+
+  /** Constructs a new {@link KubernetesEnginePublisher}. */
+  @DataBoundConstructor
+  public KubernetesEnginePublisher() {}
 
   @DataBoundSetter
   public void setProjectId(String projectId) {
@@ -175,7 +181,9 @@ public class KubernetesEnginePublisher extends Notifier implements SimpleBuildSt
         ImmutableList.<String>of("-f", workspace.child(manifestPattern).getRemote()));
 
     // run the after build step if it exists
-    if (afterBuildStep.isPresent()) {
+    // NOTE(craigatgoogle): Due to the reflective way this class is created, initializers aren't
+    // run, so we still have to check for null.
+    if (afterBuildStep != null && afterBuildStep.isPresent()) {
       afterBuildStep.get().perform(kubeConfig, run, workspace, launcher, listener);
     }
   }
