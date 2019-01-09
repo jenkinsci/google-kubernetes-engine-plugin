@@ -37,18 +37,18 @@ import hudson.model.FreeStyleProject;
 import hudson.model.Result;
 import hudson.model.Run;
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.FileSystems;
 import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.junit.After;
-import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 import org.jvnet.hudson.test.JenkinsRule;
 
 /** Tests {@link KubernetesEnginePublisher}. */
@@ -67,6 +67,7 @@ public class KubernetesEnginePublisherIT {
   private static ContainerClient client;
 
   private FreeStyleProject testJenkinsProject;
+  private TemporaryFolder testWorkspace;
 
   @BeforeClass
   public static void init() throws Exception {
@@ -79,6 +80,10 @@ public class KubernetesEnginePublisherIT {
     // setup test zone
     testZone = System.getenv("GOOGLE_PROJECT_ZONE");
     assertNotNull("GOOGLE_PROJECT_ZONE env var must be set", testZone);
+
+    // setup test cluster
+    clusterName = System.getenv("GOOGLE_GKE_CLUSTER");
+    assertNotNull("GOOGLE_GKE_CLUSTER env var must be set", clusterName);
 
     // setup test credentials
     LOGGER.info("Creating credentials");
@@ -100,17 +105,6 @@ public class KubernetesEnginePublisherIT {
                 credentialsId,
                 Optional.<HttpTransport>empty())
             .containerClient();
-
-    // create the test cluster
-    clusterName = formatRandomName("test");
-    LOGGER.log(Level.INFO, "Creating test cluster: {0}", clusterName);
-    client.createCluster(projectId, testZone, clusterName, /* nodeCount */ 1);
-  }
-
-  @AfterClass
-  public static void cleanup() throws IOException {
-    LOGGER.log(Level.INFO, "Deleting test cluster: {0}", clusterName);
-    client.deleteCluster(projectId, testZone, clusterName);
   }
 
   @Before
@@ -118,12 +112,16 @@ public class KubernetesEnginePublisherIT {
     String testProjectName = formatRandomName("test-jenkins");
     LOGGER.log(Level.INFO, "Creating test jenkins project: {0}", testProjectName);
     testJenkinsProject = jenkinsRule.createFreeStyleProject(testProjectName);
+    testWorkspace = new TemporaryFolder();
+    testWorkspace.create();
+    testJenkinsProject.setCustomWorkspace(testWorkspace.getRoot().toString());
   }
 
   @After
   public void cleanupTestProject() throws Exception {
     LOGGER.log(Level.INFO, "Deleting test jenkins project: {0}", testJenkinsProject.getName());
     testJenkinsProject.delete();
+    testWorkspace.delete();
   }
 
   @Test
@@ -134,11 +132,9 @@ public class KubernetesEnginePublisherIT {
     testJenkinsProject.getPublishersList().add(gkePublisher);
 
     // copy test deployment into project workspace
-    copyTestFileToProject(testJenkinsProject, TEST_DEPLOYMENT_MANIFEST);
+    copyTestFileToDir(testJenkinsProject.getCustomWorkspace(), TEST_DEPLOYMENT_MANIFEST);
 
     // execute a build
-    // NOTE(craigbarber): might need this for a proper
-    // run: project.getBuildersList().add(new Shell("echo foo > bar.txt"));
     FreeStyleBuild build = testJenkinsProject.scheduleBuild2(0).get();
     dumpLog(build);
     assertEquals(Result.SUCCESS, build.getResult());
@@ -154,7 +150,7 @@ public class KubernetesEnginePublisherIT {
     testJenkinsProject.getPublishersList().add(gkePublisher);
 
     // copy test deployment into project workspace
-    copyTestFileToProject(testJenkinsProject, TEST_DEPLOYMENT_MANIFEST);
+    copyTestFileToDir(testJenkinsProject.getCustomWorkspace(), TEST_DEPLOYMENT_MANIFEST);
 
     // execute a build
     FreeStyleBuild build = testJenkinsProject.scheduleBuild2(0).get();
@@ -171,7 +167,7 @@ public class KubernetesEnginePublisherIT {
     testJenkinsProject.getPublishersList().add(gkePublisher);
 
     // copy test deployment into project workspace
-    copyTestFileToProject(testJenkinsProject, TEST_DEPLOYMENT_MANIFEST);
+    copyTestFileToDir(testJenkinsProject.getCustomWorkspace(), TEST_DEPLOYMENT_MANIFEST);
 
     // execute a build
     FreeStyleBuild build = testJenkinsProject.scheduleBuild2(0).get();
@@ -188,7 +184,7 @@ public class KubernetesEnginePublisherIT {
     testJenkinsProject.getPublishersList().add(gkePublisher);
 
     // copy test deployment into project workspace
-    copyTestFileToProject(testJenkinsProject, TEST_DEPLOYMENT_MANIFEST);
+    copyTestFileToDir(testJenkinsProject.getCustomWorkspace(), TEST_DEPLOYMENT_MANIFEST);
 
     // execute a build
     FreeStyleBuild build = testJenkinsProject.scheduleBuild2(0).get();
@@ -205,7 +201,7 @@ public class KubernetesEnginePublisherIT {
     testJenkinsProject.getPublishersList().add(gkePublisher);
 
     // copy test deployment into project workspace
-    copyTestFileToProject(testJenkinsProject, TEST_DEPLOYMENT_MANIFEST);
+    copyTestFileToDir(testJenkinsProject.getCustomWorkspace(), TEST_DEPLOYMENT_MANIFEST);
 
     // execute a build
     FreeStyleBuild build = testJenkinsProject.scheduleBuild2(0).get();
@@ -222,22 +218,20 @@ public class KubernetesEnginePublisherIT {
     testJenkinsProject.getPublishersList().add(gkePublisher);
 
     // copy test deployment into project workspace
-    copyTestFileToProject(testJenkinsProject, TEST_DEPLOYMENT_MALFORMED_MANIFEST);
+    copyTestFileToDir(testJenkinsProject.getCustomWorkspace(), TEST_DEPLOYMENT_MALFORMED_MANIFEST);
 
     // execute a build
     FreeStyleBuild build = testJenkinsProject.scheduleBuild2(0).get();
     dumpLog(build);
-    assertEquals(Result.SUCCESS, build.getResult());
+    assertEquals(Result.FAILURE, build.getResult());
   }
 
-  private static void copyTestFileToProject(FreeStyleProject project, String testFile)
+  private static void copyTestFileToDir(String dir, String testFile)
       throws IOException, InterruptedException {
+    FilePath dirPath = new FilePath(new File(dir));
     String testFileContents =
         Resources.toString(Resources.getResource(testFile), StandardCharsets.UTF_8);
-    FilePath testWorkspaceFile =
-        project
-            .getWorkspace()
-            .child(FileSystems.getDefault().getPath(testFile).getFileName().toString());
+    FilePath testWorkspaceFile = dirPath.child(testFile);
     testWorkspaceFile.write(testFileContents, StandardCharsets.UTF_8.toString());
   }
 
@@ -260,6 +254,19 @@ public class KubernetesEnginePublisherIT {
     gkePublisher.setCredentialsId(credentialsId);
     gkePublisher.setZone(testZone);
     gkePublisher.setManifestPattern(TEST_DEPLOYMENT_MANIFEST);
+    gkePublisher.setAfterBuildStep(
+        (kubeConfig, run, workspace, launcher, listener) ->
+            KubectlWrapper.runKubectlCommand(
+                new JenkinsRunContext.Builder()
+                    .workspace(workspace)
+                    .launcher(launcher)
+                    .taskListener(listener)
+                    .run(run)
+                    .build(),
+                kubeConfig,
+                "delete",
+                ImmutableList.<String>of(
+                    "daemonsets,replicasets,services,deployments,pods,rc", "--all")));
     return gkePublisher;
   }
 }

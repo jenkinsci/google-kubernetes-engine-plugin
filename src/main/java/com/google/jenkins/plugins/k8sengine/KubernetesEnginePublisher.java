@@ -22,6 +22,7 @@ import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
 import com.cloudbees.plugins.credentials.domains.DomainRequirement;
 import com.google.api.client.http.HttpTransport;
 import com.google.api.services.container.model.Cluster;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
@@ -68,6 +69,8 @@ public class KubernetesEnginePublisher extends Notifier implements SimpleBuildSt
   private String manifestPattern;
   private boolean verifyDeployments;
   private boolean verifyServices;
+  private boolean isTestCleanup;
+  private Optional<KubeConfigAfterBuildStep> afterBuildStep;
 
   @DataBoundSetter
   public void setProjectId(String projectId) {
@@ -132,6 +135,12 @@ public class KubernetesEnginePublisher extends Notifier implements SimpleBuildSt
     return this.verifyServices;
   }
 
+  @VisibleForTesting
+  void setAfterBuildStep(KubeConfigAfterBuildStep afterBuildStep) {
+    this.afterBuildStep = Optional.ofNullable(afterBuildStep);
+  }
+
+  /** {@inheritDoc} */
   @Override
   public void perform(
       @Nonnull Run<?, ?> run,
@@ -154,7 +163,6 @@ public class KubernetesEnginePublisher extends Notifier implements SimpleBuildSt
     KubeConfig kubeConfig = KubeConfig.fromCluster(projectId, cluster);
 
     // run kubectl apply
-    // TODO: decide if the JenkinsRunContext is worth-while
     KubectlWrapper.runKubectlCommand(
         new JenkinsRunContext.Builder()
             .workspace(workspace)
@@ -164,8 +172,12 @@ public class KubernetesEnginePublisher extends Notifier implements SimpleBuildSt
             .build(),
         kubeConfig,
         "apply",
-        ImmutableList.<String>of(
-            String.format("-f %s", workspace.child(manifestPattern).getRemote())));
+        ImmutableList.<String>of("-f", workspace.child(manifestPattern).getRemote()));
+
+    // run the after build step if it exists
+    if (afterBuildStep.isPresent()) {
+      afterBuildStep.get().perform(kubeConfig, run, workspace, launcher, listener);
+    }
   }
 
   @Override
@@ -265,5 +277,16 @@ public class KubernetesEnginePublisher extends Notifier implements SimpleBuildSt
             credentialsId,
             Optional.<HttpTransport>empty())
         .containerClient();
+  }
+
+  @FunctionalInterface
+  interface KubeConfigAfterBuildStep {
+    public void perform(
+        KubeConfig kubeConfig,
+        Run<?, ?> run,
+        FilePath workspace,
+        Launcher launcher,
+        TaskListener listener)
+        throws AbortException, InterruptedException, IOException;
   }
 }

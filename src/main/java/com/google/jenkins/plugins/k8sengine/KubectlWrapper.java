@@ -19,6 +19,7 @@ import hudson.EnvVars;
 import hudson.FilePath;
 import hudson.Launcher;
 import hudson.util.ArgumentListBuilder;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.util.HashSet;
@@ -57,6 +58,8 @@ public class KubectlWrapper {
       tempFiles.add(kubeConfigFile.getRemote());
       StringWriter configWriter = new StringWriter();
       kubeConfig.toYaml(configWriter);
+
+      // Setup the kubeconfig
       kubeConfigFile.write(configWriter.toString(), /* encoding */ null);
       EnvVars envVars = context.getRun().getEnvironment(context.getTaskListener());
       envVars.put("KUBECONFIG", kubeConfigFile.getRemote());
@@ -66,15 +69,13 @@ public class KubectlWrapper {
               .add("kubectl")
               .add("config")
               .add("use-context")
-              .addQuoted(kubeConfig.getCurrentContext())
+              .add(kubeConfig.getCurrentContext())
               .toList());
 
       // Run the kubectl command
-      ArgumentListBuilder kubectlCmdBuilder =
-          new ArgumentListBuilder().add("kubectl").addQuoted(command);
-      args.forEach(arg -> kubectlCmdBuilder.addQuoted(arg));
+      ArgumentListBuilder kubectlCmdBuilder = new ArgumentListBuilder().add("kubectl").add(command);
+      args.forEach(kubectlCmdBuilder::add);
       launchAndJoinCommand(context.getLauncher(), kubectlCmdBuilder.toList());
-
     } catch (IOException | InterruptedException e) {
       LOGGER.log(
           Level.SEVERE,
@@ -90,8 +91,10 @@ public class KubectlWrapper {
 
   private static void launchAndJoinCommand(Launcher launcher, List<String> args)
       throws IOException, InterruptedException {
-    int status = launcher.launch().cmds(args).join();
+    ByteArrayOutputStream cmdLogStream = new ByteArrayOutputStream();
+    int status = launcher.launch().cmds(args).stderr(cmdLogStream).stdout(cmdLogStream).join();
     if (status != 0) {
+      LOGGER.log(Level.SEVERE, String.format("kubectl command log: %s", cmdLogStream.toString()));
       throw new IOException(
           String.format("Failed to launch command args: %s, status: %s", args, status));
     }
