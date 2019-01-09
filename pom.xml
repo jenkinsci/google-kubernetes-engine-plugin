@@ -15,6 +15,8 @@
 
     <name>Google Kubernetes Engine Plugin</name>
     <description>This plugin allows Jenkins to publish build artifacts to Kubernetes clusters running on Google Kubernetes Engine.</description>
+    <!-- Jenkins CI hosting -->
+    <url>https://wiki.jenkins.io/display/JENKINS/Google+Kubernetes+Engine+Plugin</url>
     <organization>
       <name>Google</name>
       <url>https://www.google.com</url>
@@ -39,6 +41,12 @@
 	<email>craigbarber@google.com</email>
       </developer>
     </developers>
+
+    <scm>
+        <connection>scm:git:git://github.com/jenkinsci/${project.artifactId}-plugin.git</connection>
+        <developerConnection>scm:git:git@github.com:jenkinsci/${project.artifactId}-plugin.git</developerConnection>
+        <url>https://github.com/jenkinsci/${project.artifactId}-plugin</url>
+    </scm>
 
     <properties>
         <jenkins.version>2.7.3</jenkins.version>
@@ -117,14 +125,6 @@
       </dependency>
     </dependencies>
 
-    <!-- Assuming you want to host on @jenkinsci:
-    <url>https://wiki.jenkins.io/display/JENKINS/TODO+Plugin</url>
-    <scm>
-        <connection>scm:git:git://github.com/jenkinsci/${project.artifactId}-plugin.git</connection>
-        <developerConnection>scm:git:git@github.com:jenkinsci/${project.artifactId}-plugin.git</developerConnection>
-        <url>https://github.com/jenkinsci/${project.artifactId}-plugin</url>
-    </scm>
-    -->
     <repositories>
         <repository>
             <id>repo.jenkins-ci.org</id>

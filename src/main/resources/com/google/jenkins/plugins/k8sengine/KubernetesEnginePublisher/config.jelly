@@ -17,10 +17,12 @@
     <f:entry field="credentialsId" title="${%Service Account Credentials}">
         <c:select/>
     </f:entry>
+    <!-- TODO(craigatgoogle): re-enable once these QOL features are complete.
     <f:entry field="verifyDeployments" title="${%Verify Deployments}">
         <f:checkbox name="verifyDeployments" checked="${it.verifyDeployments}"/>
     </f:entry>
     <f:entry field="verifyServices" title="${%Verify Services}">
         <f:checkbox name="verifyServices" checked="${it.verifyServices}"/>
     </f:entry>
+    -->
 </j:jelly>
