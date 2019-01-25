@@ -21,7 +21,6 @@ import hudson.Launcher;
 import hudson.util.ArgumentListBuilder;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.StringWriter;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -56,24 +55,30 @@ public class KubectlWrapper {
       // Set up the kubeconfig file for authentication
       FilePath kubeConfigFile = context.getWorkspace().createTempFile(".kube", "config");
       tempFiles.add(kubeConfigFile.getRemote());
-      StringWriter configWriter = new StringWriter();
-      kubeConfig.toYaml(configWriter);
+      String config = kubeConfig.toYaml();
 
       // Setup the kubeconfig
-      kubeConfigFile.write(configWriter.toString(), /* encoding */ null);
+      kubeConfigFile.write(config, /* encoding */ null);
       EnvVars envVars = context.getRun().getEnvironment(context.getTaskListener());
       envVars.put("KUBECONFIG", kubeConfigFile.getRemote());
       launchAndJoinCommand(
           context.getLauncher(),
           new ArgumentListBuilder()
               .add("kubectl")
+              .add("--kubeconfig")
+              .add(kubeConfigFile.getRemote())
               .add("config")
               .add("use-context")
               .add(kubeConfig.getCurrentContext())
               .toList());
 
       // Run the kubectl command
-      ArgumentListBuilder kubectlCmdBuilder = new ArgumentListBuilder().add("kubectl").add(command);
+      ArgumentListBuilder kubectlCmdBuilder =
+          new ArgumentListBuilder()
+              .add("kubectl")
+              .add("--kubeconfig")
+              .add(kubeConfigFile.getRemote())
+              .add(command);
       args.forEach(kubectlCmdBuilder::add);
       launchAndJoinCommand(context.getLauncher(), kubectlCmdBuilder.toList());
     } catch (IOException | InterruptedException e) {
@@ -89,7 +94,7 @@ public class KubectlWrapper {
     }
   }
 
-  private static void launchAndJoinCommand(Launcher launcher, List<String> args)
+  private static String launchAndJoinCommand(Launcher launcher, List<String> args)
       throws IOException, InterruptedException {
     ByteArrayOutputStream cmdLogStream = new ByteArrayOutputStream();
     int status = launcher.launch().cmds(args).stderr(cmdLogStream).stdout(cmdLogStream).join();
@@ -98,5 +103,7 @@ public class KubectlWrapper {
       throw new IOException(
           String.format("Failed to launch command args: %s, status: %s", args, status));
     }
+
+    return cmdLogStream.toString();
   }
 }

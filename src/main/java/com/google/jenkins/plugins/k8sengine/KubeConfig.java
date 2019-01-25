@@ -85,13 +85,12 @@ public class KubeConfig {
    * get-credentials` command's implementation: <a
    * href="https://github.com/google-cloud-sdk/google-cloud-sdk/blob/2cc7b066a0621fe5d78ac9e69157de56a142e126/lib/surface/container/clusters/get_credentials.py#L87">link</a>.
    *
-   * @param writer The writer to be written to.
-   * @throws IOException If an error was encountered in writing.
+   * @return A string containing a Yaml dump of this {@link KubeConfig}.
+   * @throws IOException If an error was encountered while exporting to Yaml.
    */
-  public void toYaml(Writer writer) throws IOException {
-    Preconditions.checkNotNull(writer);
-    new Yaml()
-        .dump(
+  public String toYaml() throws IOException {
+    return new Yaml()
+        .dumpAsMap(
             new ImmutableMap.Builder<String, Object>()
                 .put("apiVersion", API_VERSION)
                 .put("kind", CONFIG_KIND)
@@ -99,9 +98,7 @@ public class KubeConfig {
                 .put("clusters", getClusters())
                 .put("contexts", getContexts())
                 .put("users", getUsers())
-                .build(),
-            writer);
-    writer.flush();
+                .build());
   }
 
   /** Builder for {@link KubeConfig}. */

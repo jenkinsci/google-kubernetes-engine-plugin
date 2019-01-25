@@ -98,11 +98,9 @@ public class KubeConfigTest {
     Mockito.when(auth.getClientKey()).thenReturn("testClientKey");
     Mockito.when(auth.getClusterCaCertificate()).thenReturn("testCaCert");
     KubeConfig config = KubeConfig.fromCluster("testProject", cluster);
-    StringWriter writer = new StringWriter();
-    config.toYaml(writer);
-    String result = writer.toString();
+    String result = config.toYaml();
 
-    writer = new StringWriter();
+    StringWriter writer = new StringWriter();
     PrintWriter printWriter = new PrintWriter(writer);
     BufferedReader reader =
         Files.newBufferedReader(
