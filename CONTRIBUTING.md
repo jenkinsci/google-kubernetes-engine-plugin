@@ -15,6 +15,12 @@ You generally only need to submit a CLA once, so if you've already submitted one
 (even if it was for a different project), you probably don't need to do it
 again.
 
+## Branching Model
+
+This repository uses the [Gitflow](https://www.atlassian.com/git/tutorials/comparing-workflows/gitflow-workflow) branching model.
+
+Use of the [git flow](https://github.com/nvie/gitflow) git extension is recommended.
+
 ## Code reviews
 
 All submissions, including submissions by project members, require review. We
