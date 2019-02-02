@@ -18,5 +18,9 @@ Please file feature requests and bug reports under the [google-kubernetes-engine
 ## Contributing
 See [CONTRIBUTING.md](CONTRIBUTING.md)
 
+This repository uses the [Gitflow](https://www.atlassian.com/git/tutorials/comparing-workflows/gitflow-workflow) branching model.
+
+Use of the [git flow](https://github.com/nvie/gitflow) git extension is recommended.
+
 ## License
 See [LICENSE](LICENSE)
