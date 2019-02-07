@@ -90,5 +90,6 @@ public class ClientFactoryTest {
             ACCOUNT_ID,
             Optional.<HttpTransport>empty());
     Assert.assertNotNull(cf.containerClient());
+    Assert.assertNotNull(cf.computeClient());
   }
 }
