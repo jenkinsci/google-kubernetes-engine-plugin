@@ -61,11 +61,10 @@
   <artifactId>git</artifactId>
   <version>3.9.1</version>
       </dependency>
-      <!-- TODO(craigatgoogle): This is required due to an upper bound dependency error with the oauth plugin. A PR has been merged resolving this error: https://github.com/jenkinsci/google-oauth-plugin/pull/24 Once this PR is included in a release, we can use the normal mvn repo artifact. -->
         <dependency>
-  <groupId>com.github.jenkinsci</groupId>
+  <groupId>org.jenkins-ci.plugins</groupId>
   <artifactId>google-oauth-plugin</artifactId>
-  <version>master-SNAPSHOT</version>
+  <version>0.7</version>
       </dependency>
       <dependency>
 	<groupId>org.mockito</groupId>
