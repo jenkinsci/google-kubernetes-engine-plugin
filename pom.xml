@@ -94,6 +94,11 @@
 	<version>v1-rev57-1.25.0</version>
       </dependency>
       <dependency>
+  <groupId>com.google.apis</groupId>
+  <artifactId>google-api-services-compute</artifactId>
+  <version>v1-rev199-1.22.0</version>
+      </dependency>
+      <dependency>
   <groupId>com.google.api-client</groupId>
   <artifactId>google-api-client</artifactId>
   <version>1.25.0</version>
