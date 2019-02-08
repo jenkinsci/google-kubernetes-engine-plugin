@@ -7,9 +7,18 @@
     <f:entry field="clusterName" title="${%Cluster}">
         <f:textbox/>
     </f:entry>
-    <f:entry field="zone" title="${%Zone}">
-        <f:textbox/>
-    </f:entry>
+    <f:section title="${%Zone}">
+        <f:radioBlock name="entryMethod" title = "Textbox" value="textbox" checked="${instance.isEntryMethod('textbox')}" inline="true">
+            <f:entry field="zone">
+                <f:textbox/>
+            </f:entry>
+        </f:radioBlock>
+        <f:radioBlock name="entryMethod" title = "Dropdown" value="dropdown" checked="${instance.isEntryMethod('dropdown')}" inline = "true">
+            <f:entry field="zone">
+                <f:select/>
+            </f:entry>
+        </f:radioBlock>
+    </f:section>
     <!-- TODO: look in drop-down button to select manifests from file selector -->
     <f:entry field="manifestPattern" title="${%Kubernetes Manifests}">
         <f:textbox/>
