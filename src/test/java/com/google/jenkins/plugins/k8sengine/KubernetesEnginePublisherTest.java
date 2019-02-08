@@ -94,7 +94,7 @@ public class KubernetesEnginePublisherTest {
     ListBoxModel zones = descriptor.doFillZoneItems(jenkins, ERROR_PROJECT_ID, TEST_CREDENTIALS_ID);
     assertNotNull(zones);
     assertEquals(1, zones.size());
-    assertEquals(KubernetesEnginePublisher.ZONE_FILL_ERROR, zones.get(0).name);
+    assertEquals(Messages.KubernetesEnginePublisher_ZoneFillError(), zones.get(0).name);
     assertTrue(Strings.isNullOrEmpty(zones.get(0).value));
   }
 

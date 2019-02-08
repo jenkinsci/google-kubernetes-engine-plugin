@@ -66,8 +66,6 @@ import org.kohsuke.stapler.QueryParameter;
 public class KubernetesEnginePublisher extends Notifier implements SimpleBuildStep, Serializable {
   private static final Logger LOGGER = Logger.getLogger(KubernetesEnginePublisher.class.getName());
 
-  public static final String ZONE_FILL_ERROR = "Error retrieving Zones";
-
   private String projectId;
   private String clusterName;
   private String credentialsId;
@@ -229,7 +227,8 @@ public class KubernetesEnginePublisher extends Notifier implements SimpleBuildSt
       return true;
     }
 
-    public static void setComputeClient(ComputeClient client) {
+    @VisibleForTesting
+    static void setComputeClient(ComputeClient client) {
       computeClient = client;
     }
 
@@ -269,25 +268,27 @@ public class KubernetesEnginePublisher extends Notifier implements SimpleBuildSt
         @QueryParameter("credentialsId") final String credentialsId) {
       ListBoxModel items = new ListBoxModel();
       items.add("- none -", "");
-      if (!Strings.isNullOrEmpty(projectId) && !Strings.isNullOrEmpty(credentialsId)) {
-        try {
-          ComputeClient compute = getComputeClient(context, credentialsId);
-          List<Zone> zones = compute.getZones(projectId);
-
-          // This enables auto-populating the zone when there are zones.
-          if (!zones.isEmpty()) {
-            items.clear();
-          }
-
-          for (Zone z : zones) {
-            items.add(z.getName());
-          }
-        } catch (IOException ioe) {
-          items.clear();
-          items.add(ZONE_FILL_ERROR, "");
-        }
+      if (Strings.isNullOrEmpty(projectId) || Strings.isNullOrEmpty(credentialsId)) {
+        return items;
       }
-      return items;
+      try {
+        ComputeClient compute = getComputeClient(context, credentialsId);
+        List<Zone> zones = compute.getZones(projectId);
+
+        // This enables auto-populating the zone when there are zones.
+        if (!zones.isEmpty()) {
+          items.clear();
+        }
+
+        for (Zone z : zones) {
+          items.add(z.getName());
+        }
+        return items;
+      } catch (IOException ioe) {
+        items.clear();
+        items.add(Messages.KubernetesEnginePublisher_ZoneFillError(), "");
+        return items;
+      }
     }
 
     public FormValidation doCheckZone(@QueryParameter String value) {

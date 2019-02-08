@@ -35,13 +35,11 @@ import org.mockito.junit.MockitoJUnitRunner;
 /** Test {@link ComputeClient}. */
 @RunWith(MockitoJUnitRunner.class)
 public class ComputeClientTest {
-
   private static final String TEST_PROJECT_ID = "test-project";
   private static final String WRONG_PROJECT_ID = "wrong-project";
   private static final List<String> ZONE_NAMES =
       Arrays.asList("us-west-1b", "us-central-1a", "us-east-1c");
   private static ComputeClient computeClient;
-
   private static List<Zone> listOfZones;
 
   @BeforeClass
@@ -66,8 +64,13 @@ public class ComputeClientTest {
   }
 
   @Before
-  public void beforeTest() {
+  public void before() {
     listOfZones.clear();
+  }
+
+  @Test(expected = NullPointerException.class)
+  public void testGetZonesExceptionWhenProjectIdNull() throws NullPointerException, IOException {
+    computeClient.getZones(null);
   }
 
   @Test
@@ -89,18 +92,20 @@ public class ComputeClientTest {
   private void testGetZones(String projectId, List<String> zoneNames) throws IOException {
     List<Zone> zones = computeClient.getZones(projectId);
     assertNotNull("zones was null.", zones);
-    String message =
-        String.format("Expected %d zones but %d zones retrieved.", zones.size(), zoneNames.size());
-    assertEquals(message, zoneNames.size(), zones.size());
+    assertEquals(
+        String.format("Expected %d zones but %d zones retrieved.", zones.size(), zoneNames.size()),
+        zoneNames.size(),
+        zones.size());
 
     if (zoneNames.size() > 0) {
       zoneNames.sort(String::compareTo);
       for (int i = 0; i < zoneNames.size(); i++) {
-        message =
+        assertEquals(
             String.format(
                 "Zones not sorted. Expected %s but was %s.",
-                zoneNames.get(i), zones.get(i).getName());
-        assertEquals(message, zoneNames.get(i), zones.get(i).getName());
+                zoneNames.get(i), zones.get(i).getName()),
+            zoneNames.get(i),
+            zones.get(i).getName());
       }
     }
   }

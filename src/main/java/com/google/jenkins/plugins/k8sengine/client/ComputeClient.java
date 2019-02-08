@@ -48,6 +48,7 @@ public class ComputeClient {
    * @throws IOException When an error occurred attempting to get the list of zones.
    */
   public List<Zone> getZones(String projectId) throws IOException {
+    Preconditions.checkNotNull(projectId);
     List<Zone> zones = compute.zones().list(projectId).execute().getItems();
     if (zones == null) {
       zones = new ArrayList<>();
