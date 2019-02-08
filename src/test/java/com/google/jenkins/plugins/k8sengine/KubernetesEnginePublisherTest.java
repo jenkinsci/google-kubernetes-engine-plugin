@@ -43,8 +43,8 @@ public class KubernetesEnginePublisherTest {
 
   private static List<Zone> listOfZones;
   private static Jenkins jenkins;
-  private KubernetesEnginePublisher.DescriptorImpl descriptor =
-      new KubernetesEnginePublisher.DescriptorImpl();
+  private KubernetesEnginePublisher publisher;
+  private KubernetesEnginePublisher.DescriptorImpl descriptor;
 
   @BeforeClass
   public static void init() throws IOException {
@@ -59,17 +59,19 @@ public class KubernetesEnginePublisherTest {
   @Before
   public void before() {
     listOfZones.clear();
+    publisher = new KubernetesEnginePublisher();
+    descriptor = new KubernetesEnginePublisher.DescriptorImpl();
   }
 
   @Test
   public void testDoFillZoneItemsEmptyWithEmptyArguments() {
     listOfZones.add(new Zone().setName(TEST_ZONE_A));
     ListBoxModel zones = descriptor.doFillZoneItems(jenkins, null, TEST_CREDENTIALS_ID);
-    testEmptyResult(zones);
+    testZoneEmptyResult(zones);
     zones = descriptor.doFillZoneItems(jenkins, TEST_PROJECT_ID, null);
-    testEmptyResult(zones);
+    testZoneEmptyResult(zones);
     zones = descriptor.doFillZoneItems(jenkins, null, null);
-    testEmptyResult(zones);
+    testZoneEmptyResult(zones);
   }
 
   @Test
@@ -86,7 +88,7 @@ public class KubernetesEnginePublisherTest {
   @Test
   public void testDoFillZoneItemsWithValidArgumentsNoZones() {
     ListBoxModel zones = descriptor.doFillZoneItems(jenkins, TEST_PROJECT_ID, TEST_CREDENTIALS_ID);
-    testEmptyResult(zones);
+    testZoneEmptyResult(zones);
   }
 
   @Test
@@ -98,9 +100,41 @@ public class KubernetesEnginePublisherTest {
     assertTrue(Strings.isNullOrEmpty(zones.get(0).value));
   }
 
-  private void testEmptyResult(ListBoxModel zones) {
+  @Test
+  public void testIsEntryMethodNullYieldsEmpty() {
+    testEntryMethodResult(null, "");
+  }
+
+  @Test
+  public void testIsEntryMethodEmptyYieldsEmpty() {
+    testEntryMethodResult("", "");
+  }
+
+  @Test
+  public void testIsEntryMethodIncorrectYieldsEmpty() {
+    testEntryMethodResult(KubernetesEnginePublisher.ENTRY_METHOD_TEXTBOX, "");
+    testEntryMethodResult("asdf", "");
+    publisher.setEntryMethod(KubernetesEnginePublisher.ENTRY_METHOD_TEXTBOX);
+    testEntryMethodResult(KubernetesEnginePublisher.ENTRY_METHOD_DROPDOWN, "");
+    testEntryMethodResult("hello world", "");
+  }
+
+  @Test
+  public void testIsEntryMethodCorrectYieldsTrue() {
+    testEntryMethodResult(KubernetesEnginePublisher.ENTRY_METHOD_DROPDOWN, "true");
+    publisher.setEntryMethod(KubernetesEnginePublisher.ENTRY_METHOD_TEXTBOX);
+    testEntryMethodResult(KubernetesEnginePublisher.ENTRY_METHOD_TEXTBOX, "true");
+  }
+
+  private void testZoneEmptyResult(ListBoxModel zones) {
     assertNotNull(zones);
     assertEquals(1, zones.size());
     assertTrue(Strings.isNullOrEmpty(zones.get(0).value));
+  }
+
+  private void testEntryMethodResult(String entryMethodName, String expected) {
+    String result = publisher.isEntryMethod(entryMethodName);
+    assertNotNull(result);
+    assertEquals(expected, result);
   }
 }

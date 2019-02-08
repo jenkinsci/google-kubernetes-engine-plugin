@@ -65,6 +65,8 @@ import org.kohsuke.stapler.QueryParameter;
 /** Provides a build step for publishing build artifacts to a Kubernetes cluster running on GKE. */
 public class KubernetesEnginePublisher extends Notifier implements SimpleBuildStep, Serializable {
   private static final Logger LOGGER = Logger.getLogger(KubernetesEnginePublisher.class.getName());
+  public static final String ENTRY_METHOD_TEXTBOX = "textbox";
+  public static final String ENTRY_METHOD_DROPDOWN = "dropdown";
 
   private String projectId;
   private String clusterName;
@@ -80,7 +82,9 @@ public class KubernetesEnginePublisher extends Notifier implements SimpleBuildSt
 
   /** Constructs a new {@link KubernetesEnginePublisher}. */
   @DataBoundConstructor
-  public KubernetesEnginePublisher() {}
+  public KubernetesEnginePublisher() {
+    this.entryMethod = ENTRY_METHOD_DROPDOWN;
+  }
 
   @DataBoundSetter
   public void setProjectId(String projectId) {
