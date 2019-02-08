@@ -16,7 +16,6 @@ package com.google.jenkins.plugins.k8sengine.client;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
 
 import com.google.api.services.compute.Compute;
 import com.google.api.services.compute.Compute.Zones;
@@ -87,16 +86,20 @@ public class ComputeClientTest {
     testGetZones(TEST_PROJECT_ID, ZONE_NAMES);
   }
 
-  private void testGetZones(String projectId,List<String> zoneNames) throws IOException {
+  private void testGetZones(String projectId, List<String> zoneNames) throws IOException {
     List<Zone> zones = computeClient.getZones(projectId);
     assertNotNull("zones was null.", zones);
-    String message = String.format("Expected %d zones but %d zones retrieved.", zones.size(), zoneNames.size());
+    String message =
+        String.format("Expected %d zones but %d zones retrieved.", zones.size(), zoneNames.size());
     assertEquals(message, zoneNames.size(), zones.size());
 
     if (zoneNames.size() > 0) {
       zoneNames.sort(String::compareTo);
       for (int i = 0; i < zoneNames.size(); i++) {
-        message = String.format("Zones not sorted. Expected %s but was %s.", zoneNames.get(i), zones.get(i).getName());
+        message =
+            String.format(
+                "Zones not sorted. Expected %s but was %s.",
+                zoneNames.get(i), zones.get(i).getName());
         assertEquals(message, zoneNames.get(i), zones.get(i).getName());
       }
     }
