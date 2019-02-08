@@ -25,8 +25,8 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringReader;
 import java.io.StringWriter;
-import java.nio.file.FileSystems;
 import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -104,12 +104,7 @@ public class KubeConfigTest {
     PrintWriter printWriter = new PrintWriter(writer);
     BufferedReader reader =
         Files.newBufferedReader(
-            FileSystems.getDefault()
-                .getPath(
-                    this.getClass()
-                        .getClassLoader()
-                        .getResource("expectedKubeConfig.yml")
-                        .getFile()));
+            Paths.get(KubeConfigTest.class.getResource("/expectedKubeConfig.yml").toURI()));
     reader.lines().forEach(printWriter::println);
     printWriter.flush();
     String expected = writer.toString();
