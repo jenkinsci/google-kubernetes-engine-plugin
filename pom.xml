@@ -31,6 +31,11 @@
 
     <developers>
       <developer>
+	<id>stephenashank</id>
+	<name>Stephen Shank</name>
+	<email>stephenshank@google.com</email>
+      </developer>
+      <developer>
 	<id>rachelyen</id>
 	<name>Rachel Yen</name>
 	<email>rachelyen@google.com</email>
@@ -61,11 +66,10 @@
   <artifactId>git</artifactId>
   <version>3.9.1</version>
       </dependency>
-      <!-- TODO(craigatgoogle): This is required due to an upper bound dependency error with the oauth plugin. A PR has been merged resolving this error: https://github.com/jenkinsci/google-oauth-plugin/pull/24 Once this PR is included in a release, we can use the normal mvn repo artifact. -->
         <dependency>
-  <groupId>com.github.jenkinsci</groupId>
+  <groupId>org.jenkins-ci.plugins</groupId>
   <artifactId>google-oauth-plugin</artifactId>
-  <version>master-SNAPSHOT</version>
+  <version>0.7</version>
       </dependency>
       <dependency>
 	<groupId>org.mockito</groupId>
@@ -104,20 +108,6 @@
   <artifactId>guava</artifactId>
   <version>19.0</version>
       </dependency>
-      
-      <!-- TODO(craigatgoogle): This is required due to an upper bound dependency error in the java k8s client. A PR has been merged resolving this error: https://github.com/kubernetes-client/java/pull/453 Once this commit is released we can revert back to using the mvn release.-->
-      <!-- <dependency> -->
-      <!-- 	<groupId>io.kubernetes</groupId> -->
-      <!-- 	<artifactId>client-java</artifactId> -->
-      <!-- 	<version>3.0.0</version> -->
-      <!-- 	<scope>compile</scope> -->
-      <!-- </dependency> -->
-
-      <dependency>
-	<groupId>com.github.kubernetes-client.java</groupId>
-	<artifactId>client-java</artifactId>
-	<version>-SNAPSHOT</version>
-      </dependency>
       <dependency>
 	<groupId>org.yaml</groupId>
 	<artifactId>snakeyaml</artifactId>
@@ -130,10 +120,6 @@
             <id>repo.jenkins-ci.org</id>
             <url>https://repo.jenkins-ci.org/public/</url>
         </repository>
-	<repository>
-	  <id>jitpack.io</id>
-	  <url>https://jitpack.io</url>
-	</repository>
     </repositories>
     <pluginRepositories>
         <pluginRepository>
