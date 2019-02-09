@@ -8,14 +8,14 @@
         <f:textbox/>
     </f:entry>
     <f:section title="${%Zone}">
-        <f:radioBlock name="entryMethod" title = "Textbox" value="textbox" checked="${instance.isEntryMethod('textbox')}" inline="true">
-            <f:entry field="zone">
-                <f:textbox/>
-            </f:entry>
-        </f:radioBlock>
-        <f:radioBlock name="entryMethod" title = "Dropdown" value="dropdown" checked="${instance.isEntryMethod('dropdown')}" inline = "true">
+        <f:radioBlock name="entryMethod" title="Dropdown" value="dropdown" checked="true" inline="true">
             <f:entry field="zone">
                 <f:select/>
+            </f:entry>
+        </f:radioBlock>
+        <f:radioBlock name="entryMethod" title="Textbox" value="textbox" inline="true">
+            <f:entry field="zone">
+                <f:textbox/>
             </f:entry>
         </f:radioBlock>
     </f:section>

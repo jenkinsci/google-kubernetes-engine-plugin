@@ -82,9 +82,7 @@ public class KubernetesEnginePublisher extends Notifier implements SimpleBuildSt
 
   /** Constructs a new {@link KubernetesEnginePublisher}. */
   @DataBoundConstructor
-  public KubernetesEnginePublisher() {
-    this.entryMethod = ENTRY_METHOD_DROPDOWN;
-  }
+  public KubernetesEnginePublisher() {}
 
   @DataBoundSetter
   public void setProjectId(String projectId) {
@@ -157,10 +155,6 @@ public class KubernetesEnginePublisher extends Notifier implements SimpleBuildSt
 
   public boolean isVerifyServices() {
     return this.verifyServices;
-  }
-
-  public String isEntryMethod(String entryMethodName) {
-    return this.entryMethod.equalsIgnoreCase(entryMethodName) ? "true" : "";
   }
 
   @VisibleForTesting
