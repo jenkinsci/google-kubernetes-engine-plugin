@@ -63,13 +63,16 @@ public class KubernetesEnginePublisherTest {
   }
 
   @Test
-  public void testDoFillZoneItemsEmptyWithEmptyArguments() {
+  public void testDoFillZoneItemsEmptyWithEmptyProjectId() {
     listOfZones.add(new Zone().setName(TEST_ZONE_A));
     ListBoxModel zones = descriptor.doFillZoneItems(jenkins, null, TEST_CREDENTIALS_ID);
     testZoneEmptyResult(zones);
-    zones = descriptor.doFillZoneItems(jenkins, TEST_PROJECT_ID, null);
-    testZoneEmptyResult(zones);
-    zones = descriptor.doFillZoneItems(jenkins, null, null);
+  }
+
+  @Test
+  public void testDoFillZoneItemsEmptyWithEmptyCredentialsId() {
+    listOfZones.add(new Zone().setName(TEST_ZONE_A));
+    ListBoxModel zones = descriptor.doFillZoneItems(jenkins, TEST_PROJECT_ID, null);
     testZoneEmptyResult(zones);
   }
 
@@ -108,26 +111,34 @@ public class KubernetesEnginePublisherTest {
   }
 
   @Test
-  public void testDoCheckZoneMessageWithEmptyProjectOrCredentialsId() {
+  public void testDoCheckZoneMessageWithEmptyProjectId() {
     FormValidation result = descriptor.doCheckZone(jenkins, TEST_ZONE_A, null, TEST_CREDENTIALS_ID);
-    assertNotNull(result);
-    assertEquals(
-        Messages.KubernetesEnginePublisher_ZoneProjectIdCredentialRequired(), result.getMessage());
-    result = descriptor.doCheckZone(jenkins, TEST_ZONE_A, TEST_PROJECT_ID, null);
     assertNotNull(result);
     assertEquals(
         Messages.KubernetesEnginePublisher_ZoneProjectIdCredentialRequired(), result.getMessage());
   }
 
   @Test
-  public void testDoCheckZoneMessageWithNoMatchingZones() {
+  public void testDoCheckZoneMessageWithEmptyCredentialsId() {
+    FormValidation result = descriptor.doCheckZone(jenkins, TEST_ZONE_A, TEST_PROJECT_ID, null);
+    assertNotNull(result);
+    assertEquals(
+        Messages.KubernetesEnginePublisher_ZoneProjectIdCredentialRequired(), result.getMessage());
+  }
+
+  @Test
+  public void testDoCheckZoneMessageWithNoAvailableZones() {
     FormValidation result =
         descriptor.doCheckZone(jenkins, TEST_ZONE_A, TEST_PROJECT_ID, TEST_CREDENTIALS_ID);
     assertNotNull(result);
     assertEquals(Messages.KubernetesEnginePublisher_ZoneNotInProject(), result.getMessage());
+  }
 
+  @Test
+  public void testDoCheckZoneMessageWithNonMatchingZones() {
     listOfZones.add(new Zone().setName(TEST_ZONE_B));
-    result = descriptor.doCheckZone(jenkins, TEST_ZONE_A, TEST_PROJECT_ID, TEST_CREDENTIALS_ID);
+    FormValidation result =
+        descriptor.doCheckZone(jenkins, TEST_ZONE_A, TEST_PROJECT_ID, TEST_CREDENTIALS_ID);
     assertNotNull(result);
     assertEquals(Messages.KubernetesEnginePublisher_ZoneNotInProject(), result.getMessage());
   }
