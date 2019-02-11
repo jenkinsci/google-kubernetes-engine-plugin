@@ -44,7 +44,8 @@ public class ComputeClient {
    * Retrieves a list of {@link Zone} objects from the container client.
    *
    * @param projectId The ID of the project that zone usage is needed for.
-   * @return The retrieved list of {@link Zone} objects.
+   * @return The retrieved list of {@link Zone} objects. This will not be null if the request was
+   *     successful.
    * @throws IOException When an error occurred attempting to get the list of zones.
    */
   public List<Zone> getZones(String projectId) throws IOException {

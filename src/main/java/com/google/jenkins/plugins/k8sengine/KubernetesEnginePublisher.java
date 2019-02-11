@@ -289,9 +289,27 @@ public class KubernetesEnginePublisher extends Notifier implements SimpleBuildSt
       }
     }
 
-    public FormValidation doCheckZone(@QueryParameter String value) {
-      if (Strings.isNullOrEmpty(value)) {
+    public FormValidation doCheckZone(
+        @AncestorInPath Jenkins context,
+        @QueryParameter("zone") String zone,
+        @QueryParameter("projectId") String projectId,
+        @QueryParameter("credentialsId") String credentialsId) {
+      if (Strings.isNullOrEmpty(zone)) {
         return FormValidation.error(Messages.KubernetesEnginePublisher_ZoneRequired());
+      } else if (Strings.isNullOrEmpty(projectId) || Strings.isNullOrEmpty(credentialsId)) {
+        return FormValidation.error(
+            Messages.KubernetesEnginePublisher_ZoneProjectIdCredentialRequired());
+      }
+      try {
+        ComputeClient compute = getComputeClient(context, credentialsId);
+        List<Zone> zones = compute.getZones(projectId);
+        Optional<Zone> matchingZone =
+            zones.stream().filter(z -> zone.equalsIgnoreCase(z.getName())).findFirst();
+        if (!matchingZone.isPresent()) {
+          return FormValidation.error(Messages.KubernetesEnginePublisher_ZoneNotInProject());
+        }
+      } catch (IOException ioe) {
+        return FormValidation.error(Messages.KubernetesEnginePublisher_ZoneVerificationError());
       }
 
       return FormValidation.ok();
