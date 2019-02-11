@@ -140,6 +140,15 @@ public class KubernetesEnginePublisherTest {
     assertEquals(Messages.KubernetesEnginePublisher_ZoneVerificationError(), result.getMessage());
   }
 
+  @Test
+  public void testDoCheckZoneOKWithMatchingZones() {
+    listOfZones.add(new Zone().setName(TEST_ZONE_A));
+    FormValidation result =
+        descriptor.doCheckZone(jenkins, TEST_ZONE_A, TEST_PROJECT_ID, TEST_CREDENTIALS_ID);
+    assertNotNull(result);
+    assertEquals(FormValidation.ok(), result);
+  }
+
   private void testZoneEmptyResult(ListBoxModel zones) {
     assertNotNull(zones);
     assertEquals(1, zones.size());
