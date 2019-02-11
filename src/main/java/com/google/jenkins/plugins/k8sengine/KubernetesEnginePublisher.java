@@ -21,6 +21,7 @@ import com.cloudbees.plugins.credentials.common.StandardCredentials;
 import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
 import com.cloudbees.plugins.credentials.domains.DomainRequirement;
 import com.google.api.client.http.HttpTransport;
+import com.google.api.services.compute.model.Zone;
 import com.google.api.services.container.model.Cluster;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
@@ -28,6 +29,7 @@ import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.jenkins.plugins.credentials.oauth.GoogleOAuth2Credentials;
 import com.google.jenkins.plugins.k8sengine.client.ClientFactory;
+import com.google.jenkins.plugins.k8sengine.client.ComputeClient;
 import com.google.jenkins.plugins.k8sengine.client.ContainerClient;
 import hudson.AbortException;
 import hudson.Extension;
@@ -47,6 +49,7 @@ import hudson.util.ListBoxModel;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -62,11 +65,14 @@ import org.kohsuke.stapler.QueryParameter;
 /** Provides a build step for publishing build artifacts to a Kubernetes cluster running on GKE. */
 public class KubernetesEnginePublisher extends Notifier implements SimpleBuildStep, Serializable {
   private static final Logger LOGGER = Logger.getLogger(KubernetesEnginePublisher.class.getName());
+  public static final String ENTRY_METHOD_TEXTBOX = "textbox";
+  public static final String ENTRY_METHOD_DROPDOWN = "dropdown";
 
   private String projectId;
   private String clusterName;
   private String credentialsId;
   private String zone;
+  private String entryMethod;
   private String manifestPattern;
   private boolean verifyDeployments;
   private boolean verifyServices;
@@ -112,6 +118,16 @@ public class KubernetesEnginePublisher extends Notifier implements SimpleBuildSt
   public void setManifestPattern(String manifestPattern) {
     Preconditions.checkArgument(!Strings.isNullOrEmpty(manifestPattern));
     this.manifestPattern = manifestPattern;
+  }
+
+  public String getEntryMethod() {
+    return this.entryMethod;
+  }
+
+  @DataBoundSetter
+  public void setEntryMethod(String entryMethod) {
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(entryMethod));
+    this.entryMethod = entryMethod;
   }
 
   public String getZone() {
@@ -196,6 +212,8 @@ public class KubernetesEnginePublisher extends Notifier implements SimpleBuildSt
   @Symbol("kubernetesEngineDeploy")
   @Extension
   public static final class DescriptorImpl extends BuildStepDescriptor<Publisher> {
+    private static ComputeClient computeClient;
+
     @Nonnull
     @Override
     public String getDisplayName() {
@@ -205,6 +223,25 @@ public class KubernetesEnginePublisher extends Notifier implements SimpleBuildSt
     @Override
     public boolean isApplicable(Class<? extends AbstractProject> jobType) {
       return true;
+    }
+
+    @VisibleForTesting
+    static void setComputeClient(ComputeClient client) {
+      computeClient = client;
+    }
+
+    private static ComputeClient getComputeClient(Jenkins context, String credentialsId)
+        throws IOException {
+      if (computeClient != null) {
+        return computeClient;
+      }
+
+      return new ClientFactory(
+              context,
+              ImmutableList.<DomainRequirement>of(),
+              credentialsId,
+              Optional.<HttpTransport>empty())
+          .computeClient();
     }
 
     public FormValidation doCheckClusterName(@QueryParameter String value) {
@@ -220,8 +257,36 @@ public class KubernetesEnginePublisher extends Notifier implements SimpleBuildSt
       if (Strings.isNullOrEmpty(value)) {
         return FormValidation.error(Messages.KubernetesEnginePublisher_ManifestRequired());
       }
-
       return FormValidation.ok();
+    }
+
+    public ListBoxModel doFillZoneItems(
+        @AncestorInPath Jenkins context,
+        @QueryParameter("projectId") final String projectId,
+        @QueryParameter("credentialsId") final String credentialsId) {
+      ListBoxModel items = new ListBoxModel();
+      items.add("- none -", "");
+      if (Strings.isNullOrEmpty(projectId) || Strings.isNullOrEmpty(credentialsId)) {
+        return items;
+      }
+      try {
+        ComputeClient compute = getComputeClient(context, credentialsId);
+        List<Zone> zones = compute.getZones(projectId);
+
+        // This enables auto-populating the zone when there are zones.
+        if (!zones.isEmpty()) {
+          items.clear();
+        }
+
+        for (Zone z : zones) {
+          items.add(z.getName());
+        }
+        return items;
+      } catch (IOException ioe) {
+        items.clear();
+        items.add(Messages.KubernetesEnginePublisher_ZoneFillError(), "");
+        return items;
+      }
     }
 
     public FormValidation doCheckZone(@QueryParameter String value) {
