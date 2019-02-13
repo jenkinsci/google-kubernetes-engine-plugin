@@ -24,8 +24,11 @@ import com.google.api.client.googleapis.services.GoogleClientRequestInitializer;
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.jackson2.JacksonFactory;
+import com.google.api.services.cloudresourcemanager.CloudResourceManager;
+import com.google.api.services.cloudresourcemanager.CloudResourceManagerRequestInitializer;
 import com.google.api.services.compute.Compute;
 import com.google.api.services.container.Container;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
@@ -44,6 +47,13 @@ public class ClientFactory {
   private final Credential credential;
   private final HttpTransport transport;
   private final JsonFactory jsonFactory;
+
+  @VisibleForTesting
+  ClientFactory() throws AbortException {
+    credential = null;
+    transport = null;
+    jsonFactory = null;
+  }
 
   /**
    * Creates a {@link ClientFactory} instance.
@@ -93,6 +103,19 @@ public class ClientFactory {
   }
 
   /**
+   * Creates a {@link ClientFactory} instance without specifying domainRequirements or
+   * httpTransport.
+   *
+   * @param itemGroup A handle to the Jenkins instance.
+   * @param credentialsId The ID of the GoogleRobotCredentials to be retrieved from Jenkins and
+   *     utilized for authorization.
+   * @throws AbortException
+   */
+  public ClientFactory(ItemGroup itemGroup, String credentialsId) throws AbortException {
+    this(itemGroup, ImmutableList.of(), credentialsId, Optional.empty());
+  }
+
+  /**
    * Creates a new {@link ContainerClient}.
    *
    * @return A new {@link ContainerClient} instance.
@@ -134,5 +157,33 @@ public class ClientFactory {
             .setHttpRequestInitializer(new RetryHttpInitializerWrapper(credential))
             .setApplicationName(APPLICATION_NAME)
             .build());
+  }
+
+  /**
+   * Creates a new {@link CloudResourceManagerClient}.
+   *
+   * @return A new {@link CloudResourceManagerClient} instance.
+   */
+  public CloudResourceManagerClient cloudResourceManagerClient() {
+    return new CloudResourceManagerClient(
+        new CloudResourceManager.Builder(
+                transport, jsonFactory, new RetryHttpInitializerWrapper(credential))
+            .setGoogleClientRequestInitializer(
+                new GoogleClientRequestInitializer() {
+                  @Override
+                  public void initialize(AbstractGoogleClientRequest<?> request)
+                      throws IOException {
+                    request.setRequestHeaders(
+                        request.getRequestHeaders().setUserAgent(APPLICATION_NAME));
+                  }
+                })
+            .setApplicationName(APPLICATION_NAME)
+            .setCloudResourceManagerRequestInitializer(new CloudResourceManagerRequestInitializer())
+            .build());
+  }
+
+  @VisibleForTesting
+  ClientFactory makeClientFactory(ItemGroup itemGroup, String credentialsId) throws AbortException {
+    return new ClientFactory(itemGroup, credentialsId);
   }
 }
