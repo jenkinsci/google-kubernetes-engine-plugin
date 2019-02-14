@@ -17,6 +17,7 @@ package com.google.jenkins.plugins.k8sengine.client;
 import com.google.api.services.compute.Compute;
 import com.google.api.services.compute.model.Zone;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -58,6 +59,6 @@ public class ComputeClient {
     // Sort by name
     zones.sort(Comparator.comparing(Zone::getName));
 
-    return zones;
+    return ImmutableList.copyOf(zones);
   }
 }

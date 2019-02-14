@@ -19,6 +19,7 @@ package com.google.jenkins.plugins.k8sengine.client;
 import com.google.api.services.cloudresourcemanager.CloudResourceManager;
 import com.google.api.services.cloudresourcemanager.model.Project;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -58,6 +59,6 @@ public class CloudResourceManagerClient {
     // Sort by project ID
     projects.sort(Comparator.comparing(Project::getProjectId));
 
-    return projects;
+    return ImmutableList.copyOf(projects);
   }
 }
