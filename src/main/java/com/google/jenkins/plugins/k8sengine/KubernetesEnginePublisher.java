@@ -337,7 +337,7 @@ public class KubernetesEnginePublisher extends Notifier implements SimpleBuildSt
         @AncestorInPath Jenkins context,
         @QueryParameter("credentialsId") final String credentialsId) {
       ListBoxModel items = new ListBoxModel();
-      items.add("- none -");
+      items.add("- none -", "");
       if (Strings.isNullOrEmpty(credentialsId)) {
         return items;
       }

@@ -122,7 +122,7 @@ public class KubernetesEnginePublisherTest {
     ListBoxModel projects = descriptor.doFillProjectIdItems(jenkins, PROJECT_ERROR_CREDENTIALS_ID);
     assertNotNull(projects);
     assertEquals(2, projects.size());
-    assertEquals("", projects.get(0).name);
+    assertEquals("- none -", projects.get(0).name);
     assertEquals("", projects.get(0).value);
     assertFalse(projects.get(0).selected);
     assertEquals(ERROR_PROJECT_ID, projects.get(1).name);
@@ -136,7 +136,7 @@ public class KubernetesEnginePublisherTest {
     ListBoxModel projects = descriptor.doFillProjectIdItems(jenkins, null);
     assertNotNull(projects);
     assertEquals(1, projects.size());
-    assertEquals("", projects.get(0).name);
+    assertEquals("- none -", projects.get(0).name);
     assertEquals("", projects.get(0).value);
   }
 
@@ -145,7 +145,7 @@ public class KubernetesEnginePublisherTest {
     ListBoxModel projects = descriptor.doFillProjectIdItems(jenkins, TEST_CREDENTIALS_ID);
     assertNotNull(projects);
     assertEquals(1, projects.size());
-    assertEquals("", projects.get(0).name);
+    assertEquals("- none -", projects.get(0).name);
     assertEquals("", projects.get(0).value);
   }
 
@@ -156,7 +156,7 @@ public class KubernetesEnginePublisherTest {
     ListBoxModel projects = descriptor.doFillProjectIdItems(jenkins, TEST_CREDENTIALS_ID);
     assertNotNull(projects);
     assertEquals(3, projects.size());
-    assertEquals("", projects.get(0).name);
+    assertEquals("- none -", projects.get(0).name);
     assertEquals("", projects.get(0).value);
     assertFalse(projects.get(0).selected);
     assertEquals(OTHER_PROJECT_ID, projects.get(1).name);
@@ -173,7 +173,7 @@ public class KubernetesEnginePublisherTest {
     ListBoxModel projects = descriptor.doFillProjectIdItems(jenkins, TEST_CREDENTIALS_ID);
     assertNotNull(projects);
     assertEquals(2, projects.size());
-    assertEquals("", projects.get(0).name);
+    assertEquals("- none -", projects.get(0).name);
     assertEquals("", projects.get(0).value);
     assertFalse(projects.get(0).selected);
     assertEquals(OTHER_PROJECT_ID, projects.get(1).name);
@@ -188,7 +188,7 @@ public class KubernetesEnginePublisherTest {
     ListBoxModel projects = descriptor.doFillProjectIdItems(jenkins, EMPTY_PROJECT_CREDENTIALS_ID);
     assertNotNull(projects);
     assertEquals(3, projects.size());
-    assertEquals("", projects.get(0).name);
+    assertEquals("- none -", projects.get(0).name);
     assertEquals("", projects.get(0).value);
     assertFalse(projects.get(0).selected);
     assertEquals(OTHER_PROJECT_ID, projects.get(1).name);
