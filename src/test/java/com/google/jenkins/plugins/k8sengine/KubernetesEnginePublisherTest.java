@@ -66,7 +66,6 @@ public class KubernetesEnginePublisherTest {
     ComputeClient computeClient = Mockito.mock(ComputeClient.class);
     Mockito.when(computeClient.getZones(TEST_PROJECT_ID)).thenReturn(listOfZones);
     Mockito.when(computeClient.getZones(ERROR_PROJECT_ID)).thenThrow(new IOException());
-    Mockito.doReturn(computeClient).when(descriptor).getComputeClient(jenkins, TEST_CREDENTIALS_ID);
 
     CloudResourceManagerClient cloudResourceManagerClient =
         Mockito.mock(CloudResourceManagerClient.class);
@@ -74,6 +73,7 @@ public class KubernetesEnginePublisherTest {
     ClientFactory clientFactory = Mockito.mock(ClientFactory.class);
     Mockito.when(clientFactory.getDefaultProjectId()).thenReturn(TEST_PROJECT_ID);
     Mockito.when(clientFactory.cloudResourceManagerClient()).thenReturn(cloudResourceManagerClient);
+    Mockito.when(clientFactory.computeClient()).thenReturn(computeClient);
     Mockito.doReturn(clientFactory).when(descriptor).getClientFactory(jenkins, TEST_CREDENTIALS_ID);
 
     ClientFactory emptyProjectClientFactory = Mockito.mock(ClientFactory.class);

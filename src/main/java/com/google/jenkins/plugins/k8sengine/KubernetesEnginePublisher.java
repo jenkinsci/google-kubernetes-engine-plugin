@@ -225,7 +225,6 @@ public class KubernetesEnginePublisher extends Notifier implements SimpleBuildSt
   @Symbol("kubernetesEngineDeploy")
   @Extension
   public static final class DescriptorImpl extends BuildStepDescriptor<Publisher> {
-    private static ComputeClient computeClient;
     private ClientFactory clientFactory;
 
     @Nonnull
@@ -237,24 +236,6 @@ public class KubernetesEnginePublisher extends Notifier implements SimpleBuildSt
     @Override
     public boolean isApplicable(Class<? extends AbstractProject> jobType) {
       return true;
-    }
-
-    static void setComputeClient(ComputeClient client) {
-      computeClient = client;
-    }
-
-    @VisibleForTesting
-    ComputeClient getComputeClient(Jenkins context, String credentialsId) throws IOException {
-      if (computeClient != null) {
-        return computeClient;
-      }
-
-      return new ClientFactory(
-              context,
-              ImmutableList.<DomainRequirement>of(),
-              credentialsId,
-              Optional.<HttpTransport>empty())
-          .computeClient();
     }
 
     @VisibleForTesting
@@ -291,8 +272,17 @@ public class KubernetesEnginePublisher extends Notifier implements SimpleBuildSt
       if (Strings.isNullOrEmpty(projectId) || Strings.isNullOrEmpty(credentialsId)) {
         return items;
       }
+      ClientFactory clientFactory;
       try {
-        ComputeClient compute = getComputeClient(context, credentialsId);
+        clientFactory = getClientFactory(context, credentialsId);
+      } catch (AbortException ae) {
+        items.clear();
+        items.add(ae.getMessage());
+        return items;
+      }
+
+      try {
+        ComputeClient compute = clientFactory.computeClient();
         List<Zone> zones = compute.getZones(projectId);
 
         // This enables auto-populating the zone when there are zones.
@@ -322,8 +312,14 @@ public class KubernetesEnginePublisher extends Notifier implements SimpleBuildSt
         return FormValidation.error(
             Messages.KubernetesEnginePublisher_ZoneProjectIdCredentialRequired());
       }
+      ClientFactory clientFactory;
       try {
-        ComputeClient compute = getComputeClient(context, credentialsId);
+        clientFactory = getClientFactory(context, credentialsId);
+      } catch (AbortException ae) {
+        return FormValidation.error(Messages.KubernetesEnginePublisher_CredentialAuthFailed());
+      }
+      try {
+        ComputeClient compute = clientFactory.computeClient();
         List<Zone> zones = compute.getZones(projectId);
         Optional<Zone> matchingZone =
             zones.stream().filter(z -> zone.equalsIgnoreCase(z.getName())).findFirst();
