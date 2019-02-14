@@ -373,13 +373,14 @@ public class KubernetesEnginePublisher extends Notifier implements SimpleBuildSt
         }
         return items;
       } catch (IOException ioe) {
-        LOGGER.severe(ioe.getMessage());
+        LOGGER.log(Level.SEVERE, Messages.KubernetesEnginePublisher_ProjectIDFillError(), ioe);
         items.add(new Option(defaultProjectId, defaultProjectId, true));
         return items;
       }
     }
 
-    // TODO(stephenshank): Validate projectId against list of projects from CloudResourceManagerClient
+    // TODO(stephenshank): Validate projectId against list of projects from
+    // CloudResourceManagerClient
     public FormValidation doCheckProjectId(@QueryParameter("projectId") String projectId) {
       if (Strings.isNullOrEmpty(projectId)) {
         return FormValidation.error(Messages.KubernetesEnginePublisher_ProjectIDRequired());
