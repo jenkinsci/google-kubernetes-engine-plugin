@@ -34,6 +34,7 @@ import java.util.logging.Logger;
  */
 public class KubectlWrapper {
   private static final Logger LOGGER = Logger.getLogger(KubectlWrapper.class.getName());
+  private static final String CHARSET = "UTF-8";
 
   /**
    * Runs the specified kubectl command within the specified {@link JenkinsRunContext}'s
@@ -99,11 +100,12 @@ public class KubectlWrapper {
     ByteArrayOutputStream cmdLogStream = new ByteArrayOutputStream();
     int status = launcher.launch().cmds(args).stderr(cmdLogStream).stdout(cmdLogStream).join();
     if (status != 0) {
-      LOGGER.log(Level.SEVERE, String.format("kubectl command log: %s", cmdLogStream.toString()));
+      LOGGER.log(
+          Level.SEVERE, String.format("kubectl command log: %s", cmdLogStream.toString(CHARSET)));
       throw new IOException(
           String.format("Failed to launch command args: %s, status: %s", args, status));
     }
 
-    return cmdLogStream.toString();
+    return cmdLogStream.toString(CHARSET);
   }
 }
