@@ -77,8 +77,7 @@ public class KubernetesEnginePublisher extends Notifier implements SimpleBuildSt
   private boolean verifyDeployments;
   private boolean verifyServices;
   private boolean isTestCleanup;
-  private Optional<KubeConfigAfterBuildStep> afterBuildStep =
-      Optional.<KubeConfigAfterBuildStep>empty();
+  private KubeConfigAfterBuildStep afterBuildStep = null;
 
   /** Constructs a new {@link KubernetesEnginePublisher}. */
   @DataBoundConstructor
@@ -159,7 +158,7 @@ public class KubernetesEnginePublisher extends Notifier implements SimpleBuildSt
 
   @VisibleForTesting
   void setAfterBuildStep(KubeConfigAfterBuildStep afterBuildStep) {
-    this.afterBuildStep = Optional.ofNullable(afterBuildStep);
+    this.afterBuildStep = afterBuildStep;
   }
 
   /** {@inheritDoc} */
@@ -199,8 +198,8 @@ public class KubernetesEnginePublisher extends Notifier implements SimpleBuildSt
     // run the after build step if it exists
     // NOTE(craigatgoogle): Due to the reflective way this class is created, initializers aren't
     // run, so we still have to check for null.
-    if (afterBuildStep != null && afterBuildStep.isPresent()) {
-      afterBuildStep.get().perform(kubeConfig, run, workspace, launcher, listener);
+    if (afterBuildStep != null) {
+      afterBuildStep.perform(kubeConfig, run, workspace, launcher, listener);
     }
   }
 
