@@ -5,12 +5,12 @@
        <c:select/>
     </f:entry>
     <f:section title="${%Zone}">
-        <f:radioBlock name="entryMethod" title="Dropdown" value="dropdown" checked="true" inline="true">
+        <f:radioBlock name="zoneEntry" title="Dropdown" value="dropdown" checked="true" inline="true">
             <f:entry field="zone">
                 <f:select/>
             </f:entry>
         </f:radioBlock>
-        <f:radioBlock name="entryMethod" title="Textbox" value="textbox" inline="true">
+        <f:radioBlock name="zoneEntry" title="Textbox" value="textbox" inline="true">
             <f:entry field="zone">
                 <f:textbox/>
             </f:entry>

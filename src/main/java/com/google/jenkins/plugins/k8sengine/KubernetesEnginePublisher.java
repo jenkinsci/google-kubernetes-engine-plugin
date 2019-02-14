@@ -75,7 +75,7 @@ public class KubernetesEnginePublisher extends Notifier implements SimpleBuildSt
   private String clusterName;
   private String credentialsId;
   private String zone;
-  private String entryMethod;
+  private String zoneEntry;
   private String projectIdEntry;
   private String manifestPattern;
   private boolean verifyDeployments;
@@ -123,14 +123,14 @@ public class KubernetesEnginePublisher extends Notifier implements SimpleBuildSt
     this.manifestPattern = manifestPattern;
   }
 
-  public String getEntryMethod() {
-    return this.entryMethod;
+  public String getZoneEntry() {
+    return this.zoneEntry;
   }
 
   @DataBoundSetter
-  public void setEntryMethod(String entryMethod) {
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(entryMethod));
-    this.entryMethod = entryMethod;
+  public void setZoneEntry(String zoneEntry) {
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(zoneEntry));
+    this.zoneEntry = zoneEntry;
   }
 
   public String getProjectIdEntry() {
