@@ -47,6 +47,7 @@ public class KubernetesEnginePublisherTest {
   private static final String OTHER_PROJECT_ID = "other-project-id";
   private static final String ERROR_PROJECT_ID = "error-project-id";
   private static final String TEST_CREDENTIALS_ID = "test-credentials-id";
+  private static final String EMPTY_PROJECT_CREDENTIALS_ID = "empty-project-credentials-id";
   private static final String PROJECT_ERROR_CREDENTIALS_ID = "project-error-credentials-id";
   private static final String ERROR_CREDENTIALS_ID = "error-credentials-id";
   private static final String TEST_ERROR_MESSAGE = "error";
@@ -74,6 +75,14 @@ public class KubernetesEnginePublisherTest {
     Mockito.when(clientFactory.getDefaultProjectId()).thenReturn(TEST_PROJECT_ID);
     Mockito.when(clientFactory.cloudResourceManagerClient()).thenReturn(cloudResourceManagerClient);
     Mockito.doReturn(clientFactory).when(descriptor).getClientFactory(jenkins, TEST_CREDENTIALS_ID);
+
+    ClientFactory emptyProjectClientFactory = Mockito.mock(ClientFactory.class);
+    Mockito.when(emptyProjectClientFactory.getDefaultProjectId()).thenReturn("");
+    Mockito.when(emptyProjectClientFactory.cloudResourceManagerClient())
+        .thenReturn(cloudResourceManagerClient);
+    Mockito.doReturn(emptyProjectClientFactory)
+        .when(descriptor)
+        .getClientFactory(jenkins, EMPTY_PROJECT_CREDENTIALS_ID);
 
     CloudResourceManagerClient errorCloudResourceManagerClient =
         Mockito.mock(CloudResourceManagerClient.class);
@@ -149,8 +158,10 @@ public class KubernetesEnginePublisherTest {
     assertEquals(3, projects.size());
     assertEquals("", projects.get(0).name);
     assertEquals("", projects.get(0).value);
+    assertFalse(projects.get(0).selected);
     assertEquals(OTHER_PROJECT_ID, projects.get(1).name);
     assertEquals(OTHER_PROJECT_ID, projects.get(1).value);
+    assertFalse(projects.get(1).selected);
     assertEquals(TEST_PROJECT_ID, projects.get(2).name);
     assertEquals(TEST_PROJECT_ID, projects.get(2).value);
     assertTrue(projects.get(2).selected);
@@ -164,9 +175,28 @@ public class KubernetesEnginePublisherTest {
     assertEquals(2, projects.size());
     assertEquals("", projects.get(0).name);
     assertEquals("", projects.get(0).value);
+    assertFalse(projects.get(0).selected);
     assertEquals(OTHER_PROJECT_ID, projects.get(1).name);
     assertEquals(OTHER_PROJECT_ID, projects.get(1).value);
     assertTrue(projects.get(1).selected);
+  }
+
+  @Test
+  public void testDoFillProjectIdItemsWithValidCredentialsAndEmptyProject() {
+    listOfProjects.add(new Project().setProjectId(OTHER_PROJECT_ID));
+    listOfProjects.add(new Project().setProjectId(TEST_PROJECT_ID));
+    ListBoxModel projects = descriptor.doFillProjectIdItems(jenkins, EMPTY_PROJECT_CREDENTIALS_ID);
+    assertNotNull(projects);
+    assertEquals(3, projects.size());
+    assertEquals("", projects.get(0).name);
+    assertEquals("", projects.get(0).value);
+    assertFalse(projects.get(0).selected);
+    assertEquals(OTHER_PROJECT_ID, projects.get(1).name);
+    assertEquals(OTHER_PROJECT_ID, projects.get(1).value);
+    assertTrue(projects.get(1).selected);
+    assertEquals(TEST_PROJECT_ID, projects.get(2).name);
+    assertEquals(TEST_PROJECT_ID, projects.get(2).value);
+    assertFalse(projects.get(2).selected);
   }
 
   @Test

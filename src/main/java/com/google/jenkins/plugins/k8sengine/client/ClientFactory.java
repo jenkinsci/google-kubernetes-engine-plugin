@@ -95,7 +95,8 @@ public class ClientFactory {
       throw new AbortException(
           Messages.ClientFactory_FailedToInitializeHTTPTransport(gse.getMessage()));
     }
-    defaultProjectId = robotCreds.getProjectId();
+    this.defaultProjectId =
+        Strings.isNullOrEmpty(robotCreds.getProjectId()) ? "" : robotCreds.getProjectId();
     this.credentialsId = credentialsId;
 
     try {
@@ -115,7 +116,7 @@ public class ClientFactory {
    * @param itemGroup A handle to the Jenkins instance.
    * @param credentialsId The ID of the GoogleRobotCredentials to be retrieved from Jenkins and
    *     utilized for authorization.
-   * @throws AbortException
+   * @throws AbortException If failed to create a new client factory.
    */
   public ClientFactory(ItemGroup itemGroup, String credentialsId) throws AbortException {
     this(itemGroup, ImmutableList.of(), credentialsId, Optional.empty());
@@ -188,10 +189,12 @@ public class ClientFactory {
             .build());
   }
 
+  /** @return The default Project ID associated with this ClientFactory's credentials. */
   public String getDefaultProjectId() {
     return this.defaultProjectId;
   }
 
+  /** @return The Credentials ID for this ClientFactory. */
   public String getCredentialsId() {
     return this.credentialsId;
   }

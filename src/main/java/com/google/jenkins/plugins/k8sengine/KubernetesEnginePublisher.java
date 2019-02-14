@@ -365,7 +365,7 @@ public class KubernetesEnginePublisher extends Notifier implements SimpleBuildSt
               .stream()
               .filter(p -> !p.getProjectId().equals(defaultProjectId))
               .forEach(p -> items.add(p.getProjectId()));
-          if (projects.size() > items.size() - 1) {
+          if (projects.size() > items.size() - 1 && !Strings.isNullOrEmpty(defaultProjectId)) {
             items.add(new Option(defaultProjectId, defaultProjectId, true));
           } else {
             // Select not the first (empty) item but the second item, which exists because
