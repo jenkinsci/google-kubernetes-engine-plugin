@@ -356,18 +356,20 @@ public class KubernetesEnginePublisher extends Notifier implements SimpleBuildSt
         CloudResourceManagerClient client = clientFactory.cloudResourceManagerClient();
         List<Project> projects = client.getAccountProjects();
 
-        if (!projects.isEmpty()) {
-          projects
-              .stream()
-              .filter(p -> !p.getProjectId().equals(defaultProjectId))
-              .forEach(p -> items.add(p.getProjectId()));
-          if (projects.size() > items.size() - 1 && !Strings.isNullOrEmpty(defaultProjectId)) {
-            items.add(new Option(defaultProjectId, defaultProjectId, true));
-          } else {
-            // Select not the first (empty) item but the second item, which exists because
-            // projects is not empty.
-            items.get(1).selected = true;
-          }
+        if (projects.isEmpty()) {
+          return items;
+        }
+
+        projects
+            .stream()
+            .filter(p -> !p.getProjectId().equals(defaultProjectId))
+            .forEach(p -> items.add(p.getProjectId()));
+        if (projects.size() > items.size() - 1 && !Strings.isNullOrEmpty(defaultProjectId)) {
+          items.add(new Option(defaultProjectId, defaultProjectId, true));
+        } else {
+          // Select not the first (empty) item but the second item, which exists because
+          // projects is not empty.
+          items.get(1).selected = true;
         }
         return items;
       } catch (IOException ioe) {
