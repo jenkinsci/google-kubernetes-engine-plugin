@@ -47,12 +47,16 @@ public class ClientFactory {
   private final Credential credential;
   private final HttpTransport transport;
   private final JsonFactory jsonFactory;
+  private final String credentialsId;
+  private final String defaultProjectId;
 
   @VisibleForTesting
   ClientFactory() throws AbortException {
     credential = null;
     transport = null;
     jsonFactory = null;
+    defaultProjectId = null;
+    credentialsId = null;
   }
 
   /**
@@ -91,6 +95,8 @@ public class ClientFactory {
       throw new AbortException(
           Messages.ClientFactory_FailedToInitializeHTTPTransport(gse.getMessage()));
     }
+    defaultProjectId = robotCreds.getProjectId();
+    this.credentialsId = credentialsId;
 
     try {
       this.transport = httpTransport.orElse(GoogleNetHttpTransport.newTrustedTransport());
@@ -180,6 +186,14 @@ public class ClientFactory {
             .setApplicationName(APPLICATION_NAME)
             .setCloudResourceManagerRequestInitializer(new CloudResourceManagerRequestInitializer())
             .build());
+  }
+
+  public String getDefaultProjectId() {
+    return this.defaultProjectId;
+  }
+
+  public String getCredentialsId() {
+    return this.credentialsId;
   }
 
   @VisibleForTesting

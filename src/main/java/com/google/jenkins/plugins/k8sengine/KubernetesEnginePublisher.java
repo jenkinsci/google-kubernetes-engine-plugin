@@ -21,6 +21,7 @@ import com.cloudbees.plugins.credentials.common.StandardCredentials;
 import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
 import com.cloudbees.plugins.credentials.domains.DomainRequirement;
 import com.google.api.client.http.HttpTransport;
+import com.google.api.services.cloudresourcemanager.model.Project;
 import com.google.api.services.compute.model.Zone;
 import com.google.api.services.container.model.Cluster;
 import com.google.common.annotations.VisibleForTesting;
@@ -29,6 +30,7 @@ import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.jenkins.plugins.credentials.oauth.GoogleOAuth2Credentials;
 import com.google.jenkins.plugins.k8sengine.client.ClientFactory;
+import com.google.jenkins.plugins.k8sengine.client.CloudResourceManagerClient;
 import com.google.jenkins.plugins.k8sengine.client.ComputeClient;
 import com.google.jenkins.plugins.k8sengine.client.ContainerClient;
 import hudson.AbortException;
@@ -46,6 +48,7 @@ import hudson.tasks.Notifier;
 import hudson.tasks.Publisher;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
+import hudson.util.ListBoxModel.Option;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.Collections;
@@ -73,6 +76,7 @@ public class KubernetesEnginePublisher extends Notifier implements SimpleBuildSt
   private String credentialsId;
   private String zone;
   private String entryMethod;
+  private String projectIdEntry;
   private String manifestPattern;
   private boolean verifyDeployments;
   private boolean verifyServices;
@@ -127,6 +131,16 @@ public class KubernetesEnginePublisher extends Notifier implements SimpleBuildSt
   public void setEntryMethod(String entryMethod) {
     Preconditions.checkArgument(!Strings.isNullOrEmpty(entryMethod));
     this.entryMethod = entryMethod;
+  }
+
+  public String getProjectIdEntry() {
+    return this.projectIdEntry;
+  }
+
+  @DataBoundSetter
+  public void setProjectIdEntry(String projectIdEntry) {
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(projectIdEntry));
+    this.projectIdEntry = projectIdEntry;
   }
 
   public String getZone() {
@@ -212,6 +226,7 @@ public class KubernetesEnginePublisher extends Notifier implements SimpleBuildSt
   @Extension
   public static final class DescriptorImpl extends BuildStepDescriptor<Publisher> {
     private static ComputeClient computeClient;
+    private ClientFactory clientFactory;
 
     @Nonnull
     @Override
@@ -224,13 +239,12 @@ public class KubernetesEnginePublisher extends Notifier implements SimpleBuildSt
       return true;
     }
 
-    @VisibleForTesting
     static void setComputeClient(ComputeClient client) {
       computeClient = client;
     }
 
-    private static ComputeClient getComputeClient(Jenkins context, String credentialsId)
-        throws IOException {
+    @VisibleForTesting
+    ComputeClient getComputeClient(Jenkins context, String credentialsId) throws IOException {
       if (computeClient != null) {
         return computeClient;
       }
@@ -241,6 +255,15 @@ public class KubernetesEnginePublisher extends Notifier implements SimpleBuildSt
               credentialsId,
               Optional.<HttpTransport>empty())
           .computeClient();
+    }
+
+    @VisibleForTesting
+    ClientFactory getClientFactory(Jenkins context, String credentialsId) throws AbortException {
+      if (this.clientFactory == null
+          || !this.clientFactory.getCredentialsId().equals(credentialsId)) {
+        this.clientFactory = new ClientFactory(context, credentialsId);
+      }
+      return this.clientFactory;
     }
 
     public FormValidation doCheckClusterName(@QueryParameter String value) {
@@ -314,15 +337,57 @@ public class KubernetesEnginePublisher extends Notifier implements SimpleBuildSt
       return FormValidation.ok();
     }
 
-    public FormValidation doCheckProjectId(@QueryParameter String value) {
-      if (Strings.isNullOrEmpty(value)) {
+    public ListBoxModel doFillProjectIdItems(
+        @AncestorInPath Jenkins context,
+        @QueryParameter("credentialsId") final String credentialsId) {
+      ListBoxModel items = new ListBoxModel();
+      items.add("");
+      if (Strings.isNullOrEmpty(credentialsId)) {
+        return items;
+      }
+
+      ClientFactory clientFactory;
+      try {
+        clientFactory = this.getClientFactory(context, credentialsId);
+      } catch (AbortException ae) {
+        items.clear();
+        items.add(ae.getMessage(), "");
+        return items;
+      }
+
+      String defaultProjectId = clientFactory.getDefaultProjectId();
+      try {
+        CloudResourceManagerClient client = clientFactory.cloudResourceManagerClient();
+        List<Project> projects = client.getAccountProjects();
+
+        if (!projects.isEmpty()) {
+          projects
+              .stream()
+              .filter(p -> !p.getProjectId().equals(defaultProjectId))
+              .forEach(p -> items.add(p.getProjectId()));
+          if (projects.size() > items.size() - 1) {
+            items.add(new Option(defaultProjectId, defaultProjectId, true));
+          } else {
+            // Select not the first (empty) item but the second item, which exists because
+            // projects is not empty.
+            items.get(1).selected = true;
+          }
+        }
+        return items;
+      } catch (IOException ioe) {
+        items.add(new Option(defaultProjectId, defaultProjectId, true));
+        return items;
+      }
+    }
+
+    public FormValidation doCheckProjectId(@QueryParameter("projectId") String projectId) {
+      if (Strings.isNullOrEmpty(projectId)) {
         return FormValidation.error(Messages.KubernetesEnginePublisher_ProjectIDRequired());
       }
       return FormValidation.ok();
     }
 
-    public ListBoxModel doFillCredentialsIdItems(
-        @AncestorInPath Jenkins context, @QueryParameter String value) {
+    public ListBoxModel doFillCredentialsIdItems(@AncestorInPath Jenkins context) {
       if (context == null || !context.hasPermission(Item.CONFIGURE)) {
         return new StandardListBoxModel();
       }
@@ -338,10 +403,9 @@ public class KubernetesEnginePublisher extends Notifier implements SimpleBuildSt
     }
 
     public FormValidation doCheckCredentialsId(
-        @AncestorInPath Jenkins context,
         @QueryParameter("projectId") String projectId,
-        @QueryParameter String value) {
-      if (value.isEmpty()) {
+        @QueryParameter("credentialsId") String credentialsId) {
+      if (credentialsId.isEmpty()) {
         return FormValidation.error(Messages.KubernetesEnginePublisher_NoCredential());
       }
 
@@ -351,7 +415,7 @@ public class KubernetesEnginePublisher extends Notifier implements SimpleBuildSt
       }
 
       try {
-        getContainerClient(value);
+        getContainerClient(credentialsId);
       } catch (AbortException | RuntimeException e) {
         return FormValidation.error(Messages.KubernetesEnginePublisher_CredentialAuthFailed());
       }
