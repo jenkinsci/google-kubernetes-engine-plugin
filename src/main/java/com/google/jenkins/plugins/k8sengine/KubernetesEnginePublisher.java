@@ -371,7 +371,7 @@ public class KubernetesEnginePublisher extends Notifier implements SimpleBuildSt
   }
 
   @FunctionalInterface
-  interface KubeConfigAfterBuildStep {
+  interface KubeConfigAfterBuildStep extends Serializable {
     public void perform(
         KubeConfig kubeConfig,
         Run<?, ?> run,
