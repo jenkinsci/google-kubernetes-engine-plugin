@@ -373,6 +373,7 @@ public class KubernetesEnginePublisher extends Notifier implements SimpleBuildSt
         }
         return items;
       } catch (IOException ioe) {
+        LOGGER.severe(ioe.getMessage());
         items.add(new Option(defaultProjectId, defaultProjectId, true));
         return items;
       }
