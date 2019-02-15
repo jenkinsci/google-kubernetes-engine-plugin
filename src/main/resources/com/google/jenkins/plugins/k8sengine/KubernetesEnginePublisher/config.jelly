@@ -1,30 +1,39 @@
 <?jelly escape-by-default='true'?>
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler"
          xmlns:f="/lib/form" xmlns:c="/lib/credentials">
-    <f:entry field="projectId" title="${%Project ID}">
-        <f:textbox/>
-    </f:entry>
-    <f:entry field="clusterName" title="${%Cluster}">
-        <f:textbox/>
+    <f:entry field="credentialsId" title="${%Service Account Credentials}">
+       <c:select/>
     </f:entry>
     <f:section title="${%Zone}">
-        <f:radioBlock name="entryMethod" title="Dropdown" value="dropdown" checked="true" inline="true">
+        <f:radioBlock name="zoneEntry" title="Dropdown" value="dropdown" checked="true" inline="true">
             <f:entry field="zone">
                 <f:select/>
             </f:entry>
         </f:radioBlock>
-        <f:radioBlock name="entryMethod" title="Textbox" value="textbox" inline="true">
+        <f:radioBlock name="zoneEntry" title="Textbox" value="textbox" inline="true">
             <f:entry field="zone">
                 <f:textbox/>
             </f:entry>
         </f:radioBlock>
     </f:section>
+    <f:section title="${%Project ID}">
+        <f:radioBlock name="projectIdEntry" title="${%Dropdown}" value="dropdown" checked="true" inline="true">
+            <f:entry field="projectId">
+                <f:select checkMethod="post"/>
+            </f:entry>
+        </f:radioBlock>
+        <f:radioBlock name="projectIdEntry" title="${%Textbox}" value="textbox" inline="true">
+            <f:entry field="projectId">
+                <f:textbox/>
+            </f:entry>
+        </f:radioBlock>
+    </f:section>
+    <f:entry field="clusterName" title="${%Cluster}">
+        <f:textbox/>
+    </f:entry>
     <!-- TODO: look in drop-down button to select manifests from file selector -->
     <f:entry field="manifestPattern" title="${%Kubernetes Manifests}">
         <f:textbox/>
-    </f:entry>
-    <f:entry field="credentialsId" title="${%Service Account Credentials}">
-        <c:select/>
     </f:entry>
     <!-- TODO(craigatgoogle): re-enable once these QOL features are complete.
     <f:entry field="verifyDeployments" title="${%Verify Deployments}">

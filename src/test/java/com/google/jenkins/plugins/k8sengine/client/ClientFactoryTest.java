@@ -91,5 +91,6 @@ public class ClientFactoryTest {
             Optional.<HttpTransport>empty());
     Assert.assertNotNull(cf.containerClient());
     Assert.assertNotNull(cf.computeClient());
+    Assert.assertNotNull(cf.cloudResourceManagerClient());
   }
 }

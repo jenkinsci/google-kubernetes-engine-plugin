@@ -24,8 +24,11 @@ import com.google.api.client.googleapis.services.GoogleClientRequestInitializer;
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.jackson2.JacksonFactory;
+import com.google.api.services.cloudresourcemanager.CloudResourceManager;
+import com.google.api.services.cloudresourcemanager.CloudResourceManagerRequestInitializer;
 import com.google.api.services.compute.Compute;
 import com.google.api.services.container.Container;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
@@ -44,6 +47,17 @@ public class ClientFactory {
   private final Credential credential;
   private final HttpTransport transport;
   private final JsonFactory jsonFactory;
+  private final String credentialsId;
+  private final String defaultProjectId;
+
+  @VisibleForTesting
+  ClientFactory() throws AbortException {
+    credential = null;
+    transport = null;
+    jsonFactory = null;
+    defaultProjectId = null;
+    credentialsId = null;
+  }
 
   /**
    * Creates a {@link ClientFactory} instance.
@@ -81,6 +95,9 @@ public class ClientFactory {
       throw new AbortException(
           Messages.ClientFactory_FailedToInitializeHTTPTransport(gse.getMessage()));
     }
+    this.defaultProjectId =
+        Strings.isNullOrEmpty(robotCreds.getProjectId()) ? "" : robotCreds.getProjectId();
+    this.credentialsId = credentialsId;
 
     try {
       this.transport = httpTransport.orElse(GoogleNetHttpTransport.newTrustedTransport());
@@ -90,6 +107,19 @@ public class ClientFactory {
     }
 
     this.jsonFactory = new JacksonFactory();
+  }
+
+  /**
+   * Creates a {@link ClientFactory} instance without specifying domainRequirements or
+   * httpTransport.
+   *
+   * @param itemGroup A handle to the Jenkins instance.
+   * @param credentialsId The ID of the GoogleRobotCredentials to be retrieved from Jenkins and
+   *     utilized for authorization.
+   * @throws AbortException If failed to create a new client factory.
+   */
+  public ClientFactory(ItemGroup itemGroup, String credentialsId) throws AbortException {
+    this(itemGroup, ImmutableList.of(), credentialsId, Optional.empty());
   }
 
   /**
@@ -134,5 +164,43 @@ public class ClientFactory {
             .setHttpRequestInitializer(new RetryHttpInitializerWrapper(credential))
             .setApplicationName(APPLICATION_NAME)
             .build());
+  }
+
+  /**
+   * Creates a new {@link CloudResourceManagerClient}.
+   *
+   * @return A new {@link CloudResourceManagerClient} instance.
+   */
+  public CloudResourceManagerClient cloudResourceManagerClient() {
+    return new CloudResourceManagerClient(
+        new CloudResourceManager.Builder(
+                transport, jsonFactory, new RetryHttpInitializerWrapper(credential))
+            .setGoogleClientRequestInitializer(
+                new GoogleClientRequestInitializer() {
+                  @Override
+                  public void initialize(AbstractGoogleClientRequest<?> request)
+                      throws IOException {
+                    request.setRequestHeaders(
+                        request.getRequestHeaders().setUserAgent(APPLICATION_NAME));
+                  }
+                })
+            .setApplicationName(APPLICATION_NAME)
+            .setCloudResourceManagerRequestInitializer(new CloudResourceManagerRequestInitializer())
+            .build());
+  }
+
+  /** @return The default Project ID associated with this ClientFactory's credentials. */
+  public String getDefaultProjectId() {
+    return this.defaultProjectId;
+  }
+
+  /** @return The Credentials ID for this ClientFactory. */
+  public String getCredentialsId() {
+    return this.credentialsId;
+  }
+
+  @VisibleForTesting
+  ClientFactory makeClientFactory(ItemGroup itemGroup, String credentialsId) throws AbortException {
+    return new ClientFactory(itemGroup, credentialsId);
   }
 }
