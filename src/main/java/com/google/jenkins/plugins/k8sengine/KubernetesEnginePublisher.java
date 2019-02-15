@@ -381,10 +381,38 @@ public class KubernetesEnginePublisher extends Notifier implements SimpleBuildSt
 
     // TODO(stephenshank): Validate projectId against list of projects from
     // CloudResourceManagerClient
-    public FormValidation doCheckProjectId(@QueryParameter("projectId") String projectId) {
+    public FormValidation doCheckProjectId(
+        @AncestorInPath Jenkins context,
+        @QueryParameter("projectId") String projectId,
+        @QueryParameter("credentialsId") String credentialsId) {
       if (Strings.isNullOrEmpty(projectId)) {
         return FormValidation.error(Messages.KubernetesEnginePublisher_ProjectIDRequired());
+      } else if (Strings.isNullOrEmpty(credentialsId)) {
+        return FormValidation.error(
+            Messages.KubernetesEnginePublisher_ProjectCredentialIDRequired());
       }
+
+      ClientFactory clientFactory;
+      try {
+        clientFactory = getClientFactory(context, credentialsId);
+      } catch (AbortException ae) {
+        return FormValidation.error(Messages.KubernetesEnginePublisher_CredentialAuthFailed());
+      }
+
+      try {
+        CloudResourceManagerClient client = clientFactory.cloudResourceManagerClient();
+        List<Project> projects = client.getAccountProjects();
+        Optional<Project> matchingProject =
+            projects.stream().filter(p -> projectId.equals(p.getProjectId())).findFirst();
+        if (!matchingProject.isPresent()) {
+          return FormValidation.error(
+              Messages.KubernetesEnginePublisher_ProjectIDNotUnderCredential());
+        }
+      } catch (IOException ioe) {
+        return FormValidation.error(
+            Messages.KubernetesEnginePublisher_ProjectIDVerificationError());
+      }
+
       return FormValidation.ok();
     }
 
