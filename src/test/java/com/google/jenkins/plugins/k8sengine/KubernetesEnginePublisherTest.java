@@ -15,19 +15,17 @@
 package com.google.jenkins.plugins.k8sengine;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
 
 import com.google.api.services.cloudresourcemanager.model.Project;
 import com.google.api.services.compute.model.Zone;
-import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableList;
 import com.google.jenkins.plugins.k8sengine.client.ClientFactory;
 import com.google.jenkins.plugins.k8sengine.client.CloudResourceManagerClient;
 import com.google.jenkins.plugins.k8sengine.client.ComputeClient;
 import hudson.AbortException;
+import hudson.model.AutoCompletionCandidates;
 import hudson.util.FormValidation;
-import hudson.util.ListBoxModel;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -107,96 +105,58 @@ public class KubernetesEnginePublisherTest {
   }
 
   @Test
-  public void testDoFillProjectIdItemsErrorMessageWithAbortException() {
+  public void testDoAutoCompleteProjectIdEmptyWithAbortException() {
     listOfProjects.add(new Project().setProjectId(TEST_PROJECT_ID));
-    ListBoxModel projects = descriptor.doFillProjectIdItems(jenkins, ERROR_CREDENTIALS_ID);
-    assertNotNull(projects);
-    assertEquals(1, projects.size());
-    assertEquals(TEST_ERROR_MESSAGE, projects.get(0).name);
-    assertEquals("", projects.get(0).value);
+    AutoCompletionCandidates projects =
+        descriptor.doAutoCompleteProjectId(jenkins, "", ERROR_CREDENTIALS_ID);
+    testAutoCompleteResult(ImmutableList.of(), projects);
   }
 
   @Test
-  public void testDoFillProjectIdItemsDefaultProjectIdWithIOException() {
+  public void testDoAutoCompleteProjectIdDefaultProjectIdWithIOException() {
+    AutoCompletionCandidates projects =
+        descriptor.doAutoCompleteProjectId(jenkins, "", PROJECT_ERROR_CREDENTIALS_ID);
+    testAutoCompleteResult(ImmutableList.of(ERROR_PROJECT_ID), projects);
+  }
+
+  @Test
+  public void testDoAutoCompleteProjectIdEmptyWithEmptyCredentialsId() {
     listOfProjects.add(new Project().setProjectId(TEST_PROJECT_ID));
-    ListBoxModel projects = descriptor.doFillProjectIdItems(jenkins, PROJECT_ERROR_CREDENTIALS_ID);
-    assertNotNull(projects);
-    assertEquals(2, projects.size());
-    assertEquals("- none -", projects.get(0).name);
-    assertEquals("", projects.get(0).value);
-    assertFalse(projects.get(0).selected);
-    assertEquals(ERROR_PROJECT_ID, projects.get(1).name);
-    assertEquals(ERROR_PROJECT_ID, projects.get(1).value);
-    assertTrue(projects.get(1).selected);
+    AutoCompletionCandidates projects = descriptor.doAutoCompleteProjectId(jenkins, "", null);
+    testAutoCompleteResult(ImmutableList.of(), projects);
   }
 
   @Test
-  public void testDoFillProjectIdItemsEmptyWithEmptyCredentialsId() {
-    listOfProjects.add(new Project().setProjectId(TEST_PROJECT_ID));
-    ListBoxModel projects = descriptor.doFillProjectIdItems(jenkins, null);
-    assertNotNull(projects);
-    assertEquals(1, projects.size());
-    assertEquals("- none -", projects.get(0).name);
-    assertEquals("", projects.get(0).value);
+  public void testDoAutoCompleteProjectIdDefaultOnlyWithValidCredentialsIdNoProjects() {
+    AutoCompletionCandidates projects =
+        descriptor.doAutoCompleteProjectId(jenkins, "", TEST_CREDENTIALS_ID);
+    testAutoCompleteResult(ImmutableList.of(TEST_PROJECT_ID), projects);
   }
 
   @Test
-  public void testDoFillProjectIdItemsEmptyWithValidCredentialsIdNoProjects() {
-    ListBoxModel projects = descriptor.doFillProjectIdItems(jenkins, TEST_CREDENTIALS_ID);
-    assertNotNull(projects);
-    assertEquals(1, projects.size());
-    assertEquals("- none -", projects.get(0).name);
-    assertEquals("", projects.get(0).value);
-  }
-
-  @Test
-  public void testDoFillProjectIdItemsWithValidCredentialsId() {
-    listOfProjects.add(new Project().setProjectId(TEST_PROJECT_ID));
-    listOfProjects.add(new Project().setProjectId(OTHER_PROJECT_ID));
-    ListBoxModel projects = descriptor.doFillProjectIdItems(jenkins, TEST_CREDENTIALS_ID);
-    assertNotNull(projects);
-    assertEquals(3, projects.size());
-    assertEquals("- none -", projects.get(0).name);
-    assertEquals("", projects.get(0).value);
-    assertFalse(projects.get(0).selected);
-    assertEquals(OTHER_PROJECT_ID, projects.get(1).name);
-    assertEquals(OTHER_PROJECT_ID, projects.get(1).value);
-    assertFalse(projects.get(1).selected);
-    assertEquals(TEST_PROJECT_ID, projects.get(2).name);
-    assertEquals(TEST_PROJECT_ID, projects.get(2).value);
-    assertTrue(projects.get(2).selected);
-  }
-
-  @Test
-  public void testDoFillProjectIdItemsWithValidCredentialsIdNoDefaultProject() {
-    listOfProjects.add(new Project().setProjectId(OTHER_PROJECT_ID));
-    ListBoxModel projects = descriptor.doFillProjectIdItems(jenkins, TEST_CREDENTIALS_ID);
-    assertNotNull(projects);
-    assertEquals(2, projects.size());
-    assertEquals("- none -", projects.get(0).name);
-    assertEquals("", projects.get(0).value);
-    assertFalse(projects.get(0).selected);
-    assertEquals(OTHER_PROJECT_ID, projects.get(1).name);
-    assertEquals(OTHER_PROJECT_ID, projects.get(1).value);
-    assertTrue(projects.get(1).selected);
-  }
-
-  @Test
-  public void testDoFillProjectIdItemsWithValidCredentialsAndEmptyProject() {
+  public void testDoAutoCompleteProjectIdWithValidCredentialsId() {
     listOfProjects.add(new Project().setProjectId(OTHER_PROJECT_ID));
     listOfProjects.add(new Project().setProjectId(TEST_PROJECT_ID));
-    ListBoxModel projects = descriptor.doFillProjectIdItems(jenkins, EMPTY_PROJECT_CREDENTIALS_ID);
-    assertNotNull(projects);
-    assertEquals(3, projects.size());
-    assertEquals("- none -", projects.get(0).name);
-    assertEquals("", projects.get(0).value);
-    assertFalse(projects.get(0).selected);
-    assertEquals(OTHER_PROJECT_ID, projects.get(1).name);
-    assertEquals(OTHER_PROJECT_ID, projects.get(1).value);
-    assertTrue(projects.get(1).selected);
-    assertEquals(TEST_PROJECT_ID, projects.get(2).name);
-    assertEquals(TEST_PROJECT_ID, projects.get(2).value);
-    assertFalse(projects.get(2).selected);
+    AutoCompletionCandidates projects =
+        descriptor.doAutoCompleteProjectId(jenkins, "", TEST_CREDENTIALS_ID);
+    testAutoCompleteResult(ImmutableList.of(TEST_PROJECT_ID, OTHER_PROJECT_ID), projects);
+  }
+
+  @Test
+  public void testDoAutoCompleteProjectIdWithValidCredentialsIdNoDefaultProject() {
+    listOfProjects.add(new Project().setProjectId(OTHER_PROJECT_ID));
+    AutoCompletionCandidates projects =
+        descriptor.doAutoCompleteProjectId(jenkins, "", TEST_CREDENTIALS_ID);
+    testAutoCompleteResult(ImmutableList.of(OTHER_PROJECT_ID, TEST_PROJECT_ID), projects);
+  }
+
+  @Test
+  public void testDoAutoCompleteProjectIdWithValidCredentialsAndEmptyProject() {
+    listOfProjects.add(new Project().setProjectId(OTHER_PROJECT_ID));
+    listOfProjects.add(new Project().setProjectId(TEST_PROJECT_ID));
+    AutoCompletionCandidates projects =
+        descriptor.doAutoCompleteProjectId(jenkins, "", EMPTY_PROJECT_CREDENTIALS_ID);
+    testAutoCompleteResult(ImmutableList.of(OTHER_PROJECT_ID, TEST_PROJECT_ID), projects);
   }
 
   @Test
@@ -258,43 +218,42 @@ public class KubernetesEnginePublisherTest {
   }
 
   @Test
-  public void testDoFillZoneItemsEmptyWithEmptyProjectId() {
+  public void testDoAutoCompleteZoneEmptyWithEmptyProjectId() {
     listOfZones.add(new Zone().setName(TEST_ZONE_A));
-    ListBoxModel zones = descriptor.doFillZoneItems(jenkins, null, TEST_CREDENTIALS_ID);
-    testZoneEmptyResult(zones);
+    AutoCompletionCandidates zones =
+        descriptor.doAutoCompleteZone(jenkins, "", null, TEST_CREDENTIALS_ID);
+    testAutoCompleteResult(ImmutableList.of(), zones);
   }
 
   @Test
-  public void testDoFillZoneItemsEmptyWithEmptyCredentialsId() {
+  public void testDoAutoCompleteZoneEmptyWithEmptyCredentialsId() {
     listOfZones.add(new Zone().setName(TEST_ZONE_A));
-    ListBoxModel zones = descriptor.doFillZoneItems(jenkins, TEST_PROJECT_ID, null);
-    testZoneEmptyResult(zones);
+    AutoCompletionCandidates zones =
+        descriptor.doAutoCompleteZone(jenkins, "", TEST_PROJECT_ID, null);
+    testAutoCompleteResult(ImmutableList.of(), zones);
   }
 
   @Test
-  public void testDoFillZoneItemsWithValidArguments() {
+  public void testDoAutoCompleteZoneWithValidArguments() {
     listOfZones.add(new Zone().setName(TEST_ZONE_A));
     listOfZones.add(new Zone().setName(TEST_ZONE_B));
-    ListBoxModel zones = descriptor.doFillZoneItems(jenkins, TEST_PROJECT_ID, TEST_CREDENTIALS_ID);
-    assertNotNull(zones);
-    assertEquals(2, zones.size());
-    assertEquals(TEST_ZONE_A, zones.get(0).value);
-    assertEquals(TEST_ZONE_B, zones.get(1).value);
+    AutoCompletionCandidates zones =
+        descriptor.doAutoCompleteZone(jenkins, "", TEST_PROJECT_ID, TEST_CREDENTIALS_ID);
+    testAutoCompleteResult(ImmutableList.of(TEST_ZONE_A, TEST_ZONE_B), zones);
   }
 
   @Test
-  public void testDoFillZoneItemsEmptyWithValidArgumentsNoZones() {
-    ListBoxModel zones = descriptor.doFillZoneItems(jenkins, TEST_PROJECT_ID, TEST_CREDENTIALS_ID);
-    testZoneEmptyResult(zones);
+  public void testDoAutoCompleteZoneEmptyWithValidArgumentsNoZones() {
+    AutoCompletionCandidates zones =
+        descriptor.doAutoCompleteZone(jenkins, "", TEST_PROJECT_ID, TEST_CREDENTIALS_ID);
+    testAutoCompleteResult(ImmutableList.of(), zones);
   }
 
   @Test
-  public void testDoFillZoneItemsErrorMessageWithIOException() {
-    ListBoxModel zones = descriptor.doFillZoneItems(jenkins, ERROR_PROJECT_ID, TEST_CREDENTIALS_ID);
-    assertNotNull(zones);
-    assertEquals(1, zones.size());
-    assertEquals(Messages.KubernetesEnginePublisher_ZoneFillError(), zones.get(0).name);
-    assertTrue(Strings.isNullOrEmpty(zones.get(0).value));
+  public void testDoAutoCompleteZoneEmptyWithIOException() {
+    AutoCompletionCandidates zones =
+        descriptor.doAutoCompleteZone(jenkins, "", ERROR_PROJECT_ID, TEST_CREDENTIALS_ID);
+    testAutoCompleteResult(ImmutableList.of(), zones);
   }
 
   @Test
@@ -355,9 +314,10 @@ public class KubernetesEnginePublisherTest {
     assertEquals(FormValidation.ok(), result);
   }
 
-  private void testZoneEmptyResult(ListBoxModel zones) {
-    assertNotNull(zones);
-    assertEquals(1, zones.size());
-    assertTrue(Strings.isNullOrEmpty(zones.get(0).value));
+  private void testAutoCompleteResult(List<String> expected, AutoCompletionCandidates items) {
+    assertNotNull(items);
+    List<String> values = items.getValues();
+    assertNotNull(values);
+    assertEquals(expected, values);
   }
 }

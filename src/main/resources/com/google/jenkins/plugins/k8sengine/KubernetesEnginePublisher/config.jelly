@@ -4,30 +4,12 @@
     <f:entry field="credentialsId" title="${%Service Account Credentials}">
        <c:select/>
     </f:entry>
-    <f:section title="${%Zone}">
-        <f:radioBlock name="zoneEntry" title="Dropdown" value="dropdown" checked="true" inline="true">
-            <f:entry field="zone">
-                <f:select/>
-            </f:entry>
-        </f:radioBlock>
-        <f:radioBlock name="zoneEntry" title="Textbox" value="textbox" inline="true">
-            <f:entry field="zone">
-                <f:textbox/>
-            </f:entry>
-        </f:radioBlock>
-    </f:section>
-    <f:section title="${%Project ID}">
-        <f:radioBlock name="projectIdEntry" title="${%Dropdown}" value="dropdown" checked="true" inline="true">
-            <f:entry field="projectId">
-                <f:select checkMethod="post"/>
-            </f:entry>
-        </f:radioBlock>
-        <f:radioBlock name="projectIdEntry" title="${%Textbox}" value="textbox" inline="true">
-            <f:entry field="projectId">
-                <f:textbox/>
-            </f:entry>
-        </f:radioBlock>
-    </f:section>
+    <f:entry field="zone" title="${%Zone}">
+        <f:textbox/>
+    </f:entry>
+    <f:entry field="projectId" title="${%Project ID}">
+        <f:textbox/>
+    </f:entry>
     <f:entry field="clusterName" title="${%Cluster}">
         <f:textbox/>
     </f:entry>

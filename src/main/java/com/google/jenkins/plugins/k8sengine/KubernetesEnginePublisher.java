@@ -38,6 +38,7 @@ import hudson.Extension;
 import hudson.FilePath;
 import hudson.Launcher;
 import hudson.model.AbstractProject;
+import hudson.model.AutoCompletionCandidates;
 import hudson.model.Item;
 import hudson.model.Run;
 import hudson.model.TaskListener;
@@ -48,7 +49,6 @@ import hudson.tasks.Notifier;
 import hudson.tasks.Publisher;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
-import hudson.util.ListBoxModel.Option;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.Collections;
@@ -68,15 +68,11 @@ import org.kohsuke.stapler.QueryParameter;
 /** Provides a build step for publishing build artifacts to a Kubernetes cluster running on GKE. */
 public class KubernetesEnginePublisher extends Notifier implements SimpleBuildStep, Serializable {
   private static final Logger LOGGER = Logger.getLogger(KubernetesEnginePublisher.class.getName());
-  public static final String ENTRY_METHOD_TEXTBOX = "textbox";
-  public static final String ENTRY_METHOD_DROPDOWN = "dropdown";
 
   private String projectId;
   private String clusterName;
   private String credentialsId;
   private String zone;
-  private String zoneEntry;
-  private String projectIdEntry;
   private String manifestPattern;
   private boolean verifyDeployments;
   private boolean verifyServices;
@@ -121,26 +117,6 @@ public class KubernetesEnginePublisher extends Notifier implements SimpleBuildSt
   public void setManifestPattern(String manifestPattern) {
     Preconditions.checkArgument(!Strings.isNullOrEmpty(manifestPattern));
     this.manifestPattern = manifestPattern;
-  }
-
-  public String getZoneEntry() {
-    return this.zoneEntry;
-  }
-
-  @DataBoundSetter
-  public void setZoneEntry(String zoneEntry) {
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(zoneEntry));
-    this.zoneEntry = zoneEntry;
-  }
-
-  public String getProjectIdEntry() {
-    return this.projectIdEntry;
-  }
-
-  @DataBoundSetter
-  public void setProjectIdEntry(String projectIdEntry) {
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(projectIdEntry));
-    this.projectIdEntry = projectIdEntry;
   }
 
   public String getZone() {
@@ -263,21 +239,21 @@ public class KubernetesEnginePublisher extends Notifier implements SimpleBuildSt
       return FormValidation.ok();
     }
 
-    public ListBoxModel doFillZoneItems(
+    public AutoCompletionCandidates doAutoCompleteZone(
         @AncestorInPath Jenkins context,
-        @QueryParameter("projectId") final String projectId,
-        @QueryParameter("credentialsId") final String credentialsId) {
-      ListBoxModel items = new ListBoxModel();
-      items.add("- none -", "");
+        @QueryParameter("zone") String zone,
+        @QueryParameter("projectId") String projectId,
+        @QueryParameter("credentialsId") String credentialsId) {
+      AutoCompletionCandidates items = new AutoCompletionCandidates();
       if (Strings.isNullOrEmpty(projectId) || Strings.isNullOrEmpty(credentialsId)) {
         return items;
       }
+
       ClientFactory clientFactory;
       try {
         clientFactory = getClientFactory(context, credentialsId);
       } catch (AbortException ae) {
-        items.clear();
-        items.add(ae.getMessage());
+        LOGGER.log(Level.SEVERE, Messages.KubernetesEnginePublisher_CredentialAuthFailed(), ae);
         return items;
       }
 
@@ -285,18 +261,14 @@ public class KubernetesEnginePublisher extends Notifier implements SimpleBuildSt
         ComputeClient compute = clientFactory.computeClient();
         List<Zone> zones = compute.getZones(projectId);
 
-        // This enables auto-populating the zone when there are zones.
-        if (!zones.isEmpty()) {
-          items.clear();
-        }
-
-        for (Zone z : zones) {
-          items.add(z.getName());
-        }
+        String zoneFilter = zone == null ? "" : zone;
+        zones
+            .stream()
+            .filter(z -> z.getName().toLowerCase().startsWith(zoneFilter))
+            .forEach(z -> items.add(z.getName()));
         return items;
       } catch (IOException ioe) {
-        items.clear();
-        items.add(Messages.KubernetesEnginePublisher_ZoneFillError(), "");
+        LOGGER.log(Level.SEVERE, Messages.KubernetesEnginePublisher_ZoneFillError(), ioe);
         return items;
       }
     }
@@ -335,11 +307,11 @@ public class KubernetesEnginePublisher extends Notifier implements SimpleBuildSt
       return FormValidation.ok();
     }
 
-    public ListBoxModel doFillProjectIdItems(
+    public AutoCompletionCandidates doAutoCompleteProjectId(
         @AncestorInPath Jenkins context,
+        @QueryParameter("projectId") final String projectId,
         @QueryParameter("credentialsId") final String credentialsId) {
-      ListBoxModel items = new ListBoxModel();
-      items.add("- none -", "");
+      AutoCompletionCandidates items = new AutoCompletionCandidates();
       if (Strings.isNullOrEmpty(credentialsId)) {
         return items;
       }
@@ -348,8 +320,7 @@ public class KubernetesEnginePublisher extends Notifier implements SimpleBuildSt
       try {
         clientFactory = this.getClientFactory(context, credentialsId);
       } catch (AbortException ae) {
-        items.clear();
-        items.add(ae.getMessage(), "");
+        LOGGER.log(Level.SEVERE, Messages.KubernetesEnginePublisher_CredentialAuthFailed(), ae);
         return items;
       }
 
@@ -358,25 +329,30 @@ public class KubernetesEnginePublisher extends Notifier implements SimpleBuildSt
         CloudResourceManagerClient client = clientFactory.cloudResourceManagerClient();
         List<Project> projects = client.getAccountProjects();
 
-        if (projects.isEmpty()) {
-          return items;
-        }
+        String projectIdFilter = projectId == null ? "" : projectId;
 
         projects
             .stream()
-            .filter(p -> !p.getProjectId().equals(defaultProjectId))
+            .filter(p -> p.getProjectId().toLowerCase().startsWith(projectIdFilter))
             .forEach(p -> items.add(p.getProjectId()));
-        if (projects.size() > items.size() - 1 && !Strings.isNullOrEmpty(defaultProjectId)) {
-          items.add(new Option(defaultProjectId, defaultProjectId, true));
+
+        if (Strings.isNullOrEmpty(defaultProjectId)
+            || !defaultProjectId.startsWith(projectIdFilter)) {
+          return items;
+        }
+
+        if (items.getValues().contains(defaultProjectId)) {
+          // Move defaultProjectId to the front if it's already there.
+          items.getValues().remove(defaultProjectId);
+          items.getValues().add(0, defaultProjectId);
         } else {
-          // Select not the first (empty) item but the second item, which exists because
-          // projects is not empty.
-          items.get(1).selected = true;
+          // Add it anyway, to the end, if it's not
+          items.add(defaultProjectId);
         }
         return items;
       } catch (IOException ioe) {
         LOGGER.log(Level.SEVERE, Messages.KubernetesEnginePublisher_ProjectIDFillError(), ioe);
-        items.add(new Option(defaultProjectId, defaultProjectId, true));
+        items.add(defaultProjectId);
         return items;
       }
     }
