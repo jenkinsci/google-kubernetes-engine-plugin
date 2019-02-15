@@ -312,12 +312,14 @@ public class KubernetesEnginePublisher extends Notifier implements SimpleBuildSt
         return FormValidation.error(
             Messages.KubernetesEnginePublisher_ZoneProjectIdCredentialRequired());
       }
+
       ClientFactory clientFactory;
       try {
         clientFactory = getClientFactory(context, credentialsId);
       } catch (AbortException ae) {
         return FormValidation.error(Messages.KubernetesEnginePublisher_CredentialAuthFailed());
       }
+
       try {
         ComputeClient compute = clientFactory.computeClient();
         List<Zone> zones = compute.getZones(projectId);
@@ -379,8 +381,6 @@ public class KubernetesEnginePublisher extends Notifier implements SimpleBuildSt
       }
     }
 
-    // TODO(stephenshank): Validate projectId against list of projects from
-    // CloudResourceManagerClient
     public FormValidation doCheckProjectId(
         @AncestorInPath Jenkins context,
         @QueryParameter("projectId") String projectId,
