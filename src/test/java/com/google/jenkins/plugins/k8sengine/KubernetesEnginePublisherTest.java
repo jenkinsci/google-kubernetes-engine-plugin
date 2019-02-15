@@ -200,6 +200,64 @@ public class KubernetesEnginePublisherTest {
   }
 
   @Test
+  public void testDoCheckProjectIdMessageWithEmptyProjectID() {
+    FormValidation result = descriptor.doCheckProjectId(jenkins, null, TEST_CREDENTIALS_ID);
+    assertNotNull(result);
+    assertEquals(Messages.KubernetesEnginePublisher_ProjectIDRequired(), result.getMessage());
+  }
+
+  @Test
+  public void testDoCheckProjectIdMessageWithEmptyCredentialsID() {
+    FormValidation result = descriptor.doCheckProjectId(jenkins, TEST_PROJECT_ID, null);
+    assertNotNull(result);
+    assertEquals(
+        Messages.KubernetesEnginePublisher_ProjectCredentialIDRequired(), result.getMessage());
+  }
+
+  @Test
+  public void testDoCheckProjectIdMessageWithAbortException() {
+    FormValidation result =
+        descriptor.doCheckProjectId(jenkins, TEST_PROJECT_ID, ERROR_CREDENTIALS_ID);
+    assertNotNull(result);
+    assertEquals(Messages.KubernetesEnginePublisher_CredentialAuthFailed(), result.getMessage());
+  }
+
+  @Test
+  public void testDoCheckProjectIdMessageWithIOException() {
+    FormValidation result =
+        descriptor.doCheckProjectId(jenkins, TEST_PROJECT_ID, PROJECT_ERROR_CREDENTIALS_ID);
+    assertNotNull(result);
+    assertEquals(
+        Messages.KubernetesEnginePublisher_ProjectIDVerificationError(), result.getMessage());
+  }
+
+  @Test
+  public void testDoCheckProjectIdMessageWithNoProjects() {
+    FormValidation result =
+        descriptor.doCheckProjectId(jenkins, TEST_PROJECT_ID, TEST_CREDENTIALS_ID);
+    assertNotNull(result);
+    assertEquals(
+        Messages.KubernetesEnginePublisher_ProjectIDNotUnderCredential(), result.getMessage());
+  }
+
+  @Test
+  public void testDoCheckProjectIdMessageWithWrongProjects() {
+    listOfProjects.add(new Project().setProjectId(OTHER_PROJECT_ID));
+    FormValidation result =
+        descriptor.doCheckProjectId(jenkins, TEST_PROJECT_ID, TEST_CREDENTIALS_ID);
+    assertEquals(
+        Messages.KubernetesEnginePublisher_ProjectIDNotUnderCredential(), result.getMessage());
+  }
+
+  @Test
+  public void testDoCheckProjectIdMessageWithValidProject() {
+    listOfProjects.add(new Project().setProjectId(TEST_PROJECT_ID));
+    FormValidation result =
+        descriptor.doCheckProjectId(jenkins, TEST_PROJECT_ID, TEST_CREDENTIALS_ID);
+    assertEquals(FormValidation.ok().getMessage(), result.getMessage());
+  }
+
+  @Test
   public void testDoFillZoneItemsEmptyWithEmptyProjectId() {
     listOfZones.add(new Zone().setName(TEST_ZONE_A));
     ListBoxModel zones = descriptor.doFillZoneItems(jenkins, null, TEST_CREDENTIALS_ID);
