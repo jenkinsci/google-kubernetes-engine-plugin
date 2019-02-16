@@ -40,7 +40,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class KubernetesEnginePublisherTest {
   private static final String TEST_ZONE_A = "us-west1-a";
-  private static final String TEST_ZONE_B = "us-west1-b";
+  private static final String TEST_ZONE_B = "us-central1-b";
   private static final String TEST_PROJECT_ID = "test-project-id";
   private static final String OTHER_PROJECT_ID = "other-project-id";
   private static final String ERROR_PROJECT_ID = "error-project-id";
@@ -106,55 +106,52 @@ public class KubernetesEnginePublisherTest {
 
   @Test
   public void testDoAutoCompleteProjectIdEmptyWithAbortException() {
-    initProjects(ImmutableList.of(TEST_PROJECT_ID));
-    AutoCompletionCandidates projects =
-        descriptor.doAutoCompleteProjectId(jenkins, "", ERROR_CREDENTIALS_ID);
-    testAutoCompleteResult(ImmutableList.of(), projects);
+    testProjectAutoComplete(
+        "", ERROR_CREDENTIALS_ID, ImmutableList.of(TEST_PROJECT_ID), ImmutableList.of());
   }
 
   @Test
   public void testDoAutoCompleteProjectIdDefaultProjectIdWithIOException() {
-    AutoCompletionCandidates projects =
-        descriptor.doAutoCompleteProjectId(jenkins, "", PROJECT_ERROR_CREDENTIALS_ID);
-    testAutoCompleteResult(ImmutableList.of(ERROR_PROJECT_ID), projects);
+    testProjectAutoComplete(
+        "", PROJECT_ERROR_CREDENTIALS_ID, ImmutableList.of(), ImmutableList.of(ERROR_PROJECT_ID));
   }
 
   @Test
   public void testDoAutoCompleteProjectIdEmptyWithEmptyCredentialsId() {
-    initProjects(ImmutableList.of(TEST_PROJECT_ID));
-    AutoCompletionCandidates projects = descriptor.doAutoCompleteProjectId(jenkins, "", null);
-    testAutoCompleteResult(ImmutableList.of(), projects);
+    testProjectAutoComplete("", null, ImmutableList.of(TEST_PROJECT_ID), ImmutableList.of());
   }
 
   @Test
   public void testDoAutoCompleteProjectIdDefaultOnlyWithValidCredentialsIdNoProjects() {
-    AutoCompletionCandidates projects =
-        descriptor.doAutoCompleteProjectId(jenkins, "", TEST_CREDENTIALS_ID);
-    testAutoCompleteResult(ImmutableList.of(TEST_PROJECT_ID), projects);
+    testProjectAutoComplete(
+        "", TEST_CREDENTIALS_ID, ImmutableList.of(), ImmutableList.of(TEST_PROJECT_ID));
   }
 
   @Test
   public void testDoAutoCompleteProjectIdWithValidCredentialsId() {
-    initProjects(ImmutableList.of(OTHER_PROJECT_ID, TEST_PROJECT_ID));
-    AutoCompletionCandidates projects =
-        descriptor.doAutoCompleteProjectId(jenkins, "", TEST_CREDENTIALS_ID);
-    testAutoCompleteResult(ImmutableList.of(TEST_PROJECT_ID, OTHER_PROJECT_ID), projects);
+    testProjectAutoComplete(
+        "",
+        TEST_CREDENTIALS_ID,
+        ImmutableList.of(OTHER_PROJECT_ID, TEST_PROJECT_ID),
+        ImmutableList.of(TEST_PROJECT_ID, OTHER_PROJECT_ID));
   }
 
   @Test
   public void testDoAutoCompleteProjectIdWithValidCredentialsIdNoDefaultProject() {
-    initProjects(ImmutableList.of(OTHER_PROJECT_ID));
-    AutoCompletionCandidates projects =
-        descriptor.doAutoCompleteProjectId(jenkins, "", TEST_CREDENTIALS_ID);
-    testAutoCompleteResult(ImmutableList.of(OTHER_PROJECT_ID, TEST_PROJECT_ID), projects);
+    testProjectAutoComplete(
+        "",
+        TEST_CREDENTIALS_ID,
+        ImmutableList.of(OTHER_PROJECT_ID),
+        ImmutableList.of(OTHER_PROJECT_ID, TEST_PROJECT_ID));
   }
 
   @Test
   public void testDoAutoCompleteProjectIdWithValidCredentialsAndEmptyProject() {
-    initProjects(ImmutableList.of(OTHER_PROJECT_ID, TEST_PROJECT_ID));
-    AutoCompletionCandidates projects =
-        descriptor.doAutoCompleteProjectId(jenkins, "", EMPTY_PROJECT_CREDENTIALS_ID);
-    testAutoCompleteResult(ImmutableList.of(OTHER_PROJECT_ID, TEST_PROJECT_ID), projects);
+    testProjectAutoComplete(
+        "",
+        EMPTY_PROJECT_CREDENTIALS_ID,
+        ImmutableList.of(OTHER_PROJECT_ID, TEST_PROJECT_ID),
+        ImmutableList.of(OTHER_PROJECT_ID, TEST_PROJECT_ID));
   }
 
   @Test
@@ -217,40 +214,36 @@ public class KubernetesEnginePublisherTest {
 
   @Test
   public void testDoAutoCompleteZoneEmptyWithEmptyProjectId() {
-    initZones(ImmutableList.of(TEST_ZONE_A));
-    AutoCompletionCandidates zones =
-        descriptor.doAutoCompleteZone(jenkins, "", null, TEST_CREDENTIALS_ID);
-    testAutoCompleteResult(ImmutableList.of(), zones);
+    testZoneAutoComplete(
+        "", null, TEST_CREDENTIALS_ID, ImmutableList.of(TEST_ZONE_A), ImmutableList.of());
   }
 
   @Test
   public void testDoAutoCompleteZoneEmptyWithEmptyCredentialsId() {
-    initZones(ImmutableList.of(TEST_ZONE_A));
-    AutoCompletionCandidates zones =
-        descriptor.doAutoCompleteZone(jenkins, "", TEST_PROJECT_ID, null);
-    testAutoCompleteResult(ImmutableList.of(), zones);
+    testZoneAutoComplete(
+        "", TEST_PROJECT_ID, null, ImmutableList.of(TEST_ZONE_A), ImmutableList.of());
   }
 
   @Test
   public void testDoAutoCompleteZoneWithValidArguments() {
-    initZones(ImmutableList.of(TEST_ZONE_A, TEST_ZONE_B));
-    AutoCompletionCandidates zones =
-        descriptor.doAutoCompleteZone(jenkins, "", TEST_PROJECT_ID, TEST_CREDENTIALS_ID);
-    testAutoCompleteResult(ImmutableList.of(TEST_ZONE_A, TEST_ZONE_B), zones);
+    testZoneAutoComplete(
+        "",
+        TEST_PROJECT_ID,
+        TEST_CREDENTIALS_ID,
+        ImmutableList.of(TEST_ZONE_A, TEST_ZONE_B),
+        ImmutableList.of(TEST_ZONE_A, TEST_ZONE_B));
   }
 
   @Test
   public void testDoAutoCompleteZoneEmptyWithValidArgumentsNoZones() {
-    AutoCompletionCandidates zones =
-        descriptor.doAutoCompleteZone(jenkins, "", TEST_PROJECT_ID, TEST_CREDENTIALS_ID);
-    testAutoCompleteResult(ImmutableList.of(), zones);
+    testZoneAutoComplete(
+        "", TEST_PROJECT_ID, TEST_CREDENTIALS_ID, ImmutableList.of(), ImmutableList.of());
   }
 
   @Test
   public void testDoAutoCompleteZoneEmptyWithIOException() {
-    AutoCompletionCandidates zones =
-        descriptor.doAutoCompleteZone(jenkins, "", ERROR_PROJECT_ID, TEST_CREDENTIALS_ID);
-    testAutoCompleteResult(ImmutableList.of(), zones);
+    testZoneAutoComplete(
+        "", ERROR_PROJECT_ID, TEST_CREDENTIALS_ID, ImmutableList.of(), ImmutableList.of());
   }
 
   @Test
@@ -315,11 +308,30 @@ public class KubernetesEnginePublisherTest {
     zoneNames.forEach(z -> listOfZones.add(new Zone().setName(z)));
   }
 
-  private static void initProjects(List<String> projectIds) {
-    projectIds.forEach(p -> listOfProjects.add(new Project().setProjectId(p)));
+  private static void initProjects(List<String> projectNames) {
+    projectNames.forEach(p -> listOfProjects.add(new Project().setProjectId(p)));
   }
 
-  private static void testAutoCompleteResult(List<String> expected, AutoCompletionCandidates items) {
+  private static void testZoneAutoComplete(
+      String zone,
+      String projectId,
+      String credentialsId,
+      List<String> init,
+      List<String> expected) {
+    initZones(init);
+    testAutoCompleteResult(
+        expected, descriptor.doAutoCompleteZone(jenkins, zone, projectId, credentialsId));
+  }
+
+  private static void testProjectAutoComplete(
+      String projectId, String credentialsId, List<String> init, List<String> expected) {
+    initProjects(init);
+    testAutoCompleteResult(
+        expected, descriptor.doAutoCompleteProjectId(jenkins, projectId, credentialsId));
+  }
+
+  private static void testAutoCompleteResult(
+      List<String> expected, AutoCompletionCandidates items) {
     assertNotNull(items);
     List<String> values = items.getValues();
     assertNotNull(values);
