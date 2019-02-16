@@ -122,6 +122,15 @@ public class KubernetesEnginePublisherTest {
   }
 
   @Test
+  public void testDoAutoCompleteProjectIdWithNullProjectId() {
+    testProjectAutoComplete(
+        null,
+        TEST_CREDENTIALS_ID,
+        ImmutableList.of(TEST_PROJECT_ID, OTHER_PROJECT_ID),
+        ImmutableList.of(TEST_PROJECT_ID, OTHER_PROJECT_ID));
+  }
+
+  @Test
   public void testDoAutoCompleteProjectIdDefaultOnlyWithValidCredentialsIdNoProjects() {
     testProjectAutoComplete(
         "", TEST_CREDENTIALS_ID, ImmutableList.of(), ImmutableList.of(TEST_PROJECT_ID));
@@ -152,6 +161,33 @@ public class KubernetesEnginePublisherTest {
         EMPTY_PROJECT_CREDENTIALS_ID,
         ImmutableList.of(OTHER_PROJECT_ID, TEST_PROJECT_ID),
         ImmutableList.of(OTHER_PROJECT_ID, TEST_PROJECT_ID));
+  }
+
+  @Test
+  public void testDoAutoCompleteProjectIdEmptyWithNoMatching() {
+    testProjectAutoComplete(
+        "h",
+        TEST_CREDENTIALS_ID,
+        ImmutableList.of(OTHER_PROJECT_ID, TEST_PROJECT_ID),
+        ImmutableList.of());
+  }
+
+  @Test
+  public void testDoAutoCompleteProjectIdEmptyWithPartialMatching() {
+    testProjectAutoComplete(
+        "test-not",
+        TEST_CREDENTIALS_ID,
+        ImmutableList.of(OTHER_PROJECT_ID, TEST_PROJECT_ID),
+        ImmutableList.of());
+  }
+
+  @Test
+  public void testDoAutoCompleteProjectIdFiltersWithNonMatchingProjectId() {
+    testProjectAutoComplete(
+        "other-",
+        TEST_CREDENTIALS_ID,
+        ImmutableList.of(OTHER_PROJECT_ID, TEST_PROJECT_ID),
+        ImmutableList.of(OTHER_PROJECT_ID));
   }
 
   @Test
@@ -235,6 +271,16 @@ public class KubernetesEnginePublisherTest {
   }
 
   @Test
+  public void testDoAutoCompleteZoneWithNullZone() {
+    testZoneAutoComplete(
+        null,
+        TEST_PROJECT_ID,
+        TEST_CREDENTIALS_ID,
+        ImmutableList.of(TEST_ZONE_A, TEST_ZONE_B),
+        ImmutableList.of(TEST_ZONE_A, TEST_ZONE_B));
+  }
+
+  @Test
   public void testDoAutoCompleteZoneEmptyWithValidArgumentsNoZones() {
     testZoneAutoComplete(
         "", TEST_PROJECT_ID, TEST_CREDENTIALS_ID, ImmutableList.of(), ImmutableList.of());
@@ -244,6 +290,36 @@ public class KubernetesEnginePublisherTest {
   public void testDoAutoCompleteZoneEmptyWithIOException() {
     testZoneAutoComplete(
         "", ERROR_PROJECT_ID, TEST_CREDENTIALS_ID, ImmutableList.of(), ImmutableList.of());
+  }
+
+  @Test
+  public void testDoAutoCompleteZoneEmptyWithNoMatching() {
+    testZoneAutoComplete(
+        "eur",
+        TEST_PROJECT_ID,
+        TEST_CREDENTIALS_ID,
+        ImmutableList.of(TEST_ZONE_A, TEST_ZONE_B),
+        ImmutableList.of());
+  }
+
+  @Test
+  public void testDoAutoCompleteZoneEmptyWithPartialMatching() {
+    testZoneAutoComplete(
+        "us-e",
+        TEST_PROJECT_ID,
+        TEST_CREDENTIALS_ID,
+        ImmutableList.of(TEST_ZONE_A, TEST_ZONE_B),
+        ImmutableList.of());
+  }
+
+  @Test
+  public void testDoAutoCompleteZoneFiltersNonMatchingZone() {
+    testZoneAutoComplete(
+        "us-c",
+        TEST_PROJECT_ID,
+        TEST_CREDENTIALS_ID,
+        ImmutableList.of(TEST_ZONE_A, TEST_ZONE_B),
+        ImmutableList.of(TEST_ZONE_B));
   }
 
   @Test
