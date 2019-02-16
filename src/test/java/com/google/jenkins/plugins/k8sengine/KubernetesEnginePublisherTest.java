@@ -106,7 +106,7 @@ public class KubernetesEnginePublisherTest {
 
   @Test
   public void testDoAutoCompleteProjectIdEmptyWithAbortException() {
-    listOfProjects.add(new Project().setProjectId(TEST_PROJECT_ID));
+    initProjects(ImmutableList.of(TEST_PROJECT_ID));
     AutoCompletionCandidates projects =
         descriptor.doAutoCompleteProjectId(jenkins, "", ERROR_CREDENTIALS_ID);
     testAutoCompleteResult(ImmutableList.of(), projects);
@@ -121,7 +121,7 @@ public class KubernetesEnginePublisherTest {
 
   @Test
   public void testDoAutoCompleteProjectIdEmptyWithEmptyCredentialsId() {
-    listOfProjects.add(new Project().setProjectId(TEST_PROJECT_ID));
+    initProjects(ImmutableList.of(TEST_PROJECT_ID));
     AutoCompletionCandidates projects = descriptor.doAutoCompleteProjectId(jenkins, "", null);
     testAutoCompleteResult(ImmutableList.of(), projects);
   }
@@ -135,8 +135,7 @@ public class KubernetesEnginePublisherTest {
 
   @Test
   public void testDoAutoCompleteProjectIdWithValidCredentialsId() {
-    listOfProjects.add(new Project().setProjectId(OTHER_PROJECT_ID));
-    listOfProjects.add(new Project().setProjectId(TEST_PROJECT_ID));
+    initProjects(ImmutableList.of(OTHER_PROJECT_ID, TEST_PROJECT_ID));
     AutoCompletionCandidates projects =
         descriptor.doAutoCompleteProjectId(jenkins, "", TEST_CREDENTIALS_ID);
     testAutoCompleteResult(ImmutableList.of(TEST_PROJECT_ID, OTHER_PROJECT_ID), projects);
@@ -144,7 +143,7 @@ public class KubernetesEnginePublisherTest {
 
   @Test
   public void testDoAutoCompleteProjectIdWithValidCredentialsIdNoDefaultProject() {
-    listOfProjects.add(new Project().setProjectId(OTHER_PROJECT_ID));
+    initProjects(ImmutableList.of(OTHER_PROJECT_ID));
     AutoCompletionCandidates projects =
         descriptor.doAutoCompleteProjectId(jenkins, "", TEST_CREDENTIALS_ID);
     testAutoCompleteResult(ImmutableList.of(OTHER_PROJECT_ID, TEST_PROJECT_ID), projects);
@@ -152,8 +151,7 @@ public class KubernetesEnginePublisherTest {
 
   @Test
   public void testDoAutoCompleteProjectIdWithValidCredentialsAndEmptyProject() {
-    listOfProjects.add(new Project().setProjectId(OTHER_PROJECT_ID));
-    listOfProjects.add(new Project().setProjectId(TEST_PROJECT_ID));
+    initProjects(ImmutableList.of(OTHER_PROJECT_ID, TEST_PROJECT_ID));
     AutoCompletionCandidates projects =
         descriptor.doAutoCompleteProjectId(jenkins, "", EMPTY_PROJECT_CREDENTIALS_ID);
     testAutoCompleteResult(ImmutableList.of(OTHER_PROJECT_ID, TEST_PROJECT_ID), projects);
@@ -202,7 +200,7 @@ public class KubernetesEnginePublisherTest {
 
   @Test
   public void testDoCheckProjectIdMessageWithWrongProjects() {
-    listOfProjects.add(new Project().setProjectId(OTHER_PROJECT_ID));
+    initProjects(ImmutableList.of(OTHER_PROJECT_ID));
     FormValidation result =
         descriptor.doCheckProjectId(jenkins, TEST_PROJECT_ID, TEST_CREDENTIALS_ID);
     assertEquals(
@@ -211,7 +209,7 @@ public class KubernetesEnginePublisherTest {
 
   @Test
   public void testDoCheckProjectIdMessageWithValidProject() {
-    listOfProjects.add(new Project().setProjectId(TEST_PROJECT_ID));
+    initProjects(ImmutableList.of(TEST_PROJECT_ID));
     FormValidation result =
         descriptor.doCheckProjectId(jenkins, TEST_PROJECT_ID, TEST_CREDENTIALS_ID);
     assertEquals(FormValidation.ok().getMessage(), result.getMessage());
@@ -219,7 +217,7 @@ public class KubernetesEnginePublisherTest {
 
   @Test
   public void testDoAutoCompleteZoneEmptyWithEmptyProjectId() {
-    listOfZones.add(new Zone().setName(TEST_ZONE_A));
+    initZones(ImmutableList.of(TEST_ZONE_A));
     AutoCompletionCandidates zones =
         descriptor.doAutoCompleteZone(jenkins, "", null, TEST_CREDENTIALS_ID);
     testAutoCompleteResult(ImmutableList.of(), zones);
@@ -227,7 +225,7 @@ public class KubernetesEnginePublisherTest {
 
   @Test
   public void testDoAutoCompleteZoneEmptyWithEmptyCredentialsId() {
-    listOfZones.add(new Zone().setName(TEST_ZONE_A));
+    initZones(ImmutableList.of(TEST_ZONE_A));
     AutoCompletionCandidates zones =
         descriptor.doAutoCompleteZone(jenkins, "", TEST_PROJECT_ID, null);
     testAutoCompleteResult(ImmutableList.of(), zones);
@@ -235,8 +233,7 @@ public class KubernetesEnginePublisherTest {
 
   @Test
   public void testDoAutoCompleteZoneWithValidArguments() {
-    listOfZones.add(new Zone().setName(TEST_ZONE_A));
-    listOfZones.add(new Zone().setName(TEST_ZONE_B));
+    initZones(ImmutableList.of(TEST_ZONE_A, TEST_ZONE_B));
     AutoCompletionCandidates zones =
         descriptor.doAutoCompleteZone(jenkins, "", TEST_PROJECT_ID, TEST_CREDENTIALS_ID);
     testAutoCompleteResult(ImmutableList.of(TEST_ZONE_A, TEST_ZONE_B), zones);
@@ -290,7 +287,7 @@ public class KubernetesEnginePublisherTest {
 
   @Test
   public void testDoCheckZoneMessageWithNonMatchingZones() {
-    listOfZones.add(new Zone().setName(TEST_ZONE_B));
+    initZones(ImmutableList.of(TEST_ZONE_B));
     FormValidation result =
         descriptor.doCheckZone(jenkins, TEST_ZONE_A, TEST_PROJECT_ID, TEST_CREDENTIALS_ID);
     assertNotNull(result);
@@ -307,14 +304,22 @@ public class KubernetesEnginePublisherTest {
 
   @Test
   public void testDoCheckZoneOKWithMatchingZones() {
-    listOfZones.add(new Zone().setName(TEST_ZONE_A));
+    initZones(ImmutableList.of(TEST_ZONE_A));
     FormValidation result =
         descriptor.doCheckZone(jenkins, TEST_ZONE_A, TEST_PROJECT_ID, TEST_CREDENTIALS_ID);
     assertNotNull(result);
     assertEquals(FormValidation.ok(), result);
   }
 
-  private void testAutoCompleteResult(List<String> expected, AutoCompletionCandidates items) {
+  private static void initZones(List<String> zoneNames) {
+    zoneNames.forEach(z -> listOfZones.add(new Zone().setName(z)));
+  }
+
+  private static void initProjects(List<String> projectIds) {
+    projectIds.forEach(p -> listOfProjects.add(new Project().setProjectId(p)));
+  }
+
+  private static void testAutoCompleteResult(List<String> expected, AutoCompletionCandidates items) {
     assertNotNull(items);
     List<String> values = items.getValues();
     assertNotNull(values);
