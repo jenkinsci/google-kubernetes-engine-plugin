@@ -4,11 +4,11 @@
     <f:entry field="credentialsId" title="${%Service Account Credentials}">
        <c:select/>
     </f:entry>
-    <f:entry field="zone" title="${%Zone}">
-        <f:textbox/>
-    </f:entry>
     <f:entry field="projectId" title="${%Project ID}">
-        <f:textbox/>
+        <f:select/>
+    </f:entry>
+    <f:entry field="zone" title="${%Zone}">
+        <f:select/>
     </f:entry>
     <f:entry field="clusterName" title="${%Cluster}">
         <f:textbox/>

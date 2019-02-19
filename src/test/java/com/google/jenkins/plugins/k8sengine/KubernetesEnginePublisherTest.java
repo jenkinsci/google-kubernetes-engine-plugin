@@ -14,18 +14,22 @@
 
 package com.google.jenkins.plugins.k8sengine;
 
+import static com.google.jenkins.plugins.k8sengine.KubernetesEnginePublisher.EMPTY_NAME;
+import static com.google.jenkins.plugins.k8sengine.KubernetesEnginePublisher.EMPTY_VALUE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import com.google.api.services.cloudresourcemanager.model.Project;
 import com.google.api.services.compute.model.Zone;
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.jenkins.plugins.k8sengine.client.ClientFactory;
 import com.google.jenkins.plugins.k8sengine.client.CloudResourceManagerClient;
 import com.google.jenkins.plugins.k8sengine.client.ComputeClient;
 import hudson.AbortException;
-import hudson.model.AutoCompletionCandidates;
 import hudson.util.FormValidation;
+import hudson.util.ListBoxModel;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -105,89 +109,73 @@ public class KubernetesEnginePublisherTest {
   }
 
   @Test
-  public void testDoAutoCompleteProjectIdEmptyWithAbortException() {
-    testProjectAutoComplete(
-        "", ERROR_CREDENTIALS_ID, ImmutableList.of(TEST_PROJECT_ID), ImmutableList.of());
-  }
-
-  @Test
-  public void testDoAutoCompleteProjectIdDefaultProjectIdWithIOException() {
-    testProjectAutoComplete(
-        "", PROJECT_ERROR_CREDENTIALS_ID, ImmutableList.of(), ImmutableList.of(ERROR_PROJECT_ID));
-  }
-
-  @Test
-  public void testDoAutoCompleteProjectIdEmptyWithEmptyCredentialsId() {
-    testProjectAutoComplete("", null, ImmutableList.of(TEST_PROJECT_ID), ImmutableList.of());
-  }
-
-  @Test
-  public void testDoAutoCompleteProjectIdWithNullProjectId() {
-    testProjectAutoComplete(
+  public void testDoFillProjectIdItemsErrorMessageWithAbortException() {
+    testDoFillProjectIDItems(
+        ERROR_CREDENTIALS_ID,
+        ImmutableList.of(TEST_PROJECT_ID),
         null,
+        ImmutableList.of(Messages.KubernetesEnginePublisher_CredentialAuthFailed()),
+        ImmutableList.of(KubernetesEnginePublisher.EMPTY_VALUE));
+  }
+
+  @Test
+  public void testDoFillProjectIdItemsErrorMessageWithIOException() {
+    testDoFillProjectIDItems(
+        PROJECT_ERROR_CREDENTIALS_ID,
+        ImmutableList.of(),
+        null,
+        ImmutableList.of(Messages.KubernetesEnginePublisher_ProjectIDFillError()),
+        ImmutableList.of(EMPTY_VALUE));
+  }
+
+  @Test
+  public void testDoFillProjectIdItemsEmptyWithEmptyCredentialsId() {
+    testDoFillProjectIDItems(
+        null,
+        ImmutableList.of(TEST_PROJECT_ID),
+        null,
+        ImmutableList.of(EMPTY_NAME),
+        ImmutableList.of(EMPTY_VALUE));
+  }
+
+  @Test
+  public void testDoFillProjectIdItemsEmptyWithEmptyCredentialsIdNoProjects() {
+    testDoFillProjectIDItems(
         TEST_CREDENTIALS_ID,
-        ImmutableList.of(TEST_PROJECT_ID, OTHER_PROJECT_ID),
-        ImmutableList.of(TEST_PROJECT_ID, OTHER_PROJECT_ID));
+        ImmutableList.of(),
+        null,
+        ImmutableList.of(EMPTY_NAME),
+        ImmutableList.of(EMPTY_VALUE));
   }
 
   @Test
-  public void testDoAutoCompleteProjectIdDefaultOnlyWithValidCredentialsIdNoProjects() {
-    testProjectAutoComplete(
-        "", TEST_CREDENTIALS_ID, ImmutableList.of(), ImmutableList.of(TEST_PROJECT_ID));
-  }
-
-  @Test
-  public void testDoAutoCompleteProjectIdWithValidCredentialsId() {
-    testProjectAutoComplete(
-        "",
+  public void testDoFillProjectIdItemsWithValidCredentialsId() {
+    testDoFillProjectIDItems(
         TEST_CREDENTIALS_ID,
         ImmutableList.of(OTHER_PROJECT_ID, TEST_PROJECT_ID),
-        ImmutableList.of(TEST_PROJECT_ID, OTHER_PROJECT_ID));
+        TEST_PROJECT_ID,
+        ImmutableList.of(EMPTY_NAME, OTHER_PROJECT_ID, TEST_PROJECT_ID),
+        ImmutableList.of(EMPTY_VALUE, OTHER_PROJECT_ID, TEST_PROJECT_ID));
   }
 
   @Test
-  public void testDoAutoCompleteProjectIdWithValidCredentialsIdNoDefaultProject() {
-    testProjectAutoComplete(
-        "",
+  public void testDoFillProjectIdItemsWithValidCredentialsIdNoDefaultProject() {
+    testDoFillProjectIDItems(
         TEST_CREDENTIALS_ID,
         ImmutableList.of(OTHER_PROJECT_ID),
-        ImmutableList.of(OTHER_PROJECT_ID, TEST_PROJECT_ID));
+        OTHER_PROJECT_ID,
+        ImmutableList.of(EMPTY_NAME, OTHER_PROJECT_ID, TEST_PROJECT_ID),
+        ImmutableList.of(EMPTY_VALUE, OTHER_PROJECT_ID, TEST_PROJECT_ID));
   }
 
   @Test
-  public void testDoAutoCompleteProjectIdWithValidCredentialsAndEmptyProject() {
-    testProjectAutoComplete(
-        "",
+  public void testDoFillProjectIdItemsWithValidCredentialsAndEmptyProject() {
+    testDoFillProjectIDItems(
         EMPTY_PROJECT_CREDENTIALS_ID,
         ImmutableList.of(OTHER_PROJECT_ID, TEST_PROJECT_ID),
-        ImmutableList.of(OTHER_PROJECT_ID, TEST_PROJECT_ID));
-  }
-
-  @Test
-  public void testDoAutoCompleteProjectIdEmptyWithNoMatching() {
-    testProjectAutoComplete(
-        "h",
-        TEST_CREDENTIALS_ID,
-        ImmutableList.of(OTHER_PROJECT_ID, TEST_PROJECT_ID),
-        ImmutableList.of());
-  }
-
-  @Test
-  public void testDoAutoCompleteProjectIdEmptyWithPartialMatching() {
-    testProjectAutoComplete(
-        "test-not",
-        TEST_CREDENTIALS_ID,
-        ImmutableList.of(OTHER_PROJECT_ID, TEST_PROJECT_ID),
-        ImmutableList.of());
-  }
-
-  @Test
-  public void testDoAutoCompleteProjectIdFiltersWithNonMatchingProjectId() {
-    testProjectAutoComplete(
-        "other-",
-        TEST_CREDENTIALS_ID,
-        ImmutableList.of(OTHER_PROJECT_ID, TEST_PROJECT_ID),
-        ImmutableList.of(OTHER_PROJECT_ID));
+        OTHER_PROJECT_ID,
+        ImmutableList.of(EMPTY_NAME, OTHER_PROJECT_ID, TEST_PROJECT_ID),
+        ImmutableList.of(EMPTY_VALUE, OTHER_PROJECT_ID, TEST_PROJECT_ID));
   }
 
   @Test
@@ -249,77 +237,69 @@ public class KubernetesEnginePublisherTest {
   }
 
   @Test
-  public void testDoAutoCompleteZoneEmptyWithEmptyProjectId() {
-    testZoneAutoComplete(
-        "", null, TEST_CREDENTIALS_ID, ImmutableList.of(TEST_ZONE_A), ImmutableList.of());
-  }
-
-  @Test
-  public void testDoAutoCompleteZoneEmptyWithEmptyCredentialsId() {
-    testZoneAutoComplete(
-        "", TEST_PROJECT_ID, null, ImmutableList.of(TEST_ZONE_A), ImmutableList.of());
-  }
-
-  @Test
-  public void testDoAutoCompleteZoneWithValidArguments() {
-    testZoneAutoComplete(
-        "",
-        TEST_PROJECT_ID,
-        TEST_CREDENTIALS_ID,
-        ImmutableList.of(TEST_ZONE_A, TEST_ZONE_B),
-        ImmutableList.of(TEST_ZONE_A, TEST_ZONE_B));
-  }
-
-  @Test
-  public void testDoAutoCompleteZoneWithNullZone() {
-    testZoneAutoComplete(
+  public void testDoFillZoneItemsEmptyWithEmptyProjectId() {
+    testDoFillZoneItems(
         null,
+        TEST_CREDENTIALS_ID,
+        ImmutableList.of(TEST_ZONE_A),
+        null,
+        ImmutableList.of(EMPTY_NAME),
+        ImmutableList.of(EMPTY_VALUE));
+  }
+
+  @Test
+  public void testDoFillZoneItemsEmptyWithEmptyCredentialsId() {
+    testDoFillZoneItems(
+        TEST_PROJECT_ID,
+        null,
+        ImmutableList.of(TEST_ZONE_A),
+        null,
+        ImmutableList.of(EMPTY_NAME),
+        ImmutableList.of(EMPTY_VALUE));
+  }
+
+  @Test
+  public void testDoFillZoneItemsWithValidArguments() {
+    testDoFillZoneItems(
         TEST_PROJECT_ID,
         TEST_CREDENTIALS_ID,
         ImmutableList.of(TEST_ZONE_A, TEST_ZONE_B),
-        ImmutableList.of(TEST_ZONE_A, TEST_ZONE_B));
+        TEST_ZONE_A,
+        ImmutableList.of(EMPTY_NAME, TEST_ZONE_A, TEST_ZONE_B),
+        ImmutableList.of(EMPTY_VALUE, TEST_ZONE_A, TEST_ZONE_B));
   }
 
   @Test
-  public void testDoAutoCompleteZoneEmptyWithValidArgumentsNoZones() {
-    testZoneAutoComplete(
-        "", TEST_PROJECT_ID, TEST_CREDENTIALS_ID, ImmutableList.of(), ImmutableList.of());
-  }
-
-  @Test
-  public void testDoAutoCompleteZoneEmptyWithIOException() {
-    testZoneAutoComplete(
-        "", ERROR_PROJECT_ID, TEST_CREDENTIALS_ID, ImmutableList.of(), ImmutableList.of());
-  }
-
-  @Test
-  public void testDoAutoCompleteZoneEmptyWithNoMatching() {
-    testZoneAutoComplete(
-        "eur",
+  public void testDoFillZoneItemsEmptyWithValidArgumentsNoZones() {
+    testDoFillZoneItems(
         TEST_PROJECT_ID,
         TEST_CREDENTIALS_ID,
-        ImmutableList.of(TEST_ZONE_A, TEST_ZONE_B),
-        ImmutableList.of());
+        ImmutableList.of(),
+        null,
+        ImmutableList.of(EMPTY_NAME),
+        ImmutableList.of(EMPTY_VALUE));
   }
 
   @Test
-  public void testDoAutoCompleteZoneEmptyWithPartialMatching() {
-    testZoneAutoComplete(
-        "us-e",
+  public void testDoFillZoneItemsErrorMessageWithAbortException() {
+    testDoFillZoneItems(
         TEST_PROJECT_ID,
-        TEST_CREDENTIALS_ID,
-        ImmutableList.of(TEST_ZONE_A, TEST_ZONE_B),
-        ImmutableList.of());
+        ERROR_CREDENTIALS_ID,
+        ImmutableList.of(),
+        null,
+        ImmutableList.of(Messages.KubernetesEnginePublisher_CredentialAuthFailed()),
+        ImmutableList.of(EMPTY_VALUE));
   }
 
   @Test
-  public void testDoAutoCompleteZoneFiltersNonMatchingZone() {
-    testZoneAutoComplete(
-        "us-c",
-        TEST_PROJECT_ID,
+  public void testDoFillZoneItemsErrorMessageWithIOException() {
+    testDoFillZoneItems(
+        ERROR_PROJECT_ID,
         TEST_CREDENTIALS_ID,
-        ImmutableList.of(TEST_ZONE_A, TEST_ZONE_B),
-        ImmutableList.of(TEST_ZONE_B));
+        ImmutableList.of(),
+        null,
+        ImmutableList.of(Messages.KubernetesEnginePublisher_ZoneFillError()),
+        ImmutableList.of(EMPTY_VALUE));
   }
 
   @Test
@@ -388,29 +368,55 @@ public class KubernetesEnginePublisherTest {
     projectNames.forEach(p -> listOfProjects.add(new Project().setProjectId(p)));
   }
 
-  private static void testZoneAutoComplete(
-      String zone,
+  private static void testDoFillZoneItems(
       String projectId,
       String credentialsId,
       List<String> init,
-      List<String> expected) {
+      String expectedSelected,
+      List<String> expectedNames,
+      List<String> expectedValues) {
     initZones(init);
-    testAutoCompleteResult(
-        expected, descriptor.doAutoCompleteZone(jenkins, zone, projectId, credentialsId));
+    testFillItemsResult(
+        expectedNames,
+        expectedValues,
+        expectedSelected,
+        descriptor.doFillZoneItems(jenkins, projectId, credentialsId));
   }
 
-  private static void testProjectAutoComplete(
-      String projectId, String credentialsId, List<String> init, List<String> expected) {
+  private static void testDoFillProjectIDItems(
+      String credentialsId,
+      List<String> init,
+      String expectedSelected,
+      List<String> expectedNames,
+      List<String> expectedValues) {
     initProjects(init);
-    testAutoCompleteResult(
-        expected, descriptor.doAutoCompleteProjectId(jenkins, projectId, credentialsId));
+    assertEquals(
+        String.format(
+            "expectedNames (%d items) and expectedValues(%d items) must have the same size.",
+            expectedNames.size(), expectedValues.size()),
+        expectedNames.size(),
+        expectedValues.size());
+    testFillItemsResult(
+        expectedNames,
+        expectedValues,
+        expectedSelected,
+        descriptor.doFillProjectIdItems(jenkins, credentialsId));
   }
 
-  private static void testAutoCompleteResult(
-      List<String> expected, AutoCompletionCandidates items) {
+  private static void testFillItemsResult(
+      List<String> expectedNames,
+      List<String> expectedValues,
+      String expectedSelected,
+      ListBoxModel items) {
     assertNotNull(items);
-    List<String> values = items.getValues();
-    assertNotNull(values);
-    assertEquals(expected, values);
+    assertEquals(expectedNames.size(), items.size());
+
+    for (int i = 0; i < expectedNames.size(); i++) {
+      assertEquals(expectedNames.get(i), items.get(i).name);
+      assertEquals(expectedValues.get(i), items.get(i).value);
+      if (!Strings.isNullOrEmpty(expectedSelected) && expectedSelected.equals(items.get(i).value)) {
+        assertTrue(items.get(i).selected);
+      }
+    }
   }
 }
