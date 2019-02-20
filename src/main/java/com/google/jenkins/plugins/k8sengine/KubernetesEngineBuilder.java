@@ -44,8 +44,7 @@ import hudson.model.TaskListener;
 import hudson.security.ACL;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.BuildStepMonitor;
-import hudson.tasks.Notifier;
-import hudson.tasks.Publisher;
+import hudson.tasks.Builder;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 import hudson.util.ListBoxModel.Option;
@@ -66,8 +65,8 @@ import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 
 /** Provides a build step for publishing build artifacts to a Kubernetes cluster running on GKE. */
-public class KubernetesEnginePublisher extends Notifier implements SimpleBuildStep, Serializable {
-  private static final Logger LOGGER = Logger.getLogger(KubernetesEnginePublisher.class.getName());
+public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep, Serializable {
+  private static final Logger LOGGER = Logger.getLogger(KubernetesEngineBuilder.class.getName());
 
   static final String EMPTY_NAME = "- none -";
   static final String EMPTY_VALUE = "";
@@ -82,9 +81,9 @@ public class KubernetesEnginePublisher extends Notifier implements SimpleBuildSt
   private boolean isTestCleanup;
   private KubeConfigAfterBuildStep afterBuildStep = null;
 
-  /** Constructs a new {@link KubernetesEnginePublisher}. */
+  /** Constructs a new {@link KubernetesEngineBuilder}. */
   @DataBoundConstructor
-  public KubernetesEnginePublisher() {}
+  public KubernetesEngineBuilder() {}
 
   @DataBoundSetter
   public void setProjectId(String projectId) {
@@ -203,13 +202,13 @@ public class KubernetesEnginePublisher extends Notifier implements SimpleBuildSt
 
   @Symbol("kubernetesEngineDeploy")
   @Extension
-  public static final class DescriptorImpl extends BuildStepDescriptor<Publisher> {
+  public static final class DescriptorImpl extends BuildStepDescriptor<Builder> {
     private ClientFactory clientFactory;
 
     @Nonnull
     @Override
     public String getDisplayName() {
-      return Messages.KubernetesEnginePublisher_DisplayName();
+      return Messages.KubernetesEngineBuilder_DisplayName();
     }
 
     @Override
@@ -228,7 +227,7 @@ public class KubernetesEnginePublisher extends Notifier implements SimpleBuildSt
 
     public FormValidation doCheckClusterName(@QueryParameter String value) {
       if (Strings.isNullOrEmpty(value)) {
-        return FormValidation.error(Messages.KubernetesEnginePublisher_ClusterRequired());
+        return FormValidation.error(Messages.KubernetesEngineBuilder_ClusterRequired());
       }
 
       // TODO(craigatgoogle): check to ensure the cluster exists within GKE cluster
@@ -237,7 +236,7 @@ public class KubernetesEnginePublisher extends Notifier implements SimpleBuildSt
 
     public FormValidation doCheckManifestPattern(@QueryParameter String value) {
       if (Strings.isNullOrEmpty(value)) {
-        return FormValidation.error(Messages.KubernetesEnginePublisher_ManifestRequired());
+        return FormValidation.error(Messages.KubernetesEngineBuilder_ManifestRequired());
       }
       return FormValidation.ok();
     }
@@ -256,9 +255,9 @@ public class KubernetesEnginePublisher extends Notifier implements SimpleBuildSt
       try {
         clientFactory = getClientFactory(context, credentialsId);
       } catch (AbortException ae) {
-        LOGGER.log(Level.SEVERE, Messages.KubernetesEnginePublisher_CredentialAuthFailed(), ae);
+        LOGGER.log(Level.SEVERE, Messages.KubernetesEngineBuilder_CredentialAuthFailed(), ae);
         items.clear();
-        items.add(Messages.KubernetesEnginePublisher_CredentialAuthFailed(), EMPTY_VALUE);
+        items.add(Messages.KubernetesEngineBuilder_CredentialAuthFailed(), EMPTY_VALUE);
         return items;
       }
 
@@ -274,9 +273,9 @@ public class KubernetesEnginePublisher extends Notifier implements SimpleBuildSt
         items.get(1).selected = true;
         return items;
       } catch (IOException ioe) {
-        LOGGER.log(Level.SEVERE, Messages.KubernetesEnginePublisher_ZoneFillError(), ioe);
+        LOGGER.log(Level.SEVERE, Messages.KubernetesEngineBuilder_ZoneFillError(), ioe);
         items.clear();
-        items.add(Messages.KubernetesEnginePublisher_ZoneFillError(), EMPTY_VALUE);
+        items.add(Messages.KubernetesEngineBuilder_ZoneFillError(), EMPTY_VALUE);
         return items;
       }
     }
@@ -287,17 +286,17 @@ public class KubernetesEnginePublisher extends Notifier implements SimpleBuildSt
         @QueryParameter("projectId") String projectId,
         @QueryParameter("credentialsId") String credentialsId) {
       if (Strings.isNullOrEmpty(zone)) {
-        return FormValidation.error(Messages.KubernetesEnginePublisher_ZoneRequired());
+        return FormValidation.error(Messages.KubernetesEngineBuilder_ZoneRequired());
       } else if (Strings.isNullOrEmpty(projectId) || Strings.isNullOrEmpty(credentialsId)) {
         return FormValidation.error(
-            Messages.KubernetesEnginePublisher_ZoneProjectIdCredentialRequired());
+            Messages.KubernetesEngineBuilder_ZoneProjectIdCredentialRequired());
       }
 
       ClientFactory clientFactory;
       try {
         clientFactory = getClientFactory(context, credentialsId);
       } catch (AbortException ae) {
-        return FormValidation.error(Messages.KubernetesEnginePublisher_CredentialAuthFailed());
+        return FormValidation.error(Messages.KubernetesEngineBuilder_CredentialAuthFailed());
       }
 
       try {
@@ -306,10 +305,10 @@ public class KubernetesEnginePublisher extends Notifier implements SimpleBuildSt
         Optional<Zone> matchingZone =
             zones.stream().filter(z -> zone.equalsIgnoreCase(z.getName())).findFirst();
         if (!matchingZone.isPresent()) {
-          return FormValidation.error(Messages.KubernetesEnginePublisher_ZoneNotInProject());
+          return FormValidation.error(Messages.KubernetesEngineBuilder_ZoneNotInProject());
         }
       } catch (IOException ioe) {
-        return FormValidation.error(Messages.KubernetesEnginePublisher_ZoneVerificationError());
+        return FormValidation.error(Messages.KubernetesEngineBuilder_ZoneVerificationError());
       }
 
       return FormValidation.ok();
@@ -328,9 +327,9 @@ public class KubernetesEnginePublisher extends Notifier implements SimpleBuildSt
       try {
         clientFactory = this.getClientFactory(context, credentialsId);
       } catch (AbortException ae) {
-        LOGGER.log(Level.SEVERE, Messages.KubernetesEnginePublisher_CredentialAuthFailed(), ae);
+        LOGGER.log(Level.SEVERE, Messages.KubernetesEngineBuilder_CredentialAuthFailed(), ae);
         items.clear();
-        items.add(Messages.KubernetesEnginePublisher_CredentialAuthFailed(), EMPTY_VALUE);
+        items.add(Messages.KubernetesEngineBuilder_CredentialAuthFailed(), EMPTY_VALUE);
         return items;
       }
 
@@ -362,9 +361,9 @@ public class KubernetesEnginePublisher extends Notifier implements SimpleBuildSt
         }
         return items;
       } catch (IOException ioe) {
-        LOGGER.log(Level.SEVERE, Messages.KubernetesEnginePublisher_ProjectIDFillError(), ioe);
+        LOGGER.log(Level.SEVERE, Messages.KubernetesEngineBuilder_ProjectIDFillError(), ioe);
         items.clear();
-        items.add(Messages.KubernetesEnginePublisher_ProjectIDFillError(), EMPTY_VALUE);
+        items.add(Messages.KubernetesEngineBuilder_ProjectIDFillError(), EMPTY_VALUE);
         return items;
       }
     }
@@ -374,17 +373,16 @@ public class KubernetesEnginePublisher extends Notifier implements SimpleBuildSt
         @QueryParameter("projectId") String projectId,
         @QueryParameter("credentialsId") String credentialsId) {
       if (Strings.isNullOrEmpty(projectId)) {
-        return FormValidation.error(Messages.KubernetesEnginePublisher_ProjectIDRequired());
+        return FormValidation.error(Messages.KubernetesEngineBuilder_ProjectIDRequired());
       } else if (Strings.isNullOrEmpty(credentialsId)) {
-        return FormValidation.error(
-            Messages.KubernetesEnginePublisher_ProjectCredentialIDRequired());
+        return FormValidation.error(Messages.KubernetesEngineBuilder_ProjectCredentialIDRequired());
       }
 
       ClientFactory clientFactory;
       try {
         clientFactory = getClientFactory(context, credentialsId);
       } catch (AbortException ae) {
-        return FormValidation.error(Messages.KubernetesEnginePublisher_CredentialAuthFailed());
+        return FormValidation.error(Messages.KubernetesEngineBuilder_CredentialAuthFailed());
       }
 
       try {
@@ -394,11 +392,10 @@ public class KubernetesEnginePublisher extends Notifier implements SimpleBuildSt
             projects.stream().filter(p -> projectId.equals(p.getProjectId())).findFirst();
         if (!matchingProject.isPresent()) {
           return FormValidation.error(
-              Messages.KubernetesEnginePublisher_ProjectIDNotUnderCredential());
+              Messages.KubernetesEngineBuilder_ProjectIDNotUnderCredential());
         }
       } catch (IOException ioe) {
-        return FormValidation.error(
-            Messages.KubernetesEnginePublisher_ProjectIDVerificationError());
+        return FormValidation.error(Messages.KubernetesEngineBuilder_ProjectIDVerificationError());
       }
 
       return FormValidation.ok();
@@ -423,18 +420,17 @@ public class KubernetesEnginePublisher extends Notifier implements SimpleBuildSt
         @QueryParameter("projectId") String projectId,
         @QueryParameter("credentialsId") String credentialsId) {
       if (credentialsId.isEmpty()) {
-        return FormValidation.error(Messages.KubernetesEnginePublisher_NoCredential());
+        return FormValidation.error(Messages.KubernetesEngineBuilder_NoCredential());
       }
 
       if (projectId.isEmpty()) {
-        return FormValidation.error(
-            Messages.KubernetesEnginePublisher_CredentialProjectIDRequired());
+        return FormValidation.error(Messages.KubernetesEngineBuilder_CredentialProjectIDRequired());
       }
 
       try {
         getContainerClient(credentialsId);
       } catch (AbortException | RuntimeException e) {
-        return FormValidation.error(Messages.KubernetesEnginePublisher_CredentialAuthFailed());
+        return FormValidation.error(Messages.KubernetesEngineBuilder_CredentialAuthFailed());
       }
 
       return FormValidation.ok();

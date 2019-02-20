@@ -51,10 +51,9 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.jvnet.hudson.test.JenkinsRule;
 
-/** Tests {@link KubernetesEnginePublisher}. */
-public class KubernetesEnginePublisherIT {
-  private static final Logger LOGGER =
-      Logger.getLogger(KubernetesEnginePublisherIT.class.getName());
+/** Tests {@link KubernetesEngineBuilder}. */
+public class KubernetesEngineBuilderIT {
+  private static final Logger LOGGER = Logger.getLogger(KubernetesEngineBuilderIT.class.getName());
   private static final String TEST_DEPLOYMENT_MANIFEST = "testDeployment.yml";
   private static final String TEST_DEPLOYMENT_MALFORMED_MANIFEST = "testMalformedDeployment.yml";
 
@@ -71,7 +70,7 @@ public class KubernetesEnginePublisherIT {
 
   @BeforeClass
   public static void init() throws Exception {
-    LOGGER.info("Initializing KubernetesEnginePublisherIT");
+    LOGGER.info("Initializing KubernetesEngineBuilderIT");
 
     // setup test project ID
     projectId = System.getenv("GOOGLE_PROJECT_ID");
@@ -127,9 +126,9 @@ public class KubernetesEnginePublisherIT {
   @Test
   public void testServiceDeploymentSucceeds() throws Exception {
     LOGGER.info("Testing service deployment succeeds");
-    // setup GKE publisher
-    KubernetesEnginePublisher gkePublisher = getDefaultGKEPublisher();
-    testJenkinsProject.getPublishersList().add(gkePublisher);
+    // setup GKE Builder
+    KubernetesEngineBuilder gkeBuilder = getDefaultGKEBuilder();
+    testJenkinsProject.getBuildersList().add(gkeBuilder);
 
     // copy test deployment into project workspace
     copyTestFileToDir(testJenkinsProject.getCustomWorkspace(), TEST_DEPLOYMENT_MANIFEST);
@@ -144,10 +143,10 @@ public class KubernetesEnginePublisherIT {
   @Test
   public void testServiceDeploymentFailsBadCluster() throws Exception {
     LOGGER.info("Testing service deployment fails bad cluster");
-    // setup GKE publisher
-    KubernetesEnginePublisher gkePublisher = getDefaultGKEPublisher();
-    gkePublisher.setClusterName(formatRandomName("bad-cluster"));
-    testJenkinsProject.getPublishersList().add(gkePublisher);
+    // setup GKE Builder
+    KubernetesEngineBuilder gkeBuilder = getDefaultGKEBuilder();
+    gkeBuilder.setClusterName(formatRandomName("bad-cluster"));
+    testJenkinsProject.getBuildersList().add(gkeBuilder);
 
     // copy test deployment into project workspace
     copyTestFileToDir(testJenkinsProject.getCustomWorkspace(), TEST_DEPLOYMENT_MANIFEST);
@@ -161,10 +160,10 @@ public class KubernetesEnginePublisherIT {
   @Test
   public void testServiceDeploymentFailsBadProjectId() throws Exception {
     LOGGER.info("Testing service deployment fails bad project id");
-    // setup GKE publisher
-    KubernetesEnginePublisher gkePublisher = getDefaultGKEPublisher();
-    gkePublisher.setProjectId(formatRandomName("bad-project"));
-    testJenkinsProject.getPublishersList().add(gkePublisher);
+    // setup GKE Builder
+    KubernetesEngineBuilder gkeBuilder = getDefaultGKEBuilder();
+    gkeBuilder.setProjectId(formatRandomName("bad-project"));
+    testJenkinsProject.getBuildersList().add(gkeBuilder);
 
     // copy test deployment into project workspace
     copyTestFileToDir(testJenkinsProject.getCustomWorkspace(), TEST_DEPLOYMENT_MANIFEST);
@@ -178,10 +177,10 @@ public class KubernetesEnginePublisherIT {
   @Test
   public void testServiceDeploymentFailsBadCredentialId() throws Exception {
     LOGGER.info("Testing service deployment fails bad credential id");
-    // setup GKE publisher
-    KubernetesEnginePublisher gkePublisher = getDefaultGKEPublisher();
-    gkePublisher.setCredentialsId(formatRandomName("bad-credential"));
-    testJenkinsProject.getPublishersList().add(gkePublisher);
+    // setup GKE Builder
+    KubernetesEngineBuilder gkeBuilder = getDefaultGKEBuilder();
+    gkeBuilder.setCredentialsId(formatRandomName("bad-credential"));
+    testJenkinsProject.getBuildersList().add(gkeBuilder);
 
     // copy test deployment into project workspace
     copyTestFileToDir(testJenkinsProject.getCustomWorkspace(), TEST_DEPLOYMENT_MANIFEST);
@@ -195,10 +194,10 @@ public class KubernetesEnginePublisherIT {
   @Test
   public void testServiceDeploymentFailsBadManifestPattern() throws Exception {
     LOGGER.info("Testing service deployment fails bad manifest pattern");
-    // setup GKE publisher
-    KubernetesEnginePublisher gkePublisher = getDefaultGKEPublisher();
-    gkePublisher.setManifestPattern(formatRandomName("bad-manifest-pattern.yml"));
-    testJenkinsProject.getPublishersList().add(gkePublisher);
+    // setup GKE Builder
+    KubernetesEngineBuilder gkeBuilder = getDefaultGKEBuilder();
+    gkeBuilder.setManifestPattern(formatRandomName("bad-manifest-pattern.yml"));
+    testJenkinsProject.getBuildersList().add(gkeBuilder);
 
     // copy test deployment into project workspace
     copyTestFileToDir(testJenkinsProject.getCustomWorkspace(), TEST_DEPLOYMENT_MANIFEST);
@@ -212,10 +211,10 @@ public class KubernetesEnginePublisherIT {
   @Test
   public void testServiceDeploymentFailsMalformedManifest() throws Exception {
     LOGGER.info("Testing service fails malformed manifest");
-    // setup GKE publisher
-    KubernetesEnginePublisher gkePublisher = getDefaultGKEPublisher();
-    gkePublisher.setManifestPattern(TEST_DEPLOYMENT_MALFORMED_MANIFEST);
-    testJenkinsProject.getPublishersList().add(gkePublisher);
+    // setup GKE Builder
+    KubernetesEngineBuilder gkeBuilder = getDefaultGKEBuilder();
+    gkeBuilder.setManifestPattern(TEST_DEPLOYMENT_MALFORMED_MANIFEST);
+    testJenkinsProject.getBuildersList().add(gkeBuilder);
 
     // copy test deployment into project workspace
     copyTestFileToDir(testJenkinsProject.getCustomWorkspace(), TEST_DEPLOYMENT_MALFORMED_MANIFEST);
@@ -247,14 +246,14 @@ public class KubernetesEnginePublisherIT {
     }
   }
 
-  private static KubernetesEnginePublisher getDefaultGKEPublisher() {
-    KubernetesEnginePublisher gkePublisher = new KubernetesEnginePublisher();
-    gkePublisher.setProjectId(projectId);
-    gkePublisher.setClusterName(clusterName);
-    gkePublisher.setCredentialsId(credentialsId);
-    gkePublisher.setZone(testZone);
-    gkePublisher.setManifestPattern(TEST_DEPLOYMENT_MANIFEST);
-    gkePublisher.setAfterBuildStep(
+  private static KubernetesEngineBuilder getDefaultGKEBuilder() {
+    KubernetesEngineBuilder gkeBuilder = new KubernetesEngineBuilder();
+    gkeBuilder.setProjectId(projectId);
+    gkeBuilder.setClusterName(clusterName);
+    gkeBuilder.setCredentialsId(credentialsId);
+    gkeBuilder.setZone(testZone);
+    gkeBuilder.setManifestPattern(TEST_DEPLOYMENT_MANIFEST);
+    gkeBuilder.setAfterBuildStep(
         (kubeConfig, run, workspace, launcher, listener) ->
             KubectlWrapper.runKubectlCommand(
                 new JenkinsRunContext.Builder()
@@ -267,6 +266,6 @@ public class KubernetesEnginePublisherIT {
                 "delete",
                 ImmutableList.<String>of(
                     "daemonsets,replicasets,services,deployments,pods,rc", "--all")));
-    return gkePublisher;
+    return gkeBuilder;
   }
 }
