@@ -44,8 +44,7 @@ import hudson.model.TaskListener;
 import hudson.security.ACL;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.BuildStepMonitor;
-import hudson.tasks.Notifier;
-import hudson.tasks.Publisher;
+import hudson.tasks.Builder;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 import hudson.util.ListBoxModel.Option;
@@ -66,7 +65,7 @@ import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 
 /** Provides a build step for publishing build artifacts to a Kubernetes cluster running on GKE. */
-public class KubernetesEngineBuilder extends Notifier implements SimpleBuildStep, Serializable {
+public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep, Serializable {
   private static final Logger LOGGER = Logger.getLogger(KubernetesEngineBuilder.class.getName());
 
   static final String EMPTY_NAME = "- none -";
@@ -203,7 +202,7 @@ public class KubernetesEngineBuilder extends Notifier implements SimpleBuildStep
 
   @Symbol("kubernetesEngineDeploy")
   @Extension
-  public static final class DescriptorImpl extends BuildStepDescriptor<Publisher> {
+  public static final class DescriptorImpl extends BuildStepDescriptor<Builder> {
     private ClientFactory clientFactory;
 
     @Nonnull

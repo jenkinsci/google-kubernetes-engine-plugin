@@ -128,7 +128,7 @@ public class KubernetesEngineBuilderIT {
     LOGGER.info("Testing service deployment succeeds");
     // setup GKE Builder
     KubernetesEngineBuilder gkeBuilder = getDefaultGKEBuilder();
-    testJenkinsProject.getPublishersList().add(gkeBuilder);
+    testJenkinsProject.getBuildersList().add(gkeBuilder);
 
     // copy test deployment into project workspace
     copyTestFileToDir(testJenkinsProject.getCustomWorkspace(), TEST_DEPLOYMENT_MANIFEST);
@@ -146,7 +146,7 @@ public class KubernetesEngineBuilderIT {
     // setup GKE Builder
     KubernetesEngineBuilder gkeBuilder = getDefaultGKEBuilder();
     gkeBuilder.setClusterName(formatRandomName("bad-cluster"));
-    testJenkinsProject.getPublishersList().add(gkeBuilder);
+    testJenkinsProject.getBuildersList().add(gkeBuilder);
 
     // copy test deployment into project workspace
     copyTestFileToDir(testJenkinsProject.getCustomWorkspace(), TEST_DEPLOYMENT_MANIFEST);
@@ -163,7 +163,7 @@ public class KubernetesEngineBuilderIT {
     // setup GKE Builder
     KubernetesEngineBuilder gkeBuilder = getDefaultGKEBuilder();
     gkeBuilder.setProjectId(formatRandomName("bad-project"));
-    testJenkinsProject.getPublishersList().add(gkeBuilder);
+    testJenkinsProject.getBuildersList().add(gkeBuilder);
 
     // copy test deployment into project workspace
     copyTestFileToDir(testJenkinsProject.getCustomWorkspace(), TEST_DEPLOYMENT_MANIFEST);
@@ -180,7 +180,7 @@ public class KubernetesEngineBuilderIT {
     // setup GKE Builder
     KubernetesEngineBuilder gkeBuilder = getDefaultGKEBuilder();
     gkeBuilder.setCredentialsId(formatRandomName("bad-credential"));
-    testJenkinsProject.getPublishersList().add(gkeBuilder);
+    testJenkinsProject.getBuildersList().add(gkeBuilder);
 
     // copy test deployment into project workspace
     copyTestFileToDir(testJenkinsProject.getCustomWorkspace(), TEST_DEPLOYMENT_MANIFEST);
@@ -197,7 +197,7 @@ public class KubernetesEngineBuilderIT {
     // setup GKE Builder
     KubernetesEngineBuilder gkeBuilder = getDefaultGKEBuilder();
     gkeBuilder.setManifestPattern(formatRandomName("bad-manifest-pattern.yml"));
-    testJenkinsProject.getPublishersList().add(gkeBuilder);
+    testJenkinsProject.getBuildersList().add(gkeBuilder);
 
     // copy test deployment into project workspace
     copyTestFileToDir(testJenkinsProject.getCustomWorkspace(), TEST_DEPLOYMENT_MANIFEST);
@@ -214,7 +214,7 @@ public class KubernetesEngineBuilderIT {
     // setup GKE Builder
     KubernetesEngineBuilder gkeBuilder = getDefaultGKEBuilder();
     gkeBuilder.setManifestPattern(TEST_DEPLOYMENT_MALFORMED_MANIFEST);
-    testJenkinsProject.getPublishersList().add(gkeBuilder);
+    testJenkinsProject.getBuildersList().add(gkeBuilder);
 
     // copy test deployment into project workspace
     copyTestFileToDir(testJenkinsProject.getCustomWorkspace(), TEST_DEPLOYMENT_MALFORMED_MANIFEST);
