@@ -61,7 +61,7 @@ public class ContainerClient {
   /**
    * Retrieves a list of {@link Cluster} objects from the container client.
    *
-   * @param projectId The ID of the project the clusters resides
+   * @param projectId The ID of the project the clusters resides.
    * @param zone The location of the clusters.
    * @return The retrieved list of {@link Cluster} objects.
    * @throws IOException When an error occurred attempting to get the cluster.
