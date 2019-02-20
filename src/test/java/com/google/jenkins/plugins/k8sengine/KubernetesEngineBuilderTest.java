@@ -14,8 +14,8 @@
 
 package com.google.jenkins.plugins.k8sengine;
 
-import static com.google.jenkins.plugins.k8sengine.KubernetesEnginePublisher.EMPTY_NAME;
-import static com.google.jenkins.plugins.k8sengine.KubernetesEnginePublisher.EMPTY_VALUE;
+import static com.google.jenkins.plugins.k8sengine.KubernetesEngineBuilder.EMPTY_NAME;
+import static com.google.jenkins.plugins.k8sengine.KubernetesEngineBuilder.EMPTY_VALUE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -42,7 +42,7 @@ import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
-public class KubernetesEnginePublisherTest {
+public class KubernetesEngineBuilderTest {
   private static final String TEST_ZONE_A = "us-west1-a";
   private static final String TEST_ZONE_B = "us-central1-b";
   private static final String TEST_PROJECT_ID = "test-project-id";
@@ -57,13 +57,13 @@ public class KubernetesEnginePublisherTest {
   private static List<Zone> listOfZones;
   private static List<Project> listOfProjects;
   private static Jenkins jenkins;
-  private static KubernetesEnginePublisher.DescriptorImpl descriptor;
+  private static KubernetesEngineBuilder.DescriptorImpl descriptor;
 
   @BeforeClass
   public static void init() throws IOException {
     listOfZones = new ArrayList<>();
     listOfProjects = new ArrayList<>();
-    descriptor = Mockito.spy(KubernetesEnginePublisher.DescriptorImpl.class);
+    descriptor = Mockito.spy(KubernetesEngineBuilder.DescriptorImpl.class);
     jenkins = Mockito.mock(Jenkins.class);
     ComputeClient computeClient = Mockito.mock(ComputeClient.class);
     Mockito.when(computeClient.getZones(TEST_PROJECT_ID)).thenReturn(listOfZones);
@@ -114,8 +114,8 @@ public class KubernetesEnginePublisherTest {
         ERROR_CREDENTIALS_ID,
         ImmutableList.of(TEST_PROJECT_ID),
         null,
-        ImmutableList.of(Messages.KubernetesEnginePublisher_CredentialAuthFailed()),
-        ImmutableList.of(KubernetesEnginePublisher.EMPTY_VALUE));
+        ImmutableList.of(Messages.KubernetesEngineBuilder_CredentialAuthFailed()),
+        ImmutableList.of(KubernetesEngineBuilder.EMPTY_VALUE));
   }
 
   @Test
@@ -124,7 +124,7 @@ public class KubernetesEnginePublisherTest {
         PROJECT_ERROR_CREDENTIALS_ID,
         ImmutableList.of(),
         null,
-        ImmutableList.of(Messages.KubernetesEnginePublisher_ProjectIDFillError()),
+        ImmutableList.of(Messages.KubernetesEngineBuilder_ProjectIDFillError()),
         ImmutableList.of(EMPTY_VALUE));
   }
 
@@ -182,7 +182,7 @@ public class KubernetesEnginePublisherTest {
   public void testDoCheckProjectIdMessageWithEmptyProjectID() {
     FormValidation result = descriptor.doCheckProjectId(jenkins, null, TEST_CREDENTIALS_ID);
     assertNotNull(result);
-    assertEquals(Messages.KubernetesEnginePublisher_ProjectIDRequired(), result.getMessage());
+    assertEquals(Messages.KubernetesEngineBuilder_ProjectIDRequired(), result.getMessage());
   }
 
   @Test
@@ -190,7 +190,7 @@ public class KubernetesEnginePublisherTest {
     FormValidation result = descriptor.doCheckProjectId(jenkins, TEST_PROJECT_ID, null);
     assertNotNull(result);
     assertEquals(
-        Messages.KubernetesEnginePublisher_ProjectCredentialIDRequired(), result.getMessage());
+        Messages.KubernetesEngineBuilder_ProjectCredentialIDRequired(), result.getMessage());
   }
 
   @Test
@@ -198,7 +198,7 @@ public class KubernetesEnginePublisherTest {
     FormValidation result =
         descriptor.doCheckProjectId(jenkins, TEST_PROJECT_ID, ERROR_CREDENTIALS_ID);
     assertNotNull(result);
-    assertEquals(Messages.KubernetesEnginePublisher_CredentialAuthFailed(), result.getMessage());
+    assertEquals(Messages.KubernetesEngineBuilder_CredentialAuthFailed(), result.getMessage());
   }
 
   @Test
@@ -207,7 +207,7 @@ public class KubernetesEnginePublisherTest {
         descriptor.doCheckProjectId(jenkins, TEST_PROJECT_ID, PROJECT_ERROR_CREDENTIALS_ID);
     assertNotNull(result);
     assertEquals(
-        Messages.KubernetesEnginePublisher_ProjectIDVerificationError(), result.getMessage());
+        Messages.KubernetesEngineBuilder_ProjectIDVerificationError(), result.getMessage());
   }
 
   @Test
@@ -216,7 +216,7 @@ public class KubernetesEnginePublisherTest {
         descriptor.doCheckProjectId(jenkins, TEST_PROJECT_ID, TEST_CREDENTIALS_ID);
     assertNotNull(result);
     assertEquals(
-        Messages.KubernetesEnginePublisher_ProjectIDNotUnderCredential(), result.getMessage());
+        Messages.KubernetesEngineBuilder_ProjectIDNotUnderCredential(), result.getMessage());
   }
 
   @Test
@@ -225,7 +225,7 @@ public class KubernetesEnginePublisherTest {
     FormValidation result =
         descriptor.doCheckProjectId(jenkins, TEST_PROJECT_ID, TEST_CREDENTIALS_ID);
     assertEquals(
-        Messages.KubernetesEnginePublisher_ProjectIDNotUnderCredential(), result.getMessage());
+        Messages.KubernetesEngineBuilder_ProjectIDNotUnderCredential(), result.getMessage());
   }
 
   @Test
@@ -287,7 +287,7 @@ public class KubernetesEnginePublisherTest {
         ERROR_CREDENTIALS_ID,
         ImmutableList.of(),
         null,
-        ImmutableList.of(Messages.KubernetesEnginePublisher_CredentialAuthFailed()),
+        ImmutableList.of(Messages.KubernetesEngineBuilder_CredentialAuthFailed()),
         ImmutableList.of(EMPTY_VALUE));
   }
 
@@ -298,7 +298,7 @@ public class KubernetesEnginePublisherTest {
         TEST_CREDENTIALS_ID,
         ImmutableList.of(),
         null,
-        ImmutableList.of(Messages.KubernetesEnginePublisher_ZoneFillError()),
+        ImmutableList.of(Messages.KubernetesEngineBuilder_ZoneFillError()),
         ImmutableList.of(EMPTY_VALUE));
   }
 
@@ -307,7 +307,7 @@ public class KubernetesEnginePublisherTest {
     FormValidation result =
         descriptor.doCheckZone(jenkins, null, TEST_PROJECT_ID, TEST_CREDENTIALS_ID);
     assertNotNull(result);
-    assertEquals(Messages.KubernetesEnginePublisher_ZoneRequired(), result.getMessage());
+    assertEquals(Messages.KubernetesEngineBuilder_ZoneRequired(), result.getMessage());
   }
 
   @Test
@@ -315,7 +315,7 @@ public class KubernetesEnginePublisherTest {
     FormValidation result = descriptor.doCheckZone(jenkins, TEST_ZONE_A, null, TEST_CREDENTIALS_ID);
     assertNotNull(result);
     assertEquals(
-        Messages.KubernetesEnginePublisher_ZoneProjectIdCredentialRequired(), result.getMessage());
+        Messages.KubernetesEngineBuilder_ZoneProjectIdCredentialRequired(), result.getMessage());
   }
 
   @Test
@@ -323,7 +323,7 @@ public class KubernetesEnginePublisherTest {
     FormValidation result = descriptor.doCheckZone(jenkins, TEST_ZONE_A, TEST_PROJECT_ID, null);
     assertNotNull(result);
     assertEquals(
-        Messages.KubernetesEnginePublisher_ZoneProjectIdCredentialRequired(), result.getMessage());
+        Messages.KubernetesEngineBuilder_ZoneProjectIdCredentialRequired(), result.getMessage());
   }
 
   @Test
@@ -331,7 +331,7 @@ public class KubernetesEnginePublisherTest {
     FormValidation result =
         descriptor.doCheckZone(jenkins, TEST_ZONE_A, TEST_PROJECT_ID, TEST_CREDENTIALS_ID);
     assertNotNull(result);
-    assertEquals(Messages.KubernetesEnginePublisher_ZoneNotInProject(), result.getMessage());
+    assertEquals(Messages.KubernetesEngineBuilder_ZoneNotInProject(), result.getMessage());
   }
 
   @Test
@@ -340,7 +340,7 @@ public class KubernetesEnginePublisherTest {
     FormValidation result =
         descriptor.doCheckZone(jenkins, TEST_ZONE_A, TEST_PROJECT_ID, TEST_CREDENTIALS_ID);
     assertNotNull(result);
-    assertEquals(Messages.KubernetesEnginePublisher_ZoneNotInProject(), result.getMessage());
+    assertEquals(Messages.KubernetesEngineBuilder_ZoneNotInProject(), result.getMessage());
   }
 
   @Test
@@ -348,7 +348,7 @@ public class KubernetesEnginePublisherTest {
     FormValidation result =
         descriptor.doCheckZone(jenkins, TEST_ZONE_A, ERROR_PROJECT_ID, TEST_CREDENTIALS_ID);
     assertNotNull(result);
-    assertEquals(Messages.KubernetesEnginePublisher_ZoneVerificationError(), result.getMessage());
+    assertEquals(Messages.KubernetesEngineBuilder_ZoneVerificationError(), result.getMessage());
   }
 
   @Test
