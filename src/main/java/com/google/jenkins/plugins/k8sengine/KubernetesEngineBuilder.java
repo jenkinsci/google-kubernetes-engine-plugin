@@ -225,12 +225,54 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
       return this.clientFactory;
     }
 
+    public ListBoxModel doFillClusterNameItems(
+        @AncestorInPath Jenkins context,
+        @QueryParameter("credentialsId") final String credentialsId,
+        @QueryParameter("projectId") final String projectId,
+        @QueryParameter("zone") final String zone) {
+      ListBoxModel items = new ListBoxModel();
+      items.add(EMPTY_NAME, EMPTY_VALUE);
+      if (Strings.isNullOrEmpty(credentialsId)
+          || Strings.isNullOrEmpty(projectId)
+          || Strings.isNullOrEmpty(zone)) {
+        return items;
+      }
+
+      ClientFactory clientFactory;
+      try {
+        clientFactory = getClientFactory(context, credentialsId);
+      } catch (AbortException ae) {
+        LOGGER.log(Level.SEVERE, Messages.KubernetesEngineBuilder_CredentialAuthFailed(), ae);
+        items.clear();
+        items.add(Messages.KubernetesEngineBuilder_CredentialAuthFailed(), EMPTY_VALUE);
+        return items;
+      }
+
+      try {
+        ContainerClient client = clientFactory.containerClient();
+        List<Cluster> clusters = client.listClusters(projectId, zone);
+
+        if (clusters.isEmpty()) {
+          return items;
+        }
+
+        clusters.forEach(c -> items.add(c.getName()));
+        items.get(1).selected = true;
+        return items;
+      } catch (IOException ioe) {
+        LOGGER.log(Level.SEVERE, Messages.KubernetesEngineBuilder_ClusterFillError(), ioe);
+        items.clear();
+        items.add(Messages.KubernetesEngineBuilder_ClusterFillError(), EMPTY_VALUE);
+        return items;
+      }
+    }
+
     public FormValidation doCheckClusterName(@QueryParameter String value) {
       if (Strings.isNullOrEmpty(value)) {
         return FormValidation.error(Messages.KubernetesEngineBuilder_ClusterRequired());
       }
 
-      // TODO(craigatgoogle): check to ensure the cluster exists within GKE cluster
+      // TODO(stephenshank): check to ensure the cluster exists within GKE cluster
       return FormValidation.ok();
     }
 

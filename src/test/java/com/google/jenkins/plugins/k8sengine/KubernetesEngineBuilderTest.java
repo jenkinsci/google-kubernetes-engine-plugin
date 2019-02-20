@@ -22,11 +22,13 @@ import static org.junit.Assert.assertTrue;
 
 import com.google.api.services.cloudresourcemanager.model.Project;
 import com.google.api.services.compute.model.Zone;
+import com.google.api.services.container.model.Cluster;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.jenkins.plugins.k8sengine.client.ClientFactory;
 import com.google.jenkins.plugins.k8sengine.client.CloudResourceManagerClient;
 import com.google.jenkins.plugins.k8sengine.client.ComputeClient;
+import com.google.jenkins.plugins.k8sengine.client.ContainerClient;
 import hudson.AbortException;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
@@ -48,6 +50,8 @@ public class KubernetesEngineBuilderTest {
   private static final String TEST_PROJECT_ID = "test-project-id";
   private static final String OTHER_PROJECT_ID = "other-project-id";
   private static final String ERROR_PROJECT_ID = "error-project-id";
+  private static final String TEST_CLUSTER = "testCluster";
+  private static final String OTHER_CLUSTER = "otherCluster";
   private static final String TEST_CREDENTIALS_ID = "test-credentials-id";
   private static final String EMPTY_PROJECT_CREDENTIALS_ID = "empty-project-credentials-id";
   private static final String PROJECT_ERROR_CREDENTIALS_ID = "project-error-credentials-id";
@@ -56,6 +60,7 @@ public class KubernetesEngineBuilderTest {
 
   private static List<Zone> listOfZones;
   private static List<Project> listOfProjects;
+  private static List<Cluster> listOfClusters;
   private static Jenkins jenkins;
   private static KubernetesEngineBuilder.DescriptorImpl descriptor;
 
@@ -63,6 +68,7 @@ public class KubernetesEngineBuilderTest {
   public static void init() throws IOException {
     listOfZones = new ArrayList<>();
     listOfProjects = new ArrayList<>();
+    listOfClusters = new ArrayList<>();
     descriptor = Mockito.spy(KubernetesEngineBuilder.DescriptorImpl.class);
     jenkins = Mockito.mock(Jenkins.class);
     ComputeClient computeClient = Mockito.mock(ComputeClient.class);
@@ -72,10 +78,18 @@ public class KubernetesEngineBuilderTest {
     CloudResourceManagerClient cloudResourceManagerClient =
         Mockito.mock(CloudResourceManagerClient.class);
     Mockito.when(cloudResourceManagerClient.getAccountProjects()).thenReturn(listOfProjects);
+
+    ContainerClient containerClient = Mockito.mock(ContainerClient.class);
+    Mockito.when(containerClient.listClusters(TEST_PROJECT_ID, TEST_ZONE_A))
+        .thenReturn(listOfClusters);
+    Mockito.when(containerClient.listClusters(ERROR_PROJECT_ID, TEST_ZONE_A))
+        .thenThrow(new IOException());
+
     ClientFactory clientFactory = Mockito.mock(ClientFactory.class);
     Mockito.when(clientFactory.getDefaultProjectId()).thenReturn(TEST_PROJECT_ID);
     Mockito.when(clientFactory.cloudResourceManagerClient()).thenReturn(cloudResourceManagerClient);
     Mockito.when(clientFactory.computeClient()).thenReturn(computeClient);
+    Mockito.when(clientFactory.containerClient()).thenReturn(containerClient);
     Mockito.doReturn(clientFactory).when(descriptor).getClientFactory(jenkins, TEST_CREDENTIALS_ID);
 
     ClientFactory emptyProjectClientFactory = Mockito.mock(ClientFactory.class);
@@ -106,6 +120,7 @@ public class KubernetesEngineBuilderTest {
   public void before() {
     listOfZones.clear();
     listOfProjects.clear();
+    listOfClusters.clear();
   }
 
   @Test
@@ -360,12 +375,112 @@ public class KubernetesEngineBuilderTest {
     assertEquals(FormValidation.ok(), result);
   }
 
+  @Test
+  public void testDoFillClusterNameItemsEmptyWithEmptyCredentialsId() {
+    testDoFillClusterNameItems(
+        null,
+        TEST_PROJECT_ID,
+        TEST_ZONE_A,
+        ImmutableList.of(TEST_CLUSTER),
+        null,
+        ImmutableList.of(EMPTY_NAME),
+        ImmutableList.of(EMPTY_VALUE));
+  }
+
+  @Test
+  public void testDoFillClusterNameItemsEmptyWithEmptyProjectId() {
+    testDoFillClusterNameItems(
+        TEST_CREDENTIALS_ID,
+        null,
+        TEST_ZONE_A,
+        ImmutableList.of(TEST_CLUSTER),
+        null,
+        ImmutableList.of(EMPTY_NAME),
+        ImmutableList.of(EMPTY_VALUE));
+  }
+
+  @Test
+  public void testDoFillClusterNameItemsEmptyWithEmptyZone() {
+    testDoFillClusterNameItems(
+        TEST_CREDENTIALS_ID,
+        TEST_PROJECT_ID,
+        null,
+        ImmutableList.of(TEST_CLUSTER),
+        null,
+        ImmutableList.of(EMPTY_NAME),
+        ImmutableList.of(EMPTY_VALUE));
+  }
+
+  @Test
+  public void testDoFillClusterNameItemsErrorMessageWithAbortException() {
+    testDoFillClusterNameItems(
+        ERROR_CREDENTIALS_ID,
+        TEST_PROJECT_ID,
+        TEST_ZONE_A,
+        ImmutableList.of(TEST_CLUSTER),
+        null,
+        ImmutableList.of(Messages.KubernetesEngineBuilder_CredentialAuthFailed()),
+        ImmutableList.of(EMPTY_VALUE));
+  }
+
+  @Test
+  public void testDoFillClusterNameItemsEmptyWithValidInputsNoClusters() {
+    testDoFillClusterNameItems(
+        TEST_CREDENTIALS_ID,
+        TEST_PROJECT_ID,
+        TEST_ZONE_A,
+        ImmutableList.of(),
+        null,
+        ImmutableList.of(EMPTY_NAME),
+        ImmutableList.of(EMPTY_VALUE));
+  }
+
+  @Test
+  public void testDoFillClusterNameItemsWithValidInputsOneCluster() {
+    testDoFillClusterNameItems(
+        TEST_CREDENTIALS_ID,
+        TEST_PROJECT_ID,
+        TEST_ZONE_A,
+        ImmutableList.of(TEST_CLUSTER),
+        TEST_CLUSTER,
+        ImmutableList.of(EMPTY_NAME, TEST_CLUSTER),
+        ImmutableList.of(EMPTY_VALUE, TEST_CLUSTER));
+  }
+
+  @Test
+  public void testDoFillClusterNameItemsWithValidInputsMultipleClusters() {
+    testDoFillClusterNameItems(
+        TEST_CREDENTIALS_ID,
+        TEST_PROJECT_ID,
+        TEST_ZONE_A,
+        ImmutableList.of(OTHER_CLUSTER, TEST_CLUSTER),
+        OTHER_CLUSTER,
+        ImmutableList.of(EMPTY_NAME, OTHER_CLUSTER, TEST_CLUSTER),
+        ImmutableList.of(EMPTY_VALUE, OTHER_CLUSTER, TEST_CLUSTER));
+  }
+
+  @Test
+  public void testDoFillClusterNameItemsErrorMessageWithIOException() {
+    testDoFillClusterNameItems(
+        TEST_CREDENTIALS_ID,
+        ERROR_PROJECT_ID,
+        TEST_ZONE_A,
+        ImmutableList.of(OTHER_CLUSTER, TEST_CLUSTER),
+        null,
+        ImmutableList.of(Messages.KubernetesEngineBuilder_ClusterFillError()),
+        ImmutableList.of(EMPTY_VALUE));
+  }
+
   private static void initZones(List<String> zoneNames) {
     zoneNames.forEach(z -> listOfZones.add(new Zone().setName(z)));
   }
 
   private static void initProjects(List<String> projectNames) {
     projectNames.forEach(p -> listOfProjects.add(new Project().setProjectId(p)));
+  }
+
+  private static void initClusters(List<String> clusterNames) {
+    clusterNames.forEach(c -> listOfClusters.add(new Cluster().setName(c)));
   }
 
   private static void testDoFillZoneItems(
@@ -401,6 +516,23 @@ public class KubernetesEngineBuilderTest {
         expectedValues,
         expectedSelected,
         descriptor.doFillProjectIdItems(jenkins, credentialsId));
+  }
+
+  private static void testDoFillClusterNameItems(
+      String credentialsId,
+      String projectId,
+      String zone,
+      List<String> init,
+      String expectedSelected,
+      List<String> expectedNames,
+      List<String> expectedValues) {
+    System.out.println(credentialsId);
+    initClusters(init);
+    testFillItemsResult(
+        expectedNames,
+        expectedValues,
+        expectedSelected,
+        descriptor.doFillClusterNameItems(jenkins, credentialsId, projectId, zone));
   }
 
   private static void testFillItemsResult(
