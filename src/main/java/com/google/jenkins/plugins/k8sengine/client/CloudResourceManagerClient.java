@@ -21,7 +21,6 @@ import com.google.api.services.cloudresourcemanager.model.Project;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
@@ -53,7 +52,7 @@ public class CloudResourceManagerClient {
   public List<Project> getAccountProjects() throws IOException {
     List<Project> projects = cloudResourceManager.projects().list().execute().getProjects();
     if (projects == null) {
-      projects = new ArrayList<>();
+      projects = ImmutableList.of();
     }
 
     // Sort by project ID
