@@ -253,7 +253,7 @@ public class KubernetesEngineBuilderIT {
     gkeBuilder.setCredentialsId(credentialsId);
     gkeBuilder.setZone(testZone);
     gkeBuilder.setManifestPattern(TEST_DEPLOYMENT_MANIFEST);
-    gkeBuilder.setBuildStep(
+    gkeBuilder.setAfterBuildStep(
         (kubeConfig, run, workspace, launcher, listener) ->
             KubectlWrapper.runKubectlCommand(
                 new JenkinsRunContext.Builder()

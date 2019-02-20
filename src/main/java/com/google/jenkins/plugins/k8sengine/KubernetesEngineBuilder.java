@@ -79,7 +79,7 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
   private boolean verifyDeployments;
   private boolean verifyServices;
   private boolean isTestCleanup;
-  private KubeConfigBuildStep buildStep = null;
+  private KubeConfigAfterBuildStep afterBuildStep = null;
 
   /** Constructs a new {@link KubernetesEngineBuilder}. */
   @DataBoundConstructor
@@ -149,8 +149,8 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
   }
 
   @VisibleForTesting
-  void setBuildStep(KubeConfigBuildStep buildStep) {
-    this.buildStep = buildStep;
+  void setAfterBuildStep(KubeConfigAfterBuildStep afterBuildStep) {
+    this.afterBuildStep = afterBuildStep;
   }
 
   /** {@inheritDoc} */
@@ -190,8 +190,8 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
     // run the after build step if it exists
     // NOTE(craigatgoogle): Due to the reflective way this class is created, initializers aren't
     // run, so we still have to check for null.
-    if (buildStep != null) {
-      buildStep.perform(kubeConfig, run, workspace, launcher, listener);
+    if (afterBuildStep != null) {
+      afterBuildStep.perform(kubeConfig, run, workspace, launcher, listener);
     }
   }
 
@@ -447,7 +447,7 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
   }
 
   @FunctionalInterface
-  interface KubeConfigBuildStep extends Serializable {
+  interface KubeConfigAfterBuildStep extends Serializable {
     public void perform(
         KubeConfig kubeConfig,
         Run<?, ?> run,
