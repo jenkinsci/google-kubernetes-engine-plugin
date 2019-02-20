@@ -126,6 +126,7 @@ public class KubernetesEngineBuilderTest {
   @Test
   public void testDoFillProjectIdItemsErrorMessageWithAbortException() {
     testDoFillProjectIDItems(
+        null,
         ERROR_CREDENTIALS_ID,
         ImmutableList.of(TEST_PROJECT_ID),
         null,
@@ -136,6 +137,7 @@ public class KubernetesEngineBuilderTest {
   @Test
   public void testDoFillProjectIdItemsErrorMessageWithIOException() {
     testDoFillProjectIDItems(
+        null,
         PROJECT_ERROR_CREDENTIALS_ID,
         ImmutableList.of(),
         null,
@@ -147,6 +149,7 @@ public class KubernetesEngineBuilderTest {
   public void testDoFillProjectIdItemsEmptyWithEmptyCredentialsId() {
     testDoFillProjectIDItems(
         null,
+        null,
         ImmutableList.of(TEST_PROJECT_ID),
         null,
         ImmutableList.of(EMPTY_NAME),
@@ -156,6 +159,7 @@ public class KubernetesEngineBuilderTest {
   @Test
   public void testDoFillProjectIdItemsEmptyWithEmptyCredentialsIdNoProjects() {
     testDoFillProjectIDItems(
+        null,
         TEST_CREDENTIALS_ID,
         ImmutableList.of(),
         null,
@@ -166,6 +170,7 @@ public class KubernetesEngineBuilderTest {
   @Test
   public void testDoFillProjectIdItemsWithValidCredentialsId() {
     testDoFillProjectIDItems(
+        null,
         TEST_CREDENTIALS_ID,
         ImmutableList.of(OTHER_PROJECT_ID, TEST_PROJECT_ID),
         TEST_PROJECT_ID,
@@ -174,8 +179,31 @@ public class KubernetesEngineBuilderTest {
   }
 
   @Test
+  public void testDoFillProjectIdItemsWithValidCredentialsIdAndPreviousValueAndDefault() {
+    testDoFillProjectIDItems(
+        OTHER_PROJECT_ID,
+        TEST_CREDENTIALS_ID,
+        ImmutableList.of(OTHER_PROJECT_ID, TEST_PROJECT_ID),
+        OTHER_PROJECT_ID,
+        ImmutableList.of(EMPTY_NAME, OTHER_PROJECT_ID, TEST_PROJECT_ID),
+        ImmutableList.of(EMPTY_VALUE, OTHER_PROJECT_ID, TEST_PROJECT_ID));
+  }
+
+  @Test
+  public void testDoFillProjectIdItemsWithValidCredentialsIdAndPreviousValueAndEmptyDefault() {
+    testDoFillProjectIDItems(
+        OTHER_PROJECT_ID,
+        TEST_CREDENTIALS_ID,
+        ImmutableList.of(OTHER_PROJECT_ID, TEST_PROJECT_ID),
+        OTHER_PROJECT_ID,
+        ImmutableList.of(EMPTY_NAME, OTHER_PROJECT_ID, TEST_PROJECT_ID),
+        ImmutableList.of(EMPTY_VALUE, OTHER_PROJECT_ID, TEST_PROJECT_ID));
+  }
+
+  @Test
   public void testDoFillProjectIdItemsWithValidCredentialsIdNoDefaultProject() {
     testDoFillProjectIDItems(
+        null,
         TEST_CREDENTIALS_ID,
         ImmutableList.of(OTHER_PROJECT_ID),
         OTHER_PROJECT_ID,
@@ -186,6 +214,7 @@ public class KubernetesEngineBuilderTest {
   @Test
   public void testDoFillProjectIdItemsWithValidCredentialsAndEmptyProject() {
     testDoFillProjectIDItems(
+        null,
         EMPTY_PROJECT_CREDENTIALS_ID,
         ImmutableList.of(OTHER_PROJECT_ID, TEST_PROJECT_ID),
         OTHER_PROJECT_ID,
@@ -255,6 +284,7 @@ public class KubernetesEngineBuilderTest {
   public void testDoFillZoneItemsEmptyWithEmptyProjectId() {
     testDoFillZoneItems(
         null,
+        null,
         TEST_CREDENTIALS_ID,
         ImmutableList.of(TEST_ZONE_A),
         null,
@@ -265,6 +295,7 @@ public class KubernetesEngineBuilderTest {
   @Test
   public void testDoFillZoneItemsEmptyWithEmptyCredentialsId() {
     testDoFillZoneItems(
+        null,
         TEST_PROJECT_ID,
         null,
         ImmutableList.of(TEST_ZONE_A),
@@ -276,6 +307,7 @@ public class KubernetesEngineBuilderTest {
   @Test
   public void testDoFillZoneItemsWithValidArguments() {
     testDoFillZoneItems(
+        null,
         TEST_PROJECT_ID,
         TEST_CREDENTIALS_ID,
         ImmutableList.of(TEST_ZONE_A, TEST_ZONE_B),
@@ -285,8 +317,21 @@ public class KubernetesEngineBuilderTest {
   }
 
   @Test
+  public void testDoFillZoneItemsWithValidArgumentsAndPreviousValue() {
+    testDoFillZoneItems(
+        TEST_ZONE_B,
+        TEST_PROJECT_ID,
+        TEST_CREDENTIALS_ID,
+        ImmutableList.of(TEST_ZONE_A, TEST_ZONE_B),
+        TEST_ZONE_B,
+        ImmutableList.of(EMPTY_NAME, TEST_ZONE_A, TEST_ZONE_B),
+        ImmutableList.of(EMPTY_VALUE, TEST_ZONE_A, TEST_ZONE_B));
+  }
+
+  @Test
   public void testDoFillZoneItemsEmptyWithValidArgumentsNoZones() {
     testDoFillZoneItems(
+        null,
         TEST_PROJECT_ID,
         TEST_CREDENTIALS_ID,
         ImmutableList.of(),
@@ -298,6 +343,7 @@ public class KubernetesEngineBuilderTest {
   @Test
   public void testDoFillZoneItemsErrorMessageWithAbortException() {
     testDoFillZoneItems(
+        null,
         TEST_PROJECT_ID,
         ERROR_CREDENTIALS_ID,
         ImmutableList.of(),
@@ -309,6 +355,7 @@ public class KubernetesEngineBuilderTest {
   @Test
   public void testDoFillZoneItemsErrorMessageWithIOException() {
     testDoFillZoneItems(
+        null,
         ERROR_PROJECT_ID,
         TEST_CREDENTIALS_ID,
         ImmutableList.of(),
@@ -379,6 +426,7 @@ public class KubernetesEngineBuilderTest {
   public void testDoFillClusterNameItemsEmptyWithEmptyCredentialsId() {
     testDoFillClusterNameItems(
         null,
+        null,
         TEST_PROJECT_ID,
         TEST_ZONE_A,
         ImmutableList.of(TEST_CLUSTER),
@@ -390,6 +438,7 @@ public class KubernetesEngineBuilderTest {
   @Test
   public void testDoFillClusterNameItemsEmptyWithEmptyProjectId() {
     testDoFillClusterNameItems(
+        null,
         TEST_CREDENTIALS_ID,
         null,
         TEST_ZONE_A,
@@ -402,6 +451,7 @@ public class KubernetesEngineBuilderTest {
   @Test
   public void testDoFillClusterNameItemsEmptyWithEmptyZone() {
     testDoFillClusterNameItems(
+        null,
         TEST_CREDENTIALS_ID,
         TEST_PROJECT_ID,
         null,
@@ -414,6 +464,7 @@ public class KubernetesEngineBuilderTest {
   @Test
   public void testDoFillClusterNameItemsErrorMessageWithAbortException() {
     testDoFillClusterNameItems(
+        null,
         ERROR_CREDENTIALS_ID,
         TEST_PROJECT_ID,
         TEST_ZONE_A,
@@ -426,6 +477,7 @@ public class KubernetesEngineBuilderTest {
   @Test
   public void testDoFillClusterNameItemsEmptyWithValidInputsNoClusters() {
     testDoFillClusterNameItems(
+        null,
         TEST_CREDENTIALS_ID,
         TEST_PROJECT_ID,
         TEST_ZONE_A,
@@ -438,6 +490,7 @@ public class KubernetesEngineBuilderTest {
   @Test
   public void testDoFillClusterNameItemsWithValidInputsOneCluster() {
     testDoFillClusterNameItems(
+        null,
         TEST_CREDENTIALS_ID,
         TEST_PROJECT_ID,
         TEST_ZONE_A,
@@ -450,6 +503,7 @@ public class KubernetesEngineBuilderTest {
   @Test
   public void testDoFillClusterNameItemsWithValidInputsMultipleClusters() {
     testDoFillClusterNameItems(
+        null,
         TEST_CREDENTIALS_ID,
         TEST_PROJECT_ID,
         TEST_ZONE_A,
@@ -460,8 +514,22 @@ public class KubernetesEngineBuilderTest {
   }
 
   @Test
+  public void testDoFillClusterNameItemsWithValidInputsAndPreviousValue() {
+    testDoFillClusterNameItems(
+        TEST_CLUSTER,
+        TEST_CREDENTIALS_ID,
+        TEST_PROJECT_ID,
+        TEST_ZONE_A,
+        ImmutableList.of(OTHER_CLUSTER, TEST_CLUSTER),
+        TEST_CLUSTER,
+        ImmutableList.of(EMPTY_NAME, OTHER_CLUSTER, TEST_CLUSTER),
+        ImmutableList.of(EMPTY_VALUE, OTHER_CLUSTER, TEST_CLUSTER));
+  }
+
+  @Test
   public void testDoFillClusterNameItemsErrorMessageWithIOException() {
     testDoFillClusterNameItems(
+        null,
         TEST_CREDENTIALS_ID,
         ERROR_PROJECT_ID,
         TEST_ZONE_A,
@@ -484,6 +552,7 @@ public class KubernetesEngineBuilderTest {
   }
 
   private static void testDoFillZoneItems(
+      String zone,
       String projectId,
       String credentialsId,
       List<String> init,
@@ -495,10 +564,11 @@ public class KubernetesEngineBuilderTest {
         expectedNames,
         expectedValues,
         expectedSelected,
-        descriptor.doFillZoneItems(jenkins, null, projectId, credentialsId));
+        descriptor.doFillZoneItems(jenkins, zone, projectId, credentialsId));
   }
 
   private static void testDoFillProjectIDItems(
+      String projectId,
       String credentialsId,
       List<String> init,
       String expectedSelected,
@@ -515,10 +585,11 @@ public class KubernetesEngineBuilderTest {
         expectedNames,
         expectedValues,
         expectedSelected,
-        descriptor.doFillProjectIdItems(jenkins, null, credentialsId));
+        descriptor.doFillProjectIdItems(jenkins, projectId, credentialsId));
   }
 
   private static void testDoFillClusterNameItems(
+      String clusterName,
       String credentialsId,
       String projectId,
       String zone,
@@ -532,7 +603,7 @@ public class KubernetesEngineBuilderTest {
         expectedNames,
         expectedValues,
         expectedSelected,
-        descriptor.doFillClusterNameItems(jenkins, null, credentialsId, projectId, zone));
+        descriptor.doFillClusterNameItems(jenkins, clusterName, credentialsId, projectId, zone));
   }
 
   private static void testFillItemsResult(

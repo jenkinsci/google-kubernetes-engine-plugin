@@ -397,10 +397,11 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
           return items;
         }
 
-        if (projects.size() == items.size()) {
+        if (projects.size() == items.size() && Strings.isNullOrEmpty(projectId)) {
           items.add(new Option(defaultProjectId, defaultProjectId, true));
         } else {
-          // Add defaultProjectId anyway, but select the first available item.
+          // Add defaultProjectId anyway, but select the appropriate projectID based on
+          // the previously entered projectID
           items.add(defaultProjectId);
           selectOption(items, projectId);
         }
