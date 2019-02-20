@@ -495,7 +495,7 @@ public class KubernetesEngineBuilderTest {
         expectedNames,
         expectedValues,
         expectedSelected,
-        descriptor.doFillZoneItems(jenkins, projectId, credentialsId));
+        descriptor.doFillZoneItems(jenkins, null, projectId, credentialsId));
   }
 
   private static void testDoFillProjectIDItems(
@@ -515,7 +515,7 @@ public class KubernetesEngineBuilderTest {
         expectedNames,
         expectedValues,
         expectedSelected,
-        descriptor.doFillProjectIdItems(jenkins, credentialsId));
+        descriptor.doFillProjectIdItems(jenkins, null, credentialsId));
   }
 
   private static void testDoFillClusterNameItems(
@@ -532,7 +532,7 @@ public class KubernetesEngineBuilderTest {
         expectedNames,
         expectedValues,
         expectedSelected,
-        descriptor.doFillClusterNameItems(jenkins, credentialsId, projectId, zone));
+        descriptor.doFillClusterNameItems(jenkins, null, credentialsId, projectId, zone));
   }
 
   private static void testFillItemsResult(

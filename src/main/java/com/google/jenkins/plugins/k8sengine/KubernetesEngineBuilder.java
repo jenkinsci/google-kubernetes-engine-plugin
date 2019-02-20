@@ -227,6 +227,7 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
 
     public ListBoxModel doFillClusterNameItems(
         @AncestorInPath Jenkins context,
+        @QueryParameter("clusterName") final String clusterName,
         @QueryParameter("credentialsId") final String credentialsId,
         @QueryParameter("projectId") final String projectId,
         @QueryParameter("zone") final String zone) {
@@ -257,7 +258,7 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
         }
 
         clusters.forEach(c -> items.add(c.getName()));
-        items.get(1).selected = true;
+        selectOption(items, clusterName);
         return items;
       } catch (IOException ioe) {
         LOGGER.log(Level.SEVERE, Messages.KubernetesEngineBuilder_ClusterFillError(), ioe);
@@ -285,8 +286,9 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
 
     public ListBoxModel doFillZoneItems(
         @AncestorInPath Jenkins context,
-        @QueryParameter("projectId") String projectId,
-        @QueryParameter("credentialsId") String credentialsId) {
+        @QueryParameter("zone") final String zone,
+        @QueryParameter("projectId") final String projectId,
+        @QueryParameter("credentialsId") final String credentialsId) {
       ListBoxModel items = new ListBoxModel();
       items.add(EMPTY_NAME, EMPTY_VALUE);
       if (Strings.isNullOrEmpty(projectId) || Strings.isNullOrEmpty(credentialsId)) {
@@ -312,7 +314,7 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
         }
 
         zones.forEach(z -> items.add(z.getName()));
-        items.get(1).selected = true;
+        selectOption(items, zone);
         return items;
       } catch (IOException ioe) {
         LOGGER.log(Level.SEVERE, Messages.KubernetesEngineBuilder_ZoneFillError(), ioe);
@@ -358,6 +360,7 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
 
     public ListBoxModel doFillProjectIdItems(
         @AncestorInPath Jenkins context,
+        @QueryParameter("projectId") final String projectId,
         @QueryParameter("credentialsId") final String credentialsId) {
       ListBoxModel items = new ListBoxModel();
       items.add(EMPTY_NAME, EMPTY_VALUE);
@@ -390,7 +393,7 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
             .forEach(p -> items.add(p.getProjectId()));
 
         if (Strings.isNullOrEmpty(defaultProjectId)) {
-          items.get(1).selected = true;
+          selectOption(items, projectId);
           return items;
         }
 
@@ -399,7 +402,7 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
         } else {
           // Add defaultProjectId anyway, but select the first available item.
           items.add(defaultProjectId);
-          items.get(1).selected = true;
+          selectOption(items, projectId);
         }
         return items;
       } catch (IOException ioe) {
@@ -477,6 +480,17 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
 
       return FormValidation.ok();
     }
+  }
+
+  private static void selectOption(ListBoxModel listBoxModel, String optionValue) {
+    Optional<Option> item;
+    if (Strings.isNullOrEmpty(optionValue)) {
+      item =
+          listBoxModel.stream().filter(option -> !Strings.isNullOrEmpty(option.value)).findFirst();
+    } else {
+      item = listBoxModel.stream().filter(option -> optionValue.equals(option.value)).findFirst();
+    }
+    item.ifPresent(i -> i.selected = true);
   }
 
   private static ContainerClient getContainerClient(String credentialsId) throws AbortException {
