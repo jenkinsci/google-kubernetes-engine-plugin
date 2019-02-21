@@ -274,14 +274,10 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
         @QueryParameter("credentialsId") final String credentialsId,
         @QueryParameter("projectId") final String projectId,
         @QueryParameter("zone") final String zone) {
-      if (Strings.isNullOrEmpty(clusterName)) {
+      if (Strings.isNullOrEmpty(credentialsId) && Strings.isNullOrEmpty(clusterName)) {
         return FormValidation.error(Messages.KubernetesEngineBuilder_ClusterRequired());
       } else if (Strings.isNullOrEmpty(credentialsId)) {
         return FormValidation.error(Messages.KubernetesEngineBuilder_ClusterCredentialIDRequired());
-      } else if (Strings.isNullOrEmpty(projectId)) {
-        return FormValidation.error(Messages.KubernetesEngineBuilder_ClusterProjectIDRequired());
-      } else if (Strings.isNullOrEmpty(zone)) {
-        return FormValidation.error(Messages.KubernetesEngineBuilder_ClusterZoneRequired());
       }
 
       ClientFactory clientFactory;
@@ -291,9 +287,21 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
         return FormValidation.error(Messages.KubernetesEngineBuilder_CredentialAuthFailed());
       }
 
+      if ((Strings.isNullOrEmpty(projectId) || Strings.isNullOrEmpty(zone))
+          && Strings.isNullOrEmpty(clusterName)) {
+        return FormValidation.error(Messages.KubernetesEngineBuilder_ClusterRequired());
+      } else if (Strings.isNullOrEmpty(projectId)) {
+        return FormValidation.error(Messages.KubernetesEngineBuilder_ClusterProjectIDRequired());
+      } else if (Strings.isNullOrEmpty(zone)) {
+        return FormValidation.error(Messages.KubernetesEngineBuilder_ClusterZoneRequired());
+      }
+
       try {
         ContainerClient client = clientFactory.containerClient();
         List<Cluster> clusters = client.listClusters(projectId, zone);
+        if (Strings.isNullOrEmpty(clusterName)) {
+          return FormValidation.error(Messages.KubernetesEngineBuilder_ClusterRequired());
+        }
         Optional<Cluster> cluster =
             clusters.stream().filter(c -> clusterName.equals(c.getName())).findFirst();
         if (!cluster.isPresent()) {
@@ -357,12 +365,10 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
         @QueryParameter("zone") String zone,
         @QueryParameter("credentialsId") String credentialsId,
         @QueryParameter("projectId") String projectId) {
-      if (Strings.isNullOrEmpty(zone)) {
+      if (Strings.isNullOrEmpty(credentialsId) && Strings.isNullOrEmpty(zone)) {
         return FormValidation.error(Messages.KubernetesEngineBuilder_ZoneRequired());
       } else if (Strings.isNullOrEmpty(credentialsId)) {
         return FormValidation.error(Messages.KubernetesEngineBuilder_ZoneCredentialIDRequired());
-      } else if (Strings.isNullOrEmpty(projectId)) {
-        return FormValidation.error(Messages.KubernetesEngineBuilder_ZoneProjectIDRequired());
       }
 
       ClientFactory clientFactory;
@@ -372,9 +378,19 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
         return FormValidation.error(Messages.KubernetesEngineBuilder_CredentialAuthFailed());
       }
 
+      if (Strings.isNullOrEmpty(projectId) && Strings.isNullOrEmpty(zone)) {
+        return FormValidation.error(Messages.KubernetesEngineBuilder_ZoneRequired());
+      } else if (Strings.isNullOrEmpty(projectId)) {
+        return FormValidation.error(Messages.KubernetesEngineBuilder_ZoneProjectIDRequired());
+      }
+
       try {
         ComputeClient compute = clientFactory.computeClient();
         List<Zone> zones = compute.getZones(projectId);
+        if (Strings.isNullOrEmpty(zone)) {
+          return FormValidation.error(Messages.KubernetesEngineBuilder_ZoneRequired());
+        }
+
         Optional<Zone> matchingZone =
             zones.stream().filter(z -> zone.equalsIgnoreCase(z.getName())).findFirst();
         if (!matchingZone.isPresent()) {
@@ -447,7 +463,7 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
         @AncestorInPath Jenkins context,
         @QueryParameter("projectId") String projectId,
         @QueryParameter("credentialsId") String credentialsId) {
-      if (Strings.isNullOrEmpty(projectId)) {
+      if (Strings.isNullOrEmpty(credentialsId) && Strings.isNullOrEmpty(projectId)) {
         return FormValidation.error(Messages.KubernetesEngineBuilder_ProjectIDRequired());
       } else if (Strings.isNullOrEmpty(credentialsId)) {
         return FormValidation.error(Messages.KubernetesEngineBuilder_ProjectCredentialIDRequired());
@@ -463,6 +479,10 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
       try {
         CloudResourceManagerClient client = clientFactory.cloudResourceManagerClient();
         List<Project> projects = client.getAccountProjects();
+        if (Strings.isNullOrEmpty(projectId)) {
+          return FormValidation.error(Messages.KubernetesEngineBuilder_ProjectIDRequired());
+        }
+
         Optional<Project> matchingProject =
             projects.stream().filter(p -> projectId.equals(p.getProjectId())).findFirst();
         if (!matchingProject.isPresent()) {
