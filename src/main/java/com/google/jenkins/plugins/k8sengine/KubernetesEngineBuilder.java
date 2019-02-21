@@ -268,12 +268,40 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
       }
     }
 
-    public FormValidation doCheckClusterName(@QueryParameter String value) {
-      if (Strings.isNullOrEmpty(value)) {
+    public FormValidation doCheckClusterName(
+        @AncestorInPath Jenkins context,
+        @QueryParameter("clusterName") final String clusterName,
+        @QueryParameter("credentialsId") final String credentialsId,
+        @QueryParameter("projectId") final String projectId,
+        @QueryParameter("zone") final String zone) {
+      if (Strings.isNullOrEmpty(clusterName)) {
         return FormValidation.error(Messages.KubernetesEngineBuilder_ClusterRequired());
+      } else if (Strings.isNullOrEmpty(credentialsId)) {
+        return FormValidation.error(Messages.KubernetesEngineBuilder_ClusterCredentialIDRequired());
+      } else if (Strings.isNullOrEmpty(projectId)) {
+        return FormValidation.error(Messages.KubernetesEngineBuilder_ClusterProjectIDRequired());
+      } else if (Strings.isNullOrEmpty(zone)) {
+        return FormValidation.error(Messages.KubernetesEngineBuilder_ClusterZoneRequired());
       }
 
-      // TODO(stephenshank): check to ensure the cluster exists within GKE cluster
+      ClientFactory clientFactory;
+      try {
+        clientFactory = getClientFactory(context, credentialsId);
+      } catch (AbortException ae) {
+        return FormValidation.error(Messages.KubernetesEngineBuilder_CredentialAuthFailed());
+      }
+
+      try {
+        ContainerClient client = clientFactory.containerClient();
+        List<Cluster> clusters = client.listClusters(projectId, zone);
+        Optional<Cluster> cluster =
+            clusters.stream().filter(c -> clusterName.equals(c.getName())).findFirst();
+        if (!cluster.isPresent()) {
+          return FormValidation.error(Messages.KubernetesEngineBuilder_ClusterNotInProjectZone());
+        }
+      } catch (IOException ioe) {
+        return FormValidation.error(Messages.KubernetesEngineBuilder_ClusterVerificationError());
+      }
       return FormValidation.ok();
     }
 

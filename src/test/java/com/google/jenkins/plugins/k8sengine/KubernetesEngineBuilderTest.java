@@ -550,6 +550,72 @@ public class KubernetesEngineBuilderTest {
     assertListBoxModelEquals(expected, result);
   }
 
+  @Test
+  public void testDoCheckClusterNameErrorMessageWithEmptyClusterName() {
+    FormValidation result =
+        descriptor.doCheckClusterName(
+            jenkins, null, TEST_CREDENTIALS_ID, TEST_PROJECT_ID, TEST_ZONE_A);
+    assertNotNull(result);
+    assertEquals(Messages.KubernetesEngineBuilder_ClusterRequired(), result.getMessage());
+  }
+
+  @Test
+  public void testDoCheckClusterNameErrorMessageWithEmptyCredentialsId() {
+    FormValidation result =
+        descriptor.doCheckClusterName(jenkins, TEST_CLUSTER, null, TEST_PROJECT_ID, TEST_ZONE_A);
+    assertNotNull(result);
+    assertEquals(
+        Messages.KubernetesEngineBuilder_ClusterCredentialIDRequired(), result.getMessage());
+  }
+
+  @Test
+  public void testDoCheckClusterNameErrorMessageWithEmptyProjectId() {
+    FormValidation result =
+        descriptor.doCheckClusterName(
+            jenkins, TEST_CLUSTER, TEST_CREDENTIALS_ID, null, TEST_ZONE_A);
+    assertNotNull(result);
+    assertEquals(Messages.KubernetesEngineBuilder_ClusterProjectIDRequired(), result.getMessage());
+  }
+
+  @Test
+  public void testDoCheckClusterNameErrorMessageWithEmptyZone() {
+    FormValidation result =
+        descriptor.doCheckClusterName(
+            jenkins, TEST_CLUSTER, TEST_CREDENTIALS_ID, TEST_PROJECT_ID, null);
+    assertNotNull(result);
+    assertEquals(Messages.KubernetesEngineBuilder_ClusterZoneRequired(), result.getMessage());
+  }
+
+  @Test
+  public void testDoCheckCLusterNameOkWithValidInputs() {
+    initClusters(ImmutableList.of(TEST_CLUSTER));
+    FormValidation result =
+        descriptor.doCheckClusterName(
+            jenkins, TEST_CLUSTER, TEST_CREDENTIALS_ID, TEST_PROJECT_ID, TEST_ZONE_A);
+    assertNotNull(result);
+    assertEquals(FormValidation.ok().getMessage(), result.getMessage());
+  }
+
+  @Test
+  public void testDoCheckCLusterNameErrorMessageWithAbortException() {
+    initClusters(ImmutableList.of(TEST_CLUSTER));
+    FormValidation result =
+        descriptor.doCheckClusterName(
+            jenkins, TEST_CLUSTER, ERROR_CREDENTIALS_ID, TEST_PROJECT_ID, TEST_ZONE_A);
+    assertNotNull(result);
+    assertEquals(Messages.KubernetesEngineBuilder_CredentialAuthFailed(), result.getMessage());
+  }
+
+  @Test
+  public void testDoCheckClusterNameErrorMessageWithIOException() {
+    initClusters(ImmutableList.of(TEST_CLUSTER));
+    FormValidation result =
+        descriptor.doCheckClusterName(
+            jenkins, TEST_CLUSTER, TEST_CREDENTIALS_ID, ERROR_PROJECT_ID, TEST_ZONE_A);
+    assertNotNull(result);
+    assertEquals(Messages.KubernetesEngineBuilder_ClusterVerificationError(), result.getMessage());
+  }
+
   private static void initZones(List<String> zoneNames) {
     zoneNames.forEach(z -> listOfZones.add(new Zone().setName(z)));
   }
