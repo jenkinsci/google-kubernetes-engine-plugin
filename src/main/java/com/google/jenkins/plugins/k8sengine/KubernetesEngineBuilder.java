@@ -439,7 +439,7 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
 
   private static ContainerClient getContainerClient(String credentialsId) throws AbortException {
     return new ClientFactory(
-            Jenkins.getInstance(),
+            Jenkins.get(),
             ImmutableList.<DomainRequirement>of(),
             credentialsId,
             Optional.<HttpTransport>empty())

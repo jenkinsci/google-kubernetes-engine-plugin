@@ -76,7 +76,7 @@ public class StringJsonServiceAccountConfig extends ServiceAccountConfig {
   public com.google.jenkins.plugins.credentials.oauth.JsonServiceAccountConfig.DescriptorImpl
       getDescriptor() {
     return (com.google.jenkins.plugins.credentials.oauth.JsonServiceAccountConfig.DescriptorImpl)
-        Jenkins.getInstance()
+        Jenkins.get()
             .getDescriptorOrDie(
                 com.google.jenkins.plugins.credentials.oauth.JsonServiceAccountConfig.class);
   }
