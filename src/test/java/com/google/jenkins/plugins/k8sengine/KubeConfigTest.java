@@ -113,10 +113,9 @@ public class KubeConfigTest {
 
   private static boolean yamlEquals(String expectedYaml, String testYaml) throws IOException {
     Yaml yaml = new Yaml(new SafeConstructor());
-    Map<String, Object> testConfig =
-        (Map<String, Object>) yaml.load(new BufferedReader(new StringReader(testYaml)));
+    Map<String, Object> testConfig = yaml.load(new BufferedReader(new StringReader(testYaml)));
     Map<String, Object> expectedConfig =
-        (Map<String, Object>) yaml.load(new BufferedReader(new StringReader(expectedYaml)));
+        yaml.load(new BufferedReader(new StringReader(expectedYaml)));
 
     TriFunction<TriFunction, Object, Object, Boolean> deepCollectionEquals =
         (f, expected, test) -> {
@@ -125,10 +124,15 @@ public class KubeConfigTest {
           }
 
           if (expected instanceof Map) {
+            @SuppressWarnings("unchecked")
             Map<String, Object> expectedMap = (Map<String, Object>) expected;
+            @SuppressWarnings("unchecked")
             Map<String, Object> testMap = (Map<String, Object>) test;
             for (String key : expectedMap.keySet()) {
-              if (!(Boolean) f.apply(f, expectedMap.get(key), testMap.get(key))) {
+
+              @SuppressWarnings("unchecked")
+              Object result = f.apply(f, expectedMap.get(key), testMap.get(key));
+              if (!(Boolean) result) {
                 return false;
               }
             }
@@ -142,7 +146,9 @@ public class KubeConfigTest {
                 return false;
               }
 
-              if (!(Boolean) f.apply(f, expectedItr.next(), testItr.next())) {
+              @SuppressWarnings("unchecked")
+              Object result = f.apply(f, expectedItr.next(), testItr.next());
+              if (!(Boolean) result) {
                 return false;
               }
             }
