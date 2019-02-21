@@ -30,6 +30,7 @@ import java.util.List;
 import java.util.Optional;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -51,10 +52,11 @@ public class ContainerClientTest {
 
   private static ContainerClient containerClient;
   private static Cluster testCluster;
-  private static Cluster otherCluster;
+  private static List<Cluster> listOfClusters;
 
   @BeforeClass
   public static void init() throws Exception {
+    listOfClusters = new ArrayList<>();
     Container container = Mockito.mock(Container.class);
     Container.Projects projects = Mockito.mock(Container.Projects.class);
     Container.Projects.Zones zones = Mockito.mock(Container.Projects.Zones.class);
@@ -63,87 +65,103 @@ public class ContainerClientTest {
     Mockito.when(projects.zones()).thenReturn(zones);
     Mockito.when(zones.clusters()).thenReturn(clusters);
     testCluster = new Cluster().setName(TEST_CLUSTER).setZone(TEST_ZONE);
-    otherCluster = new Cluster().setName(OTHER_CLUSTER).setZone(TEST_ZONE);
 
     Mockito.when(clusters.get(anyString(), anyString(), anyString()))
         .thenAnswer(
             mockClustersGetAnswer(
-                new ImmutableMap.Builder<String, ImmutableList<Cluster>>()
-                    .put(TEST_PROJECT_ID, ImmutableList.of(testCluster))
+                new ImmutableMap.Builder<String, List<Cluster>>()
+                    .put(TEST_PROJECT_ID, listOfClusters)
                     .build()));
 
     Mockito.when(clusters.list(anyString(), anyString()))
         .thenAnswer(
             mockClustersListAnswer(
-                new ImmutableMap.Builder<Pair<String, String>, ImmutableList<Cluster>>()
-                    .put(
-                        ImmutablePair.of(TEST_PROJECT_ID, TEST_ZONE), ImmutableList.of(testCluster))
-                    .put(
-                        ImmutablePair.of(OTHER_PROJECT_ID, TEST_ZONE),
-                        ImmutableList.of(otherCluster))
-                    .put(ImmutablePair.of(EMPTY_PROJECT_ID, TEST_ZONE), ImmutableList.of())
+                new ImmutableMap.Builder<Pair<String, String>, List<Cluster>>()
+                    .put(ImmutablePair.of(TEST_PROJECT_ID, TEST_ZONE), listOfClusters)
+                    .put(ImmutablePair.of(OTHER_PROJECT_ID, TEST_ZONE), listOfClusters)
                     .build()));
     containerClient = new ContainerClient(container);
   }
 
+  @Before
+  public void before() {
+    listOfClusters.clear();
+  }
+
   @Test
   public void testGetClusterReturnsProperlyWhenClusterExists() throws IOException {
-    Cluster response = containerClient.getCluster(TEST_PROJECT_ID, TEST_ZONE, "testCluster");
+    initClusters(ImmutableList.of(TEST_CLUSTER));
+    Cluster response = containerClient.getCluster(TEST_PROJECT_ID, TEST_ZONE, TEST_CLUSTER);
     assertNotNull(response);
     assertEquals(testCluster, response);
   }
 
   @Test(expected = IOException.class)
   public void testGetClusterThrowsErrorWhenClusterDoesntExists() throws IOException {
-    containerClient.getCluster(TEST_PROJECT_ID, OTHER_ZONE, "otherCluster");
+    containerClient.getCluster(TEST_PROJECT_ID, OTHER_ZONE, OTHER_CLUSTER);
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void testListClustersErrorWithNullProjectId() throws IOException {
-    testListClusters(null, TEST_ZONE, ImmutableList.of());
+    containerClient.listClusters(null, TEST_ZONE);
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void testListClustersErrorWithNullZone() throws IOException {
-    testListClusters(TEST_PROJECT_ID, null, ImmutableList.of());
+    containerClient.listClusters(TEST_PROJECT_ID, null);
   }
 
   @Test
   public void testListClustersWithValidInputsWhenClustersExist() throws IOException {
-    testListClusters(TEST_PROJECT_ID, TEST_ZONE, ImmutableList.of(TEST_CLUSTER));
+    initClusters(ImmutableList.of(TEST_CLUSTER));
+    List<Cluster> expected = initExpectedClusterList(ImmutableList.of(TEST_CLUSTER));
+    List<Cluster> response = containerClient.listClusters(TEST_PROJECT_ID, TEST_ZONE);
+    assertNotNull(response);
+    assertEquals(expected, response);
   }
 
   @Test
   public void testListClustersWithDifferentProjectClusters() throws IOException {
-    testListClusters(OTHER_PROJECT_ID, TEST_ZONE, ImmutableList.of(OTHER_CLUSTER));
+    initClusters(ImmutableList.of(OTHER_CLUSTER));
+    List<Cluster> expected = initExpectedClusterList(ImmutableList.of(OTHER_CLUSTER));
+    List<Cluster> response = containerClient.listClusters(OTHER_PROJECT_ID, TEST_ZONE);
+    assertNotNull(response);
+    assertEquals(expected, response);
   }
 
   @Test
   public void testListClustersWithValidInputsWhenClustersIsNull() throws IOException {
-    testListClusters(OTHER_PROJECT_ID, OTHER_ZONE, ImmutableList.of());
+    List<Cluster> expected = ImmutableList.of();
+    List<Cluster> response = containerClient.listClusters(EMPTY_PROJECT_ID, TEST_ZONE);
+    assertNotNull(response);
+    assertEquals(expected, response);
   }
 
   @Test
   public void testListClustersEmptyWithValidProjectWithNoClusters() throws IOException {
-    testListClusters(EMPTY_PROJECT_ID, TEST_ZONE, ImmutableList.of());
+    List<Cluster> expected = ImmutableList.of();
+    List<Cluster> response = containerClient.listClusters(TEST_PROJECT_ID, TEST_ZONE);
+    assertNotNull(response);
+    assertEquals(expected, response);
   }
 
   @Test(expected = IOException.class)
   public void testListClustersThrowsErrorWithInvalidProject() throws IOException {
-    testListClusters(ERROR_PROJECT_ID, TEST_ZONE, ImmutableList.of());
+    containerClient.listClusters(ERROR_PROJECT_ID, TEST_ZONE);
   }
 
-  private static void testListClusters(String projectId, String zone, List<String> expected)
-      throws IOException {
+  private static void initClusters(List<String> clusterNames) {
+    clusterNames.forEach(c -> listOfClusters.add(new Cluster().setName(c).setZone(TEST_ZONE)));
+  }
+
+  private static List<Cluster> initExpectedClusterList(List<String> expectedClusterNames) {
     List<Cluster> clusters = new ArrayList<>();
-    expected.forEach(e -> clusters.add(new Cluster().setName(e).setZone(TEST_ZONE)));
-    List<Cluster> response = containerClient.listClusters(projectId, zone);
-    assertNotNull(response);
-    assertEquals(ImmutableList.copyOf(clusters), response);
+    expectedClusterNames.forEach(e -> clusters.add(new Cluster().setName(e).setZone(TEST_ZONE)));
+    return clusters;
   }
 
   private static Answer<Container.Projects.Zones.Clusters.Get> mockClustersGetAnswer(
-      ImmutableMap<String, ImmutableList<Cluster>> projectToClusters) {
+      ImmutableMap<String, List<Cluster>> projectToClusters) {
     return invocation -> {
       Object[] args = invocation.getArguments();
       String projectId = (String) args[0];
@@ -177,7 +195,7 @@ public class ContainerClientTest {
   }
 
   private static Answer<Container.Projects.Zones.Clusters.List> mockClustersListAnswer(
-      ImmutableMap<Pair<String, String>, ImmutableList<Cluster>> projectToClusters) {
+      ImmutableMap<Pair<String, String>, List<Cluster>> projectToClusters) {
     return invocation -> {
       Object[] args = invocation.getArguments();
       String projectId = (String) args[0];
