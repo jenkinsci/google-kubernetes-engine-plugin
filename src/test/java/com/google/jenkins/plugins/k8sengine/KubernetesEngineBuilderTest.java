@@ -295,7 +295,7 @@ public class KubernetesEngineBuilderTest {
     initZones(ImmutableList.of(TEST_ZONE_A));
     ListBoxModel expected =
         initExpected(ImmutableList.of(EMPTY_NAME), ImmutableList.of(EMPTY_VALUE));
-    ListBoxModel result = descriptor.doFillZoneItems(jenkins, null, null, TEST_CREDENTIALS_ID);
+    ListBoxModel result = descriptor.doFillZoneItems(jenkins, null, TEST_CREDENTIALS_ID, null);
     assertNotNull(result);
     assertListBoxModelEquals(expected, result);
   }
@@ -305,7 +305,7 @@ public class KubernetesEngineBuilderTest {
     initZones(ImmutableList.of(TEST_ZONE_A));
     ListBoxModel expected =
         initExpected(ImmutableList.of(EMPTY_NAME), ImmutableList.of(EMPTY_VALUE));
-    ListBoxModel result = descriptor.doFillZoneItems(jenkins, null, TEST_PROJECT_ID, null);
+    ListBoxModel result = descriptor.doFillZoneItems(jenkins, null, null, TEST_PROJECT_ID);
     assertNotNull(result);
     assertListBoxModelEquals(expected, result);
   }
@@ -318,7 +318,7 @@ public class KubernetesEngineBuilderTest {
             ImmutableList.of(EMPTY_NAME, TEST_ZONE_A, TEST_ZONE_B),
             ImmutableList.of(EMPTY_VALUE, TEST_ZONE_A, TEST_ZONE_B));
     ListBoxModel result =
-        descriptor.doFillZoneItems(jenkins, null, TEST_PROJECT_ID, TEST_CREDENTIALS_ID);
+        descriptor.doFillZoneItems(jenkins, null, TEST_CREDENTIALS_ID, TEST_PROJECT_ID);
     assertNotNull(result);
     assertListBoxModelEquals(expected, result);
     assertValueSelected(result, TEST_ZONE_A);
@@ -332,7 +332,7 @@ public class KubernetesEngineBuilderTest {
             ImmutableList.of(EMPTY_NAME, TEST_ZONE_A, TEST_ZONE_B),
             ImmutableList.of(EMPTY_VALUE, TEST_ZONE_A, TEST_ZONE_B));
     ListBoxModel result =
-        descriptor.doFillZoneItems(jenkins, TEST_ZONE_B, TEST_PROJECT_ID, TEST_CREDENTIALS_ID);
+        descriptor.doFillZoneItems(jenkins, TEST_ZONE_B, TEST_CREDENTIALS_ID, TEST_PROJECT_ID);
     assertNotNull(result);
     assertListBoxModelEquals(expected, result);
     assertValueSelected(result, TEST_ZONE_B);
@@ -343,7 +343,7 @@ public class KubernetesEngineBuilderTest {
     ListBoxModel expected =
         initExpected(ImmutableList.of(EMPTY_NAME), ImmutableList.of(EMPTY_VALUE));
     ListBoxModel result =
-        descriptor.doFillZoneItems(jenkins, null, TEST_PROJECT_ID, TEST_CREDENTIALS_ID);
+        descriptor.doFillZoneItems(jenkins, null, TEST_CREDENTIALS_ID, TEST_PROJECT_ID);
     assertNotNull(result);
     assertListBoxModelEquals(expected, result);
   }
@@ -356,7 +356,7 @@ public class KubernetesEngineBuilderTest {
             ImmutableList.of(Messages.KubernetesEngineBuilder_CredentialAuthFailed()),
             ImmutableList.of(EMPTY_VALUE));
     ListBoxModel result =
-        descriptor.doFillZoneItems(jenkins, null, TEST_PROJECT_ID, ERROR_CREDENTIALS_ID);
+        descriptor.doFillZoneItems(jenkins, null, ERROR_CREDENTIALS_ID, TEST_PROJECT_ID);
     assertNotNull(result);
     assertListBoxModelEquals(expected, result);
   }
@@ -369,7 +369,7 @@ public class KubernetesEngineBuilderTest {
             ImmutableList.of(Messages.KubernetesEngineBuilder_ZoneFillError()),
             ImmutableList.of(EMPTY_VALUE));
     ListBoxModel result =
-        descriptor.doFillZoneItems(jenkins, null, ERROR_PROJECT_ID, TEST_CREDENTIALS_ID);
+        descriptor.doFillZoneItems(jenkins, null, TEST_CREDENTIALS_ID, ERROR_PROJECT_ID);
     assertNotNull(result);
     assertListBoxModelEquals(expected, result);
   }
@@ -377,31 +377,29 @@ public class KubernetesEngineBuilderTest {
   @Test
   public void testDoCheckZoneMessageWithEmptyZone() {
     FormValidation result =
-        descriptor.doCheckZone(jenkins, null, TEST_PROJECT_ID, TEST_CREDENTIALS_ID);
+        descriptor.doCheckZone(jenkins, null, TEST_CREDENTIALS_ID, TEST_PROJECT_ID);
     assertNotNull(result);
     assertEquals(Messages.KubernetesEngineBuilder_ZoneRequired(), result.getMessage());
   }
 
   @Test
   public void testDoCheckZoneMessageWithEmptyProjectId() {
-    FormValidation result = descriptor.doCheckZone(jenkins, TEST_ZONE_A, null, TEST_CREDENTIALS_ID);
+    FormValidation result = descriptor.doCheckZone(jenkins, TEST_ZONE_A, TEST_CREDENTIALS_ID, null);
     assertNotNull(result);
-    assertEquals(
-        Messages.KubernetesEngineBuilder_ZoneProjectIdCredentialRequired(), result.getMessage());
+    assertEquals(Messages.KubernetesEngineBuilder_ZoneProjectIDRequired(), result.getMessage());
   }
 
   @Test
   public void testDoCheckZoneMessageWithEmptyCredentialsId() {
-    FormValidation result = descriptor.doCheckZone(jenkins, TEST_ZONE_A, TEST_PROJECT_ID, null);
+    FormValidation result = descriptor.doCheckZone(jenkins, TEST_ZONE_A, null, TEST_PROJECT_ID);
     assertNotNull(result);
-    assertEquals(
-        Messages.KubernetesEngineBuilder_ZoneProjectIdCredentialRequired(), result.getMessage());
+    assertEquals(Messages.KubernetesEngineBuilder_ZoneCredentialIDRequired(), result.getMessage());
   }
 
   @Test
   public void testDoCheckZoneMessageWithNoAvailableZones() {
     FormValidation result =
-        descriptor.doCheckZone(jenkins, TEST_ZONE_A, TEST_PROJECT_ID, TEST_CREDENTIALS_ID);
+        descriptor.doCheckZone(jenkins, TEST_ZONE_A, TEST_CREDENTIALS_ID, TEST_PROJECT_ID);
     assertNotNull(result);
     assertEquals(Messages.KubernetesEngineBuilder_ZoneNotInProject(), result.getMessage());
   }
@@ -410,7 +408,7 @@ public class KubernetesEngineBuilderTest {
   public void testDoCheckZoneMessageWithNonMatchingZones() {
     initZones(ImmutableList.of(TEST_ZONE_B));
     FormValidation result =
-        descriptor.doCheckZone(jenkins, TEST_ZONE_A, TEST_PROJECT_ID, TEST_CREDENTIALS_ID);
+        descriptor.doCheckZone(jenkins, TEST_ZONE_A, TEST_CREDENTIALS_ID, TEST_PROJECT_ID);
     assertNotNull(result);
     assertEquals(Messages.KubernetesEngineBuilder_ZoneNotInProject(), result.getMessage());
   }
@@ -418,7 +416,7 @@ public class KubernetesEngineBuilderTest {
   @Test
   public void testDoCheckZoneMessageWithIOException() {
     FormValidation result =
-        descriptor.doCheckZone(jenkins, TEST_ZONE_A, ERROR_PROJECT_ID, TEST_CREDENTIALS_ID);
+        descriptor.doCheckZone(jenkins, TEST_ZONE_A, TEST_CREDENTIALS_ID, ERROR_PROJECT_ID);
     assertNotNull(result);
     assertEquals(Messages.KubernetesEngineBuilder_ZoneVerificationError(), result.getMessage());
   }
@@ -427,7 +425,7 @@ public class KubernetesEngineBuilderTest {
   public void testDoCheckZoneOKWithMatchingZones() {
     initZones(ImmutableList.of(TEST_ZONE_A));
     FormValidation result =
-        descriptor.doCheckZone(jenkins, TEST_ZONE_A, TEST_PROJECT_ID, TEST_CREDENTIALS_ID);
+        descriptor.doCheckZone(jenkins, TEST_ZONE_A, TEST_CREDENTIALS_ID, TEST_PROJECT_ID);
     assertNotNull(result);
     assertEquals(FormValidation.ok(), result);
   }

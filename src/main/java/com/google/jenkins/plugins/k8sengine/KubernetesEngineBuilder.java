@@ -315,8 +315,8 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
     public ListBoxModel doFillZoneItems(
         @AncestorInPath Jenkins context,
         @QueryParameter("zone") final String zone,
-        @QueryParameter("projectId") final String projectId,
-        @QueryParameter("credentialsId") final String credentialsId) {
+        @QueryParameter("credentialsId") final String credentialsId,
+        @QueryParameter("projectId") final String projectId) {
       ListBoxModel items = new ListBoxModel();
       items.add(EMPTY_NAME, EMPTY_VALUE);
       if (Strings.isNullOrEmpty(projectId) || Strings.isNullOrEmpty(credentialsId)) {
@@ -355,13 +355,14 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
     public FormValidation doCheckZone(
         @AncestorInPath Jenkins context,
         @QueryParameter("zone") String zone,
-        @QueryParameter("projectId") String projectId,
-        @QueryParameter("credentialsId") String credentialsId) {
+        @QueryParameter("credentialsId") String credentialsId,
+        @QueryParameter("projectId") String projectId) {
       if (Strings.isNullOrEmpty(zone)) {
         return FormValidation.error(Messages.KubernetesEngineBuilder_ZoneRequired());
-      } else if (Strings.isNullOrEmpty(projectId) || Strings.isNullOrEmpty(credentialsId)) {
-        return FormValidation.error(
-            Messages.KubernetesEngineBuilder_ZoneProjectIdCredentialRequired());
+      } else if (Strings.isNullOrEmpty(credentialsId)) {
+        return FormValidation.error(Messages.KubernetesEngineBuilder_ZoneCredentialIDRequired());
+      } else if (Strings.isNullOrEmpty(projectId)) {
+        return FormValidation.error(Messages.KubernetesEngineBuilder_ZoneProjectIDRequired());
       }
 
       ClientFactory clientFactory;
