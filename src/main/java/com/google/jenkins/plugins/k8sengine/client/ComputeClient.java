@@ -19,7 +19,6 @@ import com.google.api.services.compute.model.Zone;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
@@ -53,7 +52,7 @@ public class ComputeClient {
     Preconditions.checkNotNull(projectId);
     List<Zone> zones = compute.zones().list(projectId).execute().getItems();
     if (zones == null) {
-      zones = new ArrayList<>();
+      zones = ImmutableList.of();
     }
 
     // Sort by name

@@ -22,17 +22,20 @@ import static org.junit.Assert.assertTrue;
 
 import com.google.api.services.cloudresourcemanager.model.Project;
 import com.google.api.services.compute.model.Zone;
-import com.google.common.base.Strings;
+import com.google.api.services.container.model.Cluster;
 import com.google.common.collect.ImmutableList;
 import com.google.jenkins.plugins.k8sengine.client.ClientFactory;
 import com.google.jenkins.plugins.k8sengine.client.CloudResourceManagerClient;
 import com.google.jenkins.plugins.k8sengine.client.ComputeClient;
+import com.google.jenkins.plugins.k8sengine.client.ContainerClient;
 import hudson.AbortException;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
+import hudson.util.ListBoxModel.Option;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import jenkins.model.Jenkins;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -48,6 +51,8 @@ public class KubernetesEngineBuilderTest {
   private static final String TEST_PROJECT_ID = "test-project-id";
   private static final String OTHER_PROJECT_ID = "other-project-id";
   private static final String ERROR_PROJECT_ID = "error-project-id";
+  private static final String TEST_CLUSTER = "testCluster";
+  private static final String OTHER_CLUSTER = "otherCluster";
   private static final String TEST_CREDENTIALS_ID = "test-credentials-id";
   private static final String EMPTY_PROJECT_CREDENTIALS_ID = "empty-project-credentials-id";
   private static final String PROJECT_ERROR_CREDENTIALS_ID = "project-error-credentials-id";
@@ -56,6 +61,7 @@ public class KubernetesEngineBuilderTest {
 
   private static List<Zone> listOfZones;
   private static List<Project> listOfProjects;
+  private static List<Cluster> listOfClusters;
   private static Jenkins jenkins;
   private static KubernetesEngineBuilder.DescriptorImpl descriptor;
 
@@ -63,6 +69,7 @@ public class KubernetesEngineBuilderTest {
   public static void init() throws IOException {
     listOfZones = new ArrayList<>();
     listOfProjects = new ArrayList<>();
+    listOfClusters = new ArrayList<>();
     descriptor = Mockito.spy(KubernetesEngineBuilder.DescriptorImpl.class);
     jenkins = Mockito.mock(Jenkins.class);
     ComputeClient computeClient = Mockito.mock(ComputeClient.class);
@@ -72,10 +79,18 @@ public class KubernetesEngineBuilderTest {
     CloudResourceManagerClient cloudResourceManagerClient =
         Mockito.mock(CloudResourceManagerClient.class);
     Mockito.when(cloudResourceManagerClient.getAccountProjects()).thenReturn(listOfProjects);
+
+    ContainerClient containerClient = Mockito.mock(ContainerClient.class);
+    Mockito.when(containerClient.listClusters(TEST_PROJECT_ID, TEST_ZONE_A))
+        .thenReturn(listOfClusters);
+    Mockito.when(containerClient.listClusters(ERROR_PROJECT_ID, TEST_ZONE_A))
+        .thenThrow(new IOException());
+
     ClientFactory clientFactory = Mockito.mock(ClientFactory.class);
     Mockito.when(clientFactory.getDefaultProjectId()).thenReturn(TEST_PROJECT_ID);
     Mockito.when(clientFactory.cloudResourceManagerClient()).thenReturn(cloudResourceManagerClient);
     Mockito.when(clientFactory.computeClient()).thenReturn(computeClient);
+    Mockito.when(clientFactory.containerClient()).thenReturn(containerClient);
     Mockito.doReturn(clientFactory).when(descriptor).getClientFactory(jenkins, TEST_CREDENTIALS_ID);
 
     ClientFactory emptyProjectClientFactory = Mockito.mock(ClientFactory.class);
@@ -106,76 +121,115 @@ public class KubernetesEngineBuilderTest {
   public void before() {
     listOfZones.clear();
     listOfProjects.clear();
+    listOfClusters.clear();
   }
 
   @Test
   public void testDoFillProjectIdItemsErrorMessageWithAbortException() {
-    testDoFillProjectIDItems(
-        ERROR_CREDENTIALS_ID,
-        ImmutableList.of(TEST_PROJECT_ID),
-        null,
-        ImmutableList.of(Messages.KubernetesEngineBuilder_CredentialAuthFailed()),
-        ImmutableList.of(KubernetesEngineBuilder.EMPTY_VALUE));
+    initProjects(ImmutableList.of(TEST_PROJECT_ID));
+    ListBoxModel expected =
+        initExpected(
+            ImmutableList.of(Messages.KubernetesEngineBuilder_CredentialAuthFailed()),
+            ImmutableList.of(EMPTY_VALUE));
+    ListBoxModel result = descriptor.doFillProjectIdItems(jenkins, null, ERROR_CREDENTIALS_ID);
+    assertNotNull(result);
+    assertListBoxModelEquals(expected, result);
   }
 
   @Test
   public void testDoFillProjectIdItemsErrorMessageWithIOException() {
-    testDoFillProjectIDItems(
-        PROJECT_ERROR_CREDENTIALS_ID,
-        ImmutableList.of(),
-        null,
-        ImmutableList.of(Messages.KubernetesEngineBuilder_ProjectIDFillError()),
-        ImmutableList.of(EMPTY_VALUE));
+    initProjects(ImmutableList.of(TEST_PROJECT_ID));
+    ListBoxModel expected =
+        initExpected(
+            ImmutableList.of(Messages.KubernetesEngineBuilder_ProjectIDFillError()),
+            ImmutableList.of(EMPTY_VALUE));
+    ListBoxModel result =
+        descriptor.doFillProjectIdItems(jenkins, null, PROJECT_ERROR_CREDENTIALS_ID);
+    assertNotNull(result);
+    assertListBoxModelEquals(expected, result);
   }
 
   @Test
   public void testDoFillProjectIdItemsEmptyWithEmptyCredentialsId() {
-    testDoFillProjectIDItems(
-        null,
-        ImmutableList.of(TEST_PROJECT_ID),
-        null,
-        ImmutableList.of(EMPTY_NAME),
-        ImmutableList.of(EMPTY_VALUE));
+    initProjects(ImmutableList.of(TEST_PROJECT_ID));
+    ListBoxModel expected =
+        initExpected(ImmutableList.of(EMPTY_NAME), ImmutableList.of(EMPTY_VALUE));
+    ListBoxModel result = descriptor.doFillProjectIdItems(jenkins, null, null);
+    assertNotNull(result);
+    assertListBoxModelEquals(expected, result);
   }
 
   @Test
   public void testDoFillProjectIdItemsEmptyWithEmptyCredentialsIdNoProjects() {
-    testDoFillProjectIDItems(
-        TEST_CREDENTIALS_ID,
-        ImmutableList.of(),
-        null,
-        ImmutableList.of(EMPTY_NAME),
-        ImmutableList.of(EMPTY_VALUE));
+    ListBoxModel expected =
+        initExpected(ImmutableList.of(EMPTY_NAME), ImmutableList.of(EMPTY_VALUE));
+    ListBoxModel result = descriptor.doFillProjectIdItems(jenkins, null, null);
+    assertNotNull(result);
+    assertListBoxModelEquals(expected, result);
   }
 
   @Test
   public void testDoFillProjectIdItemsWithValidCredentialsId() {
-    testDoFillProjectIDItems(
-        TEST_CREDENTIALS_ID,
-        ImmutableList.of(OTHER_PROJECT_ID, TEST_PROJECT_ID),
-        TEST_PROJECT_ID,
-        ImmutableList.of(EMPTY_NAME, OTHER_PROJECT_ID, TEST_PROJECT_ID),
-        ImmutableList.of(EMPTY_VALUE, OTHER_PROJECT_ID, TEST_PROJECT_ID));
+    initProjects(ImmutableList.of(OTHER_PROJECT_ID, TEST_PROJECT_ID));
+    ListBoxModel expected =
+        initExpected(
+            ImmutableList.of(EMPTY_NAME, OTHER_PROJECT_ID, TEST_PROJECT_ID),
+            ImmutableList.of(EMPTY_VALUE, OTHER_PROJECT_ID, TEST_PROJECT_ID));
+    ListBoxModel result = descriptor.doFillProjectIdItems(jenkins, null, TEST_CREDENTIALS_ID);
+    assertNotNull(result);
+    assertListBoxModelEquals(expected, result);
+    assertValueSelected(result, TEST_PROJECT_ID);
+  }
+
+  @Test
+  public void testDoFillProjectIdItemsWithValidCredentialsIdAndPreviousValueAndDefault() {
+    initProjects(ImmutableList.of(OTHER_PROJECT_ID, TEST_PROJECT_ID));
+    ListBoxModel expected =
+        initExpected(
+            ImmutableList.of(EMPTY_NAME, OTHER_PROJECT_ID, TEST_PROJECT_ID),
+            ImmutableList.of(EMPTY_VALUE, OTHER_PROJECT_ID, TEST_PROJECT_ID));
+    ListBoxModel result =
+        descriptor.doFillProjectIdItems(jenkins, OTHER_PROJECT_ID, TEST_CREDENTIALS_ID);
+    assertListBoxModelEquals(expected, result);
+    assertValueSelected(result, OTHER_PROJECT_ID);
+  }
+
+  @Test
+  public void testDoFillProjectIdItemsWithValidCredentialsIdAndPreviousValueAndEmptyDefault() {
+    initProjects(ImmutableList.of(OTHER_PROJECT_ID, TEST_PROJECT_ID));
+    ListBoxModel expected =
+        initExpected(
+            ImmutableList.of(EMPTY_NAME, OTHER_PROJECT_ID, TEST_PROJECT_ID),
+            ImmutableList.of(EMPTY_VALUE, OTHER_PROJECT_ID, TEST_PROJECT_ID));
+    ListBoxModel result =
+        descriptor.doFillProjectIdItems(jenkins, OTHER_PROJECT_ID, EMPTY_PROJECT_CREDENTIALS_ID);
+    assertListBoxModelEquals(expected, result);
+    assertValueSelected(result, OTHER_PROJECT_ID);
   }
 
   @Test
   public void testDoFillProjectIdItemsWithValidCredentialsIdNoDefaultProject() {
-    testDoFillProjectIDItems(
-        TEST_CREDENTIALS_ID,
-        ImmutableList.of(OTHER_PROJECT_ID),
-        OTHER_PROJECT_ID,
-        ImmutableList.of(EMPTY_NAME, OTHER_PROJECT_ID, TEST_PROJECT_ID),
-        ImmutableList.of(EMPTY_VALUE, OTHER_PROJECT_ID, TEST_PROJECT_ID));
+    initProjects(ImmutableList.of(OTHER_PROJECT_ID));
+    ListBoxModel expected =
+        initExpected(
+            ImmutableList.of(EMPTY_NAME, OTHER_PROJECT_ID, TEST_PROJECT_ID),
+            ImmutableList.of(EMPTY_VALUE, OTHER_PROJECT_ID, TEST_PROJECT_ID));
+    ListBoxModel result = descriptor.doFillProjectIdItems(jenkins, null, TEST_CREDENTIALS_ID);
+    assertListBoxModelEquals(expected, result);
+    assertValueSelected(result, OTHER_PROJECT_ID);
   }
 
   @Test
   public void testDoFillProjectIdItemsWithValidCredentialsAndEmptyProject() {
-    testDoFillProjectIDItems(
-        EMPTY_PROJECT_CREDENTIALS_ID,
-        ImmutableList.of(OTHER_PROJECT_ID, TEST_PROJECT_ID),
-        OTHER_PROJECT_ID,
-        ImmutableList.of(EMPTY_NAME, OTHER_PROJECT_ID, TEST_PROJECT_ID),
-        ImmutableList.of(EMPTY_VALUE, OTHER_PROJECT_ID, TEST_PROJECT_ID));
+    initProjects(ImmutableList.of(OTHER_PROJECT_ID, TEST_PROJECT_ID));
+    ListBoxModel expected =
+        initExpected(
+            ImmutableList.of(EMPTY_NAME, OTHER_PROJECT_ID, TEST_PROJECT_ID),
+            ImmutableList.of(EMPTY_VALUE, OTHER_PROJECT_ID, TEST_PROJECT_ID));
+    ListBoxModel result =
+        descriptor.doFillProjectIdItems(jenkins, OTHER_PROJECT_ID, EMPTY_PROJECT_CREDENTIALS_ID);
+    assertListBoxModelEquals(expected, result);
+    assertValueSelected(result, OTHER_PROJECT_ID);
   }
 
   @Test
@@ -238,68 +292,86 @@ public class KubernetesEngineBuilderTest {
 
   @Test
   public void testDoFillZoneItemsEmptyWithEmptyProjectId() {
-    testDoFillZoneItems(
-        null,
-        TEST_CREDENTIALS_ID,
-        ImmutableList.of(TEST_ZONE_A),
-        null,
-        ImmutableList.of(EMPTY_NAME),
-        ImmutableList.of(EMPTY_VALUE));
+    initZones(ImmutableList.of(TEST_ZONE_A));
+    ListBoxModel expected =
+        initExpected(ImmutableList.of(EMPTY_NAME), ImmutableList.of(EMPTY_VALUE));
+    ListBoxModel result = descriptor.doFillZoneItems(jenkins, null, null, TEST_CREDENTIALS_ID);
+    assertNotNull(result);
+    assertListBoxModelEquals(expected, result);
   }
 
   @Test
   public void testDoFillZoneItemsEmptyWithEmptyCredentialsId() {
-    testDoFillZoneItems(
-        TEST_PROJECT_ID,
-        null,
-        ImmutableList.of(TEST_ZONE_A),
-        null,
-        ImmutableList.of(EMPTY_NAME),
-        ImmutableList.of(EMPTY_VALUE));
+    initZones(ImmutableList.of(TEST_ZONE_A));
+    ListBoxModel expected =
+        initExpected(ImmutableList.of(EMPTY_NAME), ImmutableList.of(EMPTY_VALUE));
+    ListBoxModel result = descriptor.doFillZoneItems(jenkins, null, TEST_PROJECT_ID, null);
+    assertNotNull(result);
+    assertListBoxModelEquals(expected, result);
   }
 
   @Test
   public void testDoFillZoneItemsWithValidArguments() {
-    testDoFillZoneItems(
-        TEST_PROJECT_ID,
-        TEST_CREDENTIALS_ID,
-        ImmutableList.of(TEST_ZONE_A, TEST_ZONE_B),
-        TEST_ZONE_A,
-        ImmutableList.of(EMPTY_NAME, TEST_ZONE_A, TEST_ZONE_B),
-        ImmutableList.of(EMPTY_VALUE, TEST_ZONE_A, TEST_ZONE_B));
+    initZones(ImmutableList.of(TEST_ZONE_A, TEST_ZONE_B));
+    ListBoxModel expected =
+        initExpected(
+            ImmutableList.of(EMPTY_NAME, TEST_ZONE_A, TEST_ZONE_B),
+            ImmutableList.of(EMPTY_VALUE, TEST_ZONE_A, TEST_ZONE_B));
+    ListBoxModel result =
+        descriptor.doFillZoneItems(jenkins, null, TEST_PROJECT_ID, TEST_CREDENTIALS_ID);
+    assertNotNull(result);
+    assertListBoxModelEquals(expected, result);
+    assertValueSelected(result, TEST_ZONE_A);
+  }
+
+  @Test
+  public void testDoFillZoneItemsWithValidArgumentsAndPreviousValue() {
+    initZones(ImmutableList.of(TEST_ZONE_A, TEST_ZONE_B));
+    ListBoxModel expected =
+        initExpected(
+            ImmutableList.of(EMPTY_NAME, TEST_ZONE_A, TEST_ZONE_B),
+            ImmutableList.of(EMPTY_VALUE, TEST_ZONE_A, TEST_ZONE_B));
+    ListBoxModel result =
+        descriptor.doFillZoneItems(jenkins, TEST_ZONE_B, TEST_PROJECT_ID, TEST_CREDENTIALS_ID);
+    assertNotNull(result);
+    assertListBoxModelEquals(expected, result);
+    assertValueSelected(result, TEST_ZONE_B);
   }
 
   @Test
   public void testDoFillZoneItemsEmptyWithValidArgumentsNoZones() {
-    testDoFillZoneItems(
-        TEST_PROJECT_ID,
-        TEST_CREDENTIALS_ID,
-        ImmutableList.of(),
-        null,
-        ImmutableList.of(EMPTY_NAME),
-        ImmutableList.of(EMPTY_VALUE));
+    ListBoxModel expected =
+        initExpected(ImmutableList.of(EMPTY_NAME), ImmutableList.of(EMPTY_VALUE));
+    ListBoxModel result =
+        descriptor.doFillZoneItems(jenkins, null, TEST_PROJECT_ID, TEST_CREDENTIALS_ID);
+    assertNotNull(result);
+    assertListBoxModelEquals(expected, result);
   }
 
   @Test
   public void testDoFillZoneItemsErrorMessageWithAbortException() {
-    testDoFillZoneItems(
-        TEST_PROJECT_ID,
-        ERROR_CREDENTIALS_ID,
-        ImmutableList.of(),
-        null,
-        ImmutableList.of(Messages.KubernetesEngineBuilder_CredentialAuthFailed()),
-        ImmutableList.of(EMPTY_VALUE));
+    initZones(ImmutableList.of(TEST_ZONE_A));
+    ListBoxModel expected =
+        initExpected(
+            ImmutableList.of(Messages.KubernetesEngineBuilder_CredentialAuthFailed()),
+            ImmutableList.of(EMPTY_VALUE));
+    ListBoxModel result =
+        descriptor.doFillZoneItems(jenkins, null, TEST_PROJECT_ID, ERROR_CREDENTIALS_ID);
+    assertNotNull(result);
+    assertListBoxModelEquals(expected, result);
   }
 
   @Test
   public void testDoFillZoneItemsErrorMessageWithIOException() {
-    testDoFillZoneItems(
-        ERROR_PROJECT_ID,
-        TEST_CREDENTIALS_ID,
-        ImmutableList.of(),
-        null,
-        ImmutableList.of(Messages.KubernetesEngineBuilder_ZoneFillError()),
-        ImmutableList.of(EMPTY_VALUE));
+    initZones(ImmutableList.of(TEST_ZONE_A));
+    ListBoxModel expected =
+        initExpected(
+            ImmutableList.of(Messages.KubernetesEngineBuilder_ZoneFillError()),
+            ImmutableList.of(EMPTY_VALUE));
+    ListBoxModel result =
+        descriptor.doFillZoneItems(jenkins, null, ERROR_PROJECT_ID, TEST_CREDENTIALS_ID);
+    assertNotNull(result);
+    assertListBoxModelEquals(expected, result);
   }
 
   @Test
@@ -360,6 +432,124 @@ public class KubernetesEngineBuilderTest {
     assertEquals(FormValidation.ok(), result);
   }
 
+  @Test
+  public void testDoFillClusterNameItemsEmptyWithEmptyCredentialsId() {
+    initClusters(ImmutableList.of(TEST_CLUSTER));
+    ListBoxModel expected =
+        initExpected(ImmutableList.of(EMPTY_NAME), ImmutableList.of(EMPTY_VALUE));
+    ListBoxModel result =
+        descriptor.doFillClusterNameItems(jenkins, null, null, TEST_PROJECT_ID, TEST_ZONE_A);
+    assertNotNull(result);
+    assertListBoxModelEquals(expected, result);
+  }
+
+  @Test
+  public void testDoFillClusterNameItemsEmptyWithEmptyProjectId() {
+    initClusters(ImmutableList.of(TEST_CLUSTER));
+    ListBoxModel expected =
+        initExpected(ImmutableList.of(EMPTY_NAME), ImmutableList.of(EMPTY_VALUE));
+    ListBoxModel result =
+        descriptor.doFillClusterNameItems(jenkins, null, TEST_CREDENTIALS_ID, null, TEST_ZONE_A);
+    assertNotNull(result);
+    assertListBoxModelEquals(expected, result);
+  }
+
+  @Test
+  public void testDoFillClusterNameItemsEmptyWithEmptyZone() {
+    initClusters(ImmutableList.of(TEST_CLUSTER));
+    ListBoxModel expected =
+        initExpected(ImmutableList.of(EMPTY_NAME), ImmutableList.of(EMPTY_VALUE));
+    ListBoxModel result =
+        descriptor.doFillClusterNameItems(
+            jenkins, null, TEST_CREDENTIALS_ID, TEST_PROJECT_ID, null);
+    assertNotNull(result);
+    assertListBoxModelEquals(expected, result);
+  }
+
+  @Test
+  public void testDoFillClusterNameItemsErrorMessageWithAbortException() {
+    initClusters(ImmutableList.of(TEST_CLUSTER));
+    ListBoxModel expected =
+        initExpected(
+            ImmutableList.of(Messages.KubernetesEngineBuilder_CredentialAuthFailed()),
+            ImmutableList.of(EMPTY_VALUE));
+    ListBoxModel result =
+        descriptor.doFillClusterNameItems(
+            jenkins, null, ERROR_CREDENTIALS_ID, TEST_PROJECT_ID, TEST_ZONE_A);
+    assertNotNull(result);
+    assertListBoxModelEquals(expected, result);
+  }
+
+  @Test
+  public void testDoFillClusterNameItemsEmptyWithValidInputsNoClusters() {
+    ListBoxModel expected =
+        initExpected(ImmutableList.of(EMPTY_NAME), ImmutableList.of(EMPTY_VALUE));
+    ListBoxModel result =
+        descriptor.doFillClusterNameItems(
+            jenkins, null, TEST_CREDENTIALS_ID, TEST_PROJECT_ID, TEST_ZONE_A);
+    assertNotNull(result);
+    assertListBoxModelEquals(expected, result);
+  }
+
+  @Test
+  public void testDoFillClusterNameItemsWithValidInputsOneCluster() {
+    initClusters(ImmutableList.of(TEST_CLUSTER));
+    ListBoxModel expected =
+        initExpected(
+            ImmutableList.of(EMPTY_NAME, TEST_CLUSTER),
+            ImmutableList.of(EMPTY_VALUE, TEST_CLUSTER));
+    ListBoxModel result =
+        descriptor.doFillClusterNameItems(
+            jenkins, null, TEST_CREDENTIALS_ID, TEST_PROJECT_ID, TEST_ZONE_A);
+    assertNotNull(result);
+    assertListBoxModelEquals(expected, result);
+    assertValueSelected(result, TEST_CLUSTER);
+  }
+
+  @Test
+  public void testDoFillClusterNameItemsWithValidInputsMultipleClusters() {
+    initClusters(ImmutableList.of(OTHER_CLUSTER, TEST_CLUSTER));
+    ListBoxModel expected =
+        initExpected(
+            ImmutableList.of(EMPTY_NAME, OTHER_CLUSTER, TEST_CLUSTER),
+            ImmutableList.of(EMPTY_VALUE, OTHER_CLUSTER, TEST_CLUSTER));
+    ListBoxModel result =
+        descriptor.doFillClusterNameItems(
+            jenkins, null, TEST_CREDENTIALS_ID, TEST_PROJECT_ID, TEST_ZONE_A);
+    assertNotNull(result);
+    assertListBoxModelEquals(expected, result);
+    assertValueSelected(result, OTHER_CLUSTER);
+  }
+
+  @Test
+  public void testDoFillClusterNameItemsWithValidInputsMultipleClustersAndPreviousValue() {
+    initClusters(ImmutableList.of(OTHER_CLUSTER, TEST_CLUSTER));
+    ListBoxModel expected =
+        initExpected(
+            ImmutableList.of(EMPTY_NAME, OTHER_CLUSTER, TEST_CLUSTER),
+            ImmutableList.of(EMPTY_VALUE, OTHER_CLUSTER, TEST_CLUSTER));
+    ListBoxModel result =
+        descriptor.doFillClusterNameItems(
+            jenkins, TEST_CLUSTER, TEST_CREDENTIALS_ID, TEST_PROJECT_ID, TEST_ZONE_A);
+    assertNotNull(result);
+    assertListBoxModelEquals(expected, result);
+    assertValueSelected(result, TEST_CLUSTER);
+  }
+
+  @Test
+  public void testDoFillClusterNameItemsErrorMessageWithIOException() {
+    initClusters(ImmutableList.of(TEST_CLUSTER));
+    ListBoxModel expected =
+        initExpected(
+            ImmutableList.of(Messages.KubernetesEngineBuilder_ClusterFillError()),
+            ImmutableList.of(EMPTY_VALUE));
+    ListBoxModel result =
+        descriptor.doFillClusterNameItems(
+            jenkins, null, TEST_CREDENTIALS_ID, ERROR_PROJECT_ID, TEST_ZONE_A);
+    assertNotNull(result);
+    assertListBoxModelEquals(expected, result);
+  }
+
   private static void initZones(List<String> zoneNames) {
     zoneNames.forEach(z -> listOfZones.add(new Zone().setName(z)));
   }
@@ -368,55 +558,29 @@ public class KubernetesEngineBuilderTest {
     projectNames.forEach(p -> listOfProjects.add(new Project().setProjectId(p)));
   }
 
-  private static void testDoFillZoneItems(
-      String projectId,
-      String credentialsId,
-      List<String> init,
-      String expectedSelected,
-      List<String> expectedNames,
-      List<String> expectedValues) {
-    initZones(init);
-    testFillItemsResult(
-        expectedNames,
-        expectedValues,
-        expectedSelected,
-        descriptor.doFillZoneItems(jenkins, projectId, credentialsId));
+  private static void initClusters(List<String> clusterNames) {
+    clusterNames.forEach(c -> listOfClusters.add(new Cluster().setName(c)));
   }
 
-  private static void testDoFillProjectIDItems(
-      String credentialsId,
-      List<String> init,
-      String expectedSelected,
-      List<String> expectedNames,
-      List<String> expectedValues) {
-    initProjects(init);
-    assertEquals(
-        String.format(
-            "expectedNames (%d items) and expectedValues(%d items) must have the same size.",
-            expectedNames.size(), expectedValues.size()),
-        expectedNames.size(),
-        expectedValues.size());
-    testFillItemsResult(
-        expectedNames,
-        expectedValues,
-        expectedSelected,
-        descriptor.doFillProjectIdItems(jenkins, credentialsId));
-  }
-
-  private static void testFillItemsResult(
-      List<String> expectedNames,
-      List<String> expectedValues,
-      String expectedSelected,
-      ListBoxModel items) {
-    assertNotNull(items);
-    assertEquals(expectedNames.size(), items.size());
-
+  private static ListBoxModel initExpected(
+      List<String> expectedNames, List<String> expectedValues) {
+    ListBoxModel expected = new ListBoxModel();
     for (int i = 0; i < expectedNames.size(); i++) {
-      assertEquals(expectedNames.get(i), items.get(i).name);
-      assertEquals(expectedValues.get(i), items.get(i).value);
-      if (!Strings.isNullOrEmpty(expectedSelected) && expectedSelected.equals(items.get(i).value)) {
-        assertTrue(items.get(i).selected);
-      }
+      expected.add(expectedNames.get(i), expectedValues.get(i));
     }
+    return expected;
+  }
+
+  private static void assertListBoxModelEquals(ListBoxModel expected, ListBoxModel result) {
+    for (int i = 0; i < expected.size(); i++) {
+      assertEquals(expected.get(i).name, result.get(i).name);
+      assertEquals(expected.get(i).value, result.get(i).value);
+    }
+  }
+
+  private static void assertValueSelected(ListBoxModel result, String expectedValue) {
+    Optional<Option> expectedOption =
+        result.stream().filter(i -> expectedValue.equals(i.value)).findFirst();
+    expectedOption.ifPresent(option -> assertTrue(option.selected));
   }
 }

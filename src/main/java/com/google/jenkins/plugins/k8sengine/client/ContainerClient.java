@@ -18,7 +18,10 @@ import com.google.api.services.container.Container;
 import com.google.api.services.container.model.Cluster;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableList;
 import java.io.IOException;
+import java.util.Comparator;
+import java.util.List;
 
 /**
  * Client for communicating with the Google GKE API.
@@ -42,9 +45,9 @@ public class ContainerClient {
   /**
    * Retrieves a {@link Cluster} from the container client.
    *
-   * @param projectId The ID of the project the clusters reside in.
-   * @param zone The location of the clusters.
-   * @param cluster The name of the cluster b
+   * @param projectId The ID of the project the cluster resides in.
+   * @param zone The location of the cluster.
+   * @param cluster The name of the cluster.
    * @return The retrieved {@link Cluster}.
    * @throws IOException When an error occurred attempting to get the cluster.
    */
@@ -53,5 +56,25 @@ public class ContainerClient {
     Preconditions.checkArgument(!Strings.isNullOrEmpty(zone));
     Preconditions.checkArgument(!Strings.isNullOrEmpty(cluster));
     return container.projects().zones().clusters().get(projectId, zone, cluster).execute();
+  }
+
+  /**
+   * Retrieves a list of {@link Cluster} objects from the container client.
+   *
+   * @param projectId The ID of the project the clusters resides.
+   * @param zone The location of the clusters.
+   * @return The retrieved list of {@link Cluster} objects.
+   * @throws IOException When an error occurred attempting to get the cluster.
+   */
+  public List<Cluster> listClusters(String projectId, String zone) throws IOException {
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(projectId));
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(zone));
+    List<Cluster> clusters =
+        container.projects().zones().clusters().list(projectId, zone).execute().getClusters();
+    if (clusters == null) {
+      return ImmutableList.of();
+    }
+    clusters.sort(Comparator.comparing(Cluster::getName));
+    return ImmutableList.copyOf(clusters);
   }
 }
