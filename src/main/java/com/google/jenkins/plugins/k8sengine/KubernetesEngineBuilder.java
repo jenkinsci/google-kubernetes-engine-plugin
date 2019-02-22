@@ -268,12 +268,48 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
       }
     }
 
-    public FormValidation doCheckClusterName(@QueryParameter String value) {
-      if (Strings.isNullOrEmpty(value)) {
+    public FormValidation doCheckClusterName(
+        @AncestorInPath Jenkins context,
+        @QueryParameter("clusterName") final String clusterName,
+        @QueryParameter("credentialsId") final String credentialsId,
+        @QueryParameter("projectId") final String projectId,
+        @QueryParameter("zone") final String zone) {
+      if (Strings.isNullOrEmpty(credentialsId) && Strings.isNullOrEmpty(clusterName)) {
         return FormValidation.error(Messages.KubernetesEngineBuilder_ClusterRequired());
+      } else if (Strings.isNullOrEmpty(credentialsId)) {
+        return FormValidation.error(Messages.KubernetesEngineBuilder_ClusterCredentialIDRequired());
       }
 
-      // TODO(stephenshank): check to ensure the cluster exists within GKE cluster
+      ClientFactory clientFactory;
+      try {
+        clientFactory = getClientFactory(context, credentialsId);
+      } catch (AbortException ae) {
+        return FormValidation.error(Messages.KubernetesEngineBuilder_CredentialAuthFailed());
+      }
+
+      if ((Strings.isNullOrEmpty(projectId) || Strings.isNullOrEmpty(zone))
+          && Strings.isNullOrEmpty(clusterName)) {
+        return FormValidation.error(Messages.KubernetesEngineBuilder_ClusterRequired());
+      } else if (Strings.isNullOrEmpty(projectId)) {
+        return FormValidation.error(Messages.KubernetesEngineBuilder_ClusterProjectIDRequired());
+      } else if (Strings.isNullOrEmpty(zone)) {
+        return FormValidation.error(Messages.KubernetesEngineBuilder_ClusterZoneRequired());
+      }
+
+      try {
+        ContainerClient client = clientFactory.containerClient();
+        List<Cluster> clusters = client.listClusters(projectId, zone);
+        if (Strings.isNullOrEmpty(clusterName)) {
+          return FormValidation.error(Messages.KubernetesEngineBuilder_ClusterRequired());
+        }
+        Optional<Cluster> cluster =
+            clusters.stream().filter(c -> clusterName.equals(c.getName())).findFirst();
+        if (!cluster.isPresent()) {
+          return FormValidation.error(Messages.KubernetesEngineBuilder_ClusterNotInProjectZone());
+        }
+      } catch (IOException ioe) {
+        return FormValidation.error(Messages.KubernetesEngineBuilder_ClusterVerificationError());
+      }
       return FormValidation.ok();
     }
 
@@ -287,8 +323,8 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
     public ListBoxModel doFillZoneItems(
         @AncestorInPath Jenkins context,
         @QueryParameter("zone") final String zone,
-        @QueryParameter("projectId") final String projectId,
-        @QueryParameter("credentialsId") final String credentialsId) {
+        @QueryParameter("credentialsId") final String credentialsId,
+        @QueryParameter("projectId") final String projectId) {
       ListBoxModel items = new ListBoxModel();
       items.add(EMPTY_NAME, EMPTY_VALUE);
       if (Strings.isNullOrEmpty(projectId) || Strings.isNullOrEmpty(credentialsId)) {
@@ -327,13 +363,12 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
     public FormValidation doCheckZone(
         @AncestorInPath Jenkins context,
         @QueryParameter("zone") String zone,
-        @QueryParameter("projectId") String projectId,
-        @QueryParameter("credentialsId") String credentialsId) {
-      if (Strings.isNullOrEmpty(zone)) {
+        @QueryParameter("credentialsId") String credentialsId,
+        @QueryParameter("projectId") String projectId) {
+      if (Strings.isNullOrEmpty(credentialsId) && Strings.isNullOrEmpty(zone)) {
         return FormValidation.error(Messages.KubernetesEngineBuilder_ZoneRequired());
-      } else if (Strings.isNullOrEmpty(projectId) || Strings.isNullOrEmpty(credentialsId)) {
-        return FormValidation.error(
-            Messages.KubernetesEngineBuilder_ZoneProjectIdCredentialRequired());
+      } else if (Strings.isNullOrEmpty(credentialsId)) {
+        return FormValidation.error(Messages.KubernetesEngineBuilder_ZoneCredentialIDRequired());
       }
 
       ClientFactory clientFactory;
@@ -343,9 +378,19 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
         return FormValidation.error(Messages.KubernetesEngineBuilder_CredentialAuthFailed());
       }
 
+      if (Strings.isNullOrEmpty(projectId) && Strings.isNullOrEmpty(zone)) {
+        return FormValidation.error(Messages.KubernetesEngineBuilder_ZoneRequired());
+      } else if (Strings.isNullOrEmpty(projectId)) {
+        return FormValidation.error(Messages.KubernetesEngineBuilder_ZoneProjectIDRequired());
+      }
+
       try {
         ComputeClient compute = clientFactory.computeClient();
         List<Zone> zones = compute.getZones(projectId);
+        if (Strings.isNullOrEmpty(zone)) {
+          return FormValidation.error(Messages.KubernetesEngineBuilder_ZoneRequired());
+        }
+
         Optional<Zone> matchingZone =
             zones.stream().filter(z -> zone.equalsIgnoreCase(z.getName())).findFirst();
         if (!matchingZone.isPresent()) {
@@ -418,7 +463,7 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
         @AncestorInPath Jenkins context,
         @QueryParameter("projectId") String projectId,
         @QueryParameter("credentialsId") String credentialsId) {
-      if (Strings.isNullOrEmpty(projectId)) {
+      if (Strings.isNullOrEmpty(credentialsId) && Strings.isNullOrEmpty(projectId)) {
         return FormValidation.error(Messages.KubernetesEngineBuilder_ProjectIDRequired());
       } else if (Strings.isNullOrEmpty(credentialsId)) {
         return FormValidation.error(Messages.KubernetesEngineBuilder_ProjectCredentialIDRequired());
@@ -434,6 +479,10 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
       try {
         CloudResourceManagerClient client = clientFactory.cloudResourceManagerClient();
         List<Project> projects = client.getAccountProjects();
+        if (Strings.isNullOrEmpty(projectId)) {
+          return FormValidation.error(Messages.KubernetesEngineBuilder_ProjectIDRequired());
+        }
+
         Optional<Project> matchingProject =
             projects.stream().filter(p -> projectId.equals(p.getProjectId())).findFirst();
         if (!matchingProject.isPresent()) {
