@@ -115,6 +115,10 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
     this.credentialsId = credentialsId;
   }
 
+  public String getManifestPattern() {
+    return this.manifestPattern;
+  }
+
   @DataBoundSetter
   public void setManifestPattern(String manifestPattern) {
     Preconditions.checkArgument(!Strings.isNullOrEmpty(manifestPattern));
