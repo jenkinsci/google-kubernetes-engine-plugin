@@ -59,16 +59,16 @@ public class KubernetesEngineBuilderTest {
   private static final String ERROR_CREDENTIALS_ID = "error-credentials-id";
   private static final String TEST_ERROR_MESSAGE = "error";
 
-  private static List<Zone> listOfZones;
   private static List<Project> listOfProjects;
+  private static List<Zone> listOfZones;
   private static List<Cluster> listOfClusters;
   private static Jenkins jenkins;
   private static KubernetesEngineBuilder.DescriptorImpl descriptor;
 
   @BeforeClass
   public static void init() throws IOException {
-    listOfZones = new ArrayList<>();
     listOfProjects = new ArrayList<>();
+    listOfZones = new ArrayList<>();
     listOfClusters = new ArrayList<>();
     descriptor = Mockito.spy(KubernetesEngineBuilder.DescriptorImpl.class);
     jenkins = Mockito.mock(Jenkins.class);
@@ -119,8 +119,8 @@ public class KubernetesEngineBuilderTest {
 
   @Before
   public void before() {
-    listOfZones.clear();
     listOfProjects.clear();
+    listOfZones.clear();
     listOfClusters.clear();
   }
 
@@ -666,12 +666,12 @@ public class KubernetesEngineBuilderTest {
     assertEquals(Messages.KubernetesEngineBuilder_ClusterVerificationError(), result.getMessage());
   }
 
-  private static void initZones(List<String> zoneNames) {
-    zoneNames.forEach(z -> listOfZones.add(new Zone().setName(z)));
-  }
-
   private static void initProjects(List<String> projectNames) {
     projectNames.forEach(p -> listOfProjects.add(new Project().setProjectId(p)));
+  }
+
+  private static void initZones(List<String> zoneNames) {
+    zoneNames.forEach(z -> listOfZones.add(new Zone().setName(z)));
   }
 
   private static void initClusters(List<String> clusterNames) {

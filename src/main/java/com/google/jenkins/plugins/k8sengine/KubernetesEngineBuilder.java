@@ -71,10 +71,10 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
   static final String EMPTY_NAME = "- none -";
   static final String EMPTY_VALUE = "";
 
-  private String projectId;
-  private String clusterName;
   private String credentialsId;
+  private String projectId;
   private String zone;
+  private String clusterName;
   private String manifestPattern;
   private boolean verifyDeployments;
   private boolean verifyServices;
@@ -85,10 +85,14 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
   @DataBoundConstructor
   public KubernetesEngineBuilder() {}
 
+  public String getCredentialsId() {
+    return this.credentialsId;
+  }
+
   @DataBoundSetter
-  public void setProjectId(String projectId) {
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(projectId));
-    this.projectId = projectId;
+  public void setCredentialsId(String credentialsId) {
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(credentialsId));
+    this.credentialsId = credentialsId;
   }
 
   public String getProjectId() {
@@ -96,23 +100,29 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
   }
 
   @DataBoundSetter
-  public void setClusterName(String clusterName) {
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(clusterName));
-    this.clusterName = clusterName;
+  public void setProjectId(String projectId) {
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(projectId));
+    this.projectId = projectId;
+  }
+
+  public String getZone() {
+    return this.zone;
+  }
+
+  @DataBoundSetter
+  public void setZone(String zone) {
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(zone));
+    this.zone = zone;
   }
 
   public String getClusterName() {
     return this.clusterName;
   }
 
-  public String getCredentialsId() {
-    return credentialsId;
-  }
-
   @DataBoundSetter
-  public void setCredentialsId(String credentialsId) {
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(credentialsId));
-    this.credentialsId = credentialsId;
+  public void setClusterName(String clusterName) {
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(clusterName));
+    this.clusterName = clusterName;
   }
 
   public String getManifestPattern() {
@@ -123,15 +133,6 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
   public void setManifestPattern(String manifestPattern) {
     Preconditions.checkArgument(!Strings.isNullOrEmpty(manifestPattern));
     this.manifestPattern = manifestPattern;
-  }
-
-  public String getZone() {
-    return this.zone;
-  }
-
-  @DataBoundSetter
-  public void setZone(String zone) {
-    this.zone = zone;
   }
 
   @DataBoundSetter
@@ -229,6 +230,217 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
       return this.clientFactory;
     }
 
+    public ListBoxModel doFillCredentialsIdItems(@AncestorInPath Jenkins context) {
+      if (context == null || !context.hasPermission(Item.CONFIGURE)) {
+        return new StandardListBoxModel();
+      }
+
+      return new StandardListBoxModel()
+          .includeEmptyValue()
+          .includeMatchingAs(
+              ACL.SYSTEM,
+              context,
+              StandardCredentials.class,
+              Collections.<DomainRequirement>emptyList(),
+              CredentialsMatchers.instanceOf(GoogleOAuth2Credentials.class));
+    }
+
+    public FormValidation doCheckCredentialsId(
+        @QueryParameter("credentialsId") final String credentialsId,
+        @QueryParameter("projectId") final String projectId) {
+      if (credentialsId.isEmpty()) {
+        return FormValidation.error(Messages.KubernetesEngineBuilder_NoCredential());
+      }
+
+      if (projectId.isEmpty()) {
+        return FormValidation.error(Messages.KubernetesEngineBuilder_CredentialProjectIDRequired());
+      }
+
+      try {
+        getContainerClient(credentialsId);
+      } catch (AbortException | RuntimeException e) {
+        return FormValidation.error(Messages.KubernetesEngineBuilder_CredentialAuthFailed());
+      }
+
+      return FormValidation.ok();
+    }
+
+    public ListBoxModel doFillProjectIdItems(
+        @AncestorInPath Jenkins context,
+        @QueryParameter("projectId") final String projectId,
+        @QueryParameter("credentialsId") final String credentialsId) {
+      ListBoxModel items = new ListBoxModel();
+      items.add(EMPTY_NAME, EMPTY_VALUE);
+      if (Strings.isNullOrEmpty(credentialsId)) {
+        return items;
+      }
+
+      ClientFactory clientFactory;
+      try {
+        clientFactory = this.getClientFactory(context, credentialsId);
+      } catch (AbortException ae) {
+        LOGGER.log(Level.SEVERE, Messages.KubernetesEngineBuilder_CredentialAuthFailed(), ae);
+        items.clear();
+        items.add(Messages.KubernetesEngineBuilder_CredentialAuthFailed(), EMPTY_VALUE);
+        return items;
+      }
+
+      String defaultProjectId = clientFactory.getDefaultProjectId();
+      try {
+        CloudResourceManagerClient client = clientFactory.cloudResourceManagerClient();
+        List<Project> projects = client.getAccountProjects();
+
+        if (projects.isEmpty()) {
+          return items;
+        }
+
+        projects
+            .stream()
+            .filter(p -> !p.getProjectId().equals(defaultProjectId))
+            .forEach(p -> items.add(p.getProjectId()));
+
+        if (Strings.isNullOrEmpty(defaultProjectId)) {
+          selectOption(items, projectId);
+          return items;
+        }
+
+        if (projects.size() == items.size() && Strings.isNullOrEmpty(projectId)) {
+          items.add(new Option(defaultProjectId, defaultProjectId, true));
+        } else {
+          // Add defaultProjectId anyway, but select the appropriate projectID based on
+          // the previously entered projectID
+          items.add(defaultProjectId);
+          selectOption(items, projectId);
+        }
+        return items;
+      } catch (IOException ioe) {
+        LOGGER.log(Level.SEVERE, Messages.KubernetesEngineBuilder_ProjectIDFillError(), ioe);
+        items.clear();
+        items.add(Messages.KubernetesEngineBuilder_ProjectIDFillError(), EMPTY_VALUE);
+        return items;
+      }
+    }
+
+    public FormValidation doCheckProjectId(
+        @AncestorInPath Jenkins context,
+        @QueryParameter("projectId") final String projectId,
+        @QueryParameter("credentialsId") final String credentialsId) {
+      if (Strings.isNullOrEmpty(credentialsId) && Strings.isNullOrEmpty(projectId)) {
+        return FormValidation.error(Messages.KubernetesEngineBuilder_ProjectIDRequired());
+      } else if (Strings.isNullOrEmpty(credentialsId)) {
+        return FormValidation.error(Messages.KubernetesEngineBuilder_ProjectCredentialIDRequired());
+      }
+
+      ClientFactory clientFactory;
+      try {
+        clientFactory = getClientFactory(context, credentialsId);
+      } catch (AbortException ae) {
+        return FormValidation.error(Messages.KubernetesEngineBuilder_CredentialAuthFailed());
+      }
+
+      try {
+        CloudResourceManagerClient client = clientFactory.cloudResourceManagerClient();
+        List<Project> projects = client.getAccountProjects();
+        if (Strings.isNullOrEmpty(projectId)) {
+          return FormValidation.error(Messages.KubernetesEngineBuilder_ProjectIDRequired());
+        }
+
+        Optional<Project> matchingProject =
+            projects.stream().filter(p -> projectId.equals(p.getProjectId())).findFirst();
+        if (!matchingProject.isPresent()) {
+          return FormValidation.error(
+              Messages.KubernetesEngineBuilder_ProjectIDNotUnderCredential());
+        }
+      } catch (IOException ioe) {
+        return FormValidation.error(Messages.KubernetesEngineBuilder_ProjectIDVerificationError());
+      }
+
+      return FormValidation.ok();
+    }
+
+    public ListBoxModel doFillZoneItems(
+        @AncestorInPath Jenkins context,
+        @QueryParameter("zone") final String zone,
+        @QueryParameter("credentialsId") final String credentialsId,
+        @QueryParameter("projectId") final String projectId) {
+      ListBoxModel items = new ListBoxModel();
+      items.add(EMPTY_NAME, EMPTY_VALUE);
+      if (Strings.isNullOrEmpty(projectId) || Strings.isNullOrEmpty(credentialsId)) {
+        return items;
+      }
+
+      ClientFactory clientFactory;
+      try {
+        clientFactory = getClientFactory(context, credentialsId);
+      } catch (AbortException ae) {
+        LOGGER.log(Level.SEVERE, Messages.KubernetesEngineBuilder_CredentialAuthFailed(), ae);
+        items.clear();
+        items.add(Messages.KubernetesEngineBuilder_CredentialAuthFailed(), EMPTY_VALUE);
+        return items;
+      }
+
+      try {
+        ComputeClient compute = clientFactory.computeClient();
+        List<Zone> zones = compute.getZones(projectId);
+
+        if (zones.isEmpty()) {
+          return items;
+        }
+
+        zones.forEach(z -> items.add(z.getName()));
+        selectOption(items, zone);
+        return items;
+      } catch (IOException ioe) {
+        LOGGER.log(Level.SEVERE, Messages.KubernetesEngineBuilder_ZoneFillError(), ioe);
+        items.clear();
+        items.add(Messages.KubernetesEngineBuilder_ZoneFillError(), EMPTY_VALUE);
+        return items;
+      }
+    }
+
+    public FormValidation doCheckZone(
+        @AncestorInPath Jenkins context,
+        @QueryParameter("zone") final String zone,
+        @QueryParameter("credentialsId") final String credentialsId,
+        @QueryParameter("projectId") final String projectId) {
+      if (Strings.isNullOrEmpty(credentialsId) && Strings.isNullOrEmpty(zone)) {
+        return FormValidation.error(Messages.KubernetesEngineBuilder_ZoneRequired());
+      } else if (Strings.isNullOrEmpty(credentialsId)) {
+        return FormValidation.error(Messages.KubernetesEngineBuilder_ZoneCredentialIDRequired());
+      }
+
+      ClientFactory clientFactory;
+      try {
+        clientFactory = getClientFactory(context, credentialsId);
+      } catch (AbortException ae) {
+        return FormValidation.error(Messages.KubernetesEngineBuilder_CredentialAuthFailed());
+      }
+
+      if (Strings.isNullOrEmpty(projectId) && Strings.isNullOrEmpty(zone)) {
+        return FormValidation.error(Messages.KubernetesEngineBuilder_ZoneRequired());
+      } else if (Strings.isNullOrEmpty(projectId)) {
+        return FormValidation.error(Messages.KubernetesEngineBuilder_ZoneProjectIDRequired());
+      }
+
+      try {
+        ComputeClient compute = clientFactory.computeClient();
+        List<Zone> zones = compute.getZones(projectId);
+        if (Strings.isNullOrEmpty(zone)) {
+          return FormValidation.error(Messages.KubernetesEngineBuilder_ZoneRequired());
+        }
+
+        Optional<Zone> matchingZone =
+            zones.stream().filter(z -> zone.equalsIgnoreCase(z.getName())).findFirst();
+        if (!matchingZone.isPresent()) {
+          return FormValidation.error(Messages.KubernetesEngineBuilder_ZoneNotInProject());
+        }
+      } catch (IOException ioe) {
+        return FormValidation.error(Messages.KubernetesEngineBuilder_ZoneVerificationError());
+      }
+
+      return FormValidation.ok();
+    }
+
     public ListBoxModel doFillClusterNameItems(
         @AncestorInPath Jenkins context,
         @QueryParameter("clusterName") final String clusterName,
@@ -317,221 +529,11 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
       return FormValidation.ok();
     }
 
-    public FormValidation doCheckManifestPattern(@QueryParameter String value) {
-      if (Strings.isNullOrEmpty(value)) {
+    public FormValidation doCheckManifestPattern(
+        @QueryParameter("manifestPattern") final String manifestPattern) {
+      if (Strings.isNullOrEmpty(manifestPattern)) {
         return FormValidation.error(Messages.KubernetesEngineBuilder_ManifestRequired());
       }
-      return FormValidation.ok();
-    }
-
-    public ListBoxModel doFillZoneItems(
-        @AncestorInPath Jenkins context,
-        @QueryParameter("zone") final String zone,
-        @QueryParameter("credentialsId") final String credentialsId,
-        @QueryParameter("projectId") final String projectId) {
-      ListBoxModel items = new ListBoxModel();
-      items.add(EMPTY_NAME, EMPTY_VALUE);
-      if (Strings.isNullOrEmpty(projectId) || Strings.isNullOrEmpty(credentialsId)) {
-        return items;
-      }
-
-      ClientFactory clientFactory;
-      try {
-        clientFactory = getClientFactory(context, credentialsId);
-      } catch (AbortException ae) {
-        LOGGER.log(Level.SEVERE, Messages.KubernetesEngineBuilder_CredentialAuthFailed(), ae);
-        items.clear();
-        items.add(Messages.KubernetesEngineBuilder_CredentialAuthFailed(), EMPTY_VALUE);
-        return items;
-      }
-
-      try {
-        ComputeClient compute = clientFactory.computeClient();
-        List<Zone> zones = compute.getZones(projectId);
-
-        if (zones.isEmpty()) {
-          return items;
-        }
-
-        zones.forEach(z -> items.add(z.getName()));
-        selectOption(items, zone);
-        return items;
-      } catch (IOException ioe) {
-        LOGGER.log(Level.SEVERE, Messages.KubernetesEngineBuilder_ZoneFillError(), ioe);
-        items.clear();
-        items.add(Messages.KubernetesEngineBuilder_ZoneFillError(), EMPTY_VALUE);
-        return items;
-      }
-    }
-
-    public FormValidation doCheckZone(
-        @AncestorInPath Jenkins context,
-        @QueryParameter("zone") String zone,
-        @QueryParameter("credentialsId") String credentialsId,
-        @QueryParameter("projectId") String projectId) {
-      if (Strings.isNullOrEmpty(credentialsId) && Strings.isNullOrEmpty(zone)) {
-        return FormValidation.error(Messages.KubernetesEngineBuilder_ZoneRequired());
-      } else if (Strings.isNullOrEmpty(credentialsId)) {
-        return FormValidation.error(Messages.KubernetesEngineBuilder_ZoneCredentialIDRequired());
-      }
-
-      ClientFactory clientFactory;
-      try {
-        clientFactory = getClientFactory(context, credentialsId);
-      } catch (AbortException ae) {
-        return FormValidation.error(Messages.KubernetesEngineBuilder_CredentialAuthFailed());
-      }
-
-      if (Strings.isNullOrEmpty(projectId) && Strings.isNullOrEmpty(zone)) {
-        return FormValidation.error(Messages.KubernetesEngineBuilder_ZoneRequired());
-      } else if (Strings.isNullOrEmpty(projectId)) {
-        return FormValidation.error(Messages.KubernetesEngineBuilder_ZoneProjectIDRequired());
-      }
-
-      try {
-        ComputeClient compute = clientFactory.computeClient();
-        List<Zone> zones = compute.getZones(projectId);
-        if (Strings.isNullOrEmpty(zone)) {
-          return FormValidation.error(Messages.KubernetesEngineBuilder_ZoneRequired());
-        }
-
-        Optional<Zone> matchingZone =
-            zones.stream().filter(z -> zone.equalsIgnoreCase(z.getName())).findFirst();
-        if (!matchingZone.isPresent()) {
-          return FormValidation.error(Messages.KubernetesEngineBuilder_ZoneNotInProject());
-        }
-      } catch (IOException ioe) {
-        return FormValidation.error(Messages.KubernetesEngineBuilder_ZoneVerificationError());
-      }
-
-      return FormValidation.ok();
-    }
-
-    public ListBoxModel doFillProjectIdItems(
-        @AncestorInPath Jenkins context,
-        @QueryParameter("projectId") final String projectId,
-        @QueryParameter("credentialsId") final String credentialsId) {
-      ListBoxModel items = new ListBoxModel();
-      items.add(EMPTY_NAME, EMPTY_VALUE);
-      if (Strings.isNullOrEmpty(credentialsId)) {
-        return items;
-      }
-
-      ClientFactory clientFactory;
-      try {
-        clientFactory = this.getClientFactory(context, credentialsId);
-      } catch (AbortException ae) {
-        LOGGER.log(Level.SEVERE, Messages.KubernetesEngineBuilder_CredentialAuthFailed(), ae);
-        items.clear();
-        items.add(Messages.KubernetesEngineBuilder_CredentialAuthFailed(), EMPTY_VALUE);
-        return items;
-      }
-
-      String defaultProjectId = clientFactory.getDefaultProjectId();
-      try {
-        CloudResourceManagerClient client = clientFactory.cloudResourceManagerClient();
-        List<Project> projects = client.getAccountProjects();
-
-        if (projects.isEmpty()) {
-          return items;
-        }
-
-        projects
-            .stream()
-            .filter(p -> !p.getProjectId().equals(defaultProjectId))
-            .forEach(p -> items.add(p.getProjectId()));
-
-        if (Strings.isNullOrEmpty(defaultProjectId)) {
-          selectOption(items, projectId);
-          return items;
-        }
-
-        if (projects.size() == items.size() && Strings.isNullOrEmpty(projectId)) {
-          items.add(new Option(defaultProjectId, defaultProjectId, true));
-        } else {
-          // Add defaultProjectId anyway, but select the appropriate projectID based on
-          // the previously entered projectID
-          items.add(defaultProjectId);
-          selectOption(items, projectId);
-        }
-        return items;
-      } catch (IOException ioe) {
-        LOGGER.log(Level.SEVERE, Messages.KubernetesEngineBuilder_ProjectIDFillError(), ioe);
-        items.clear();
-        items.add(Messages.KubernetesEngineBuilder_ProjectIDFillError(), EMPTY_VALUE);
-        return items;
-      }
-    }
-
-    public FormValidation doCheckProjectId(
-        @AncestorInPath Jenkins context,
-        @QueryParameter("projectId") String projectId,
-        @QueryParameter("credentialsId") String credentialsId) {
-      if (Strings.isNullOrEmpty(credentialsId) && Strings.isNullOrEmpty(projectId)) {
-        return FormValidation.error(Messages.KubernetesEngineBuilder_ProjectIDRequired());
-      } else if (Strings.isNullOrEmpty(credentialsId)) {
-        return FormValidation.error(Messages.KubernetesEngineBuilder_ProjectCredentialIDRequired());
-      }
-
-      ClientFactory clientFactory;
-      try {
-        clientFactory = getClientFactory(context, credentialsId);
-      } catch (AbortException ae) {
-        return FormValidation.error(Messages.KubernetesEngineBuilder_CredentialAuthFailed());
-      }
-
-      try {
-        CloudResourceManagerClient client = clientFactory.cloudResourceManagerClient();
-        List<Project> projects = client.getAccountProjects();
-        if (Strings.isNullOrEmpty(projectId)) {
-          return FormValidation.error(Messages.KubernetesEngineBuilder_ProjectIDRequired());
-        }
-
-        Optional<Project> matchingProject =
-            projects.stream().filter(p -> projectId.equals(p.getProjectId())).findFirst();
-        if (!matchingProject.isPresent()) {
-          return FormValidation.error(
-              Messages.KubernetesEngineBuilder_ProjectIDNotUnderCredential());
-        }
-      } catch (IOException ioe) {
-        return FormValidation.error(Messages.KubernetesEngineBuilder_ProjectIDVerificationError());
-      }
-
-      return FormValidation.ok();
-    }
-
-    public ListBoxModel doFillCredentialsIdItems(@AncestorInPath Jenkins context) {
-      if (context == null || !context.hasPermission(Item.CONFIGURE)) {
-        return new StandardListBoxModel();
-      }
-
-      return new StandardListBoxModel()
-          .includeEmptyValue()
-          .includeMatchingAs(
-              ACL.SYSTEM,
-              context,
-              StandardCredentials.class,
-              Collections.<DomainRequirement>emptyList(),
-              CredentialsMatchers.instanceOf(GoogleOAuth2Credentials.class));
-    }
-
-    public FormValidation doCheckCredentialsId(
-        @QueryParameter("projectId") String projectId,
-        @QueryParameter("credentialsId") String credentialsId) {
-      if (credentialsId.isEmpty()) {
-        return FormValidation.error(Messages.KubernetesEngineBuilder_NoCredential());
-      }
-
-      if (projectId.isEmpty()) {
-        return FormValidation.error(Messages.KubernetesEngineBuilder_CredentialProjectIDRequired());
-      }
-
-      try {
-        getContainerClient(credentialsId);
-      } catch (AbortException | RuntimeException e) {
-        return FormValidation.error(Messages.KubernetesEngineBuilder_CredentialAuthFailed());
-      }
-
       return FormValidation.ok();
     }
   }
