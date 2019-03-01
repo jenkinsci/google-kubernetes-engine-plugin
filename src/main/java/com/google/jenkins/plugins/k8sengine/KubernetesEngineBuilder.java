@@ -246,19 +246,16 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
     }
 
     public FormValidation doCheckCredentialsId(
-        @QueryParameter("credentialsId") final String credentialsId,
-        @QueryParameter("projectId") final String projectId) {
+        @AncestorInPath Jenkins context,
+        @QueryParameter("credentialsId") final String credentialsId) {
       if (credentialsId.isEmpty()) {
         return FormValidation.error(Messages.KubernetesEngineBuilder_NoCredential());
       }
 
-      if (projectId.isEmpty()) {
-        return FormValidation.error(Messages.KubernetesEngineBuilder_CredentialProjectIDRequired());
-      }
-
       try {
-        getContainerClient(credentialsId);
-      } catch (AbortException | RuntimeException e) {
+        this.getClientFactory(context, credentialsId);
+      } catch (AbortException | RuntimeException ex) {
+        LOGGER.log(Level.SEVERE, Messages.KubernetesEngineBuilder_CredentialAuthFailed(), ex);
         return FormValidation.error(Messages.KubernetesEngineBuilder_CredentialAuthFailed());
       }
 
@@ -278,8 +275,8 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
       ClientFactory clientFactory;
       try {
         clientFactory = this.getClientFactory(context, credentialsId);
-      } catch (AbortException ae) {
-        LOGGER.log(Level.SEVERE, Messages.KubernetesEngineBuilder_CredentialAuthFailed(), ae);
+      } catch (AbortException | RuntimeException ex) {
+        LOGGER.log(Level.SEVERE, Messages.KubernetesEngineBuilder_CredentialAuthFailed(), ex);
         items.clear();
         items.add(Messages.KubernetesEngineBuilder_CredentialAuthFailed(), EMPTY_VALUE);
         return items;
@@ -334,7 +331,7 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
       ClientFactory clientFactory;
       try {
         clientFactory = getClientFactory(context, credentialsId);
-      } catch (AbortException ae) {
+      } catch (AbortException | RuntimeException e) {
         return FormValidation.error(Messages.KubernetesEngineBuilder_CredentialAuthFailed());
       }
 
@@ -372,8 +369,8 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
       ClientFactory clientFactory;
       try {
         clientFactory = getClientFactory(context, credentialsId);
-      } catch (AbortException ae) {
-        LOGGER.log(Level.SEVERE, Messages.KubernetesEngineBuilder_CredentialAuthFailed(), ae);
+      } catch (AbortException | RuntimeException ex) {
+        LOGGER.log(Level.SEVERE, Messages.KubernetesEngineBuilder_CredentialAuthFailed(), ex);
         items.clear();
         items.add(Messages.KubernetesEngineBuilder_CredentialAuthFailed(), EMPTY_VALUE);
         return items;
@@ -412,7 +409,7 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
       ClientFactory clientFactory;
       try {
         clientFactory = getClientFactory(context, credentialsId);
-      } catch (AbortException ae) {
+      } catch (AbortException | RuntimeException ex) {
         return FormValidation.error(Messages.KubernetesEngineBuilder_CredentialAuthFailed());
       }
 
@@ -458,8 +455,8 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
       ClientFactory clientFactory;
       try {
         clientFactory = getClientFactory(context, credentialsId);
-      } catch (AbortException ae) {
-        LOGGER.log(Level.SEVERE, Messages.KubernetesEngineBuilder_CredentialAuthFailed(), ae);
+      } catch (AbortException | RuntimeException ex) {
+        LOGGER.log(Level.SEVERE, Messages.KubernetesEngineBuilder_CredentialAuthFailed(), ex);
         items.clear();
         items.add(Messages.KubernetesEngineBuilder_CredentialAuthFailed(), EMPTY_VALUE);
         return items;
@@ -499,7 +496,7 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
       ClientFactory clientFactory;
       try {
         clientFactory = getClientFactory(context, credentialsId);
-      } catch (AbortException ae) {
+      } catch (AbortException | RuntimeException ex) {
         return FormValidation.error(Messages.KubernetesEngineBuilder_CredentialAuthFailed());
       }
 
