@@ -12,7 +12,7 @@ Please see the [Google Kubernetes Engine Plugin](docs/Home.md) wiki for complete
 1. If the plugin does not appear under **Available**, make sure it appears under **Installed** and is enabled.
  
 ## Snapshot Installation
-See [Snapshot Installation](docs/SnapshotInstallation.md) to build and install from source.
+See [Plugin Source Build Installation](docs/SourceBuildInstallation.md) to build and install from source.
 
 ## Feature requests and bug reports
 Please file feature requests and bug reports as [github issues](https://github.com/jenkinsci/google-kubernetes-engine-plugin/issues).

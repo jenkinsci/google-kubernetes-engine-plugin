@@ -1,4 +1,4 @@
-# Snapshot Installation Instructions
+# Plugin Source Build Installation
 
 1. Clone the plugin and enter the directory:
     ```bash
