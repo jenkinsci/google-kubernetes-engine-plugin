@@ -11,7 +11,7 @@ Please see the [Google Kubernetes Engine Plugin](docs/Home.md) wiki for complete
 1. Check the box under the **Install** column and click the **Install without restart** button.
 1. If the plugin does not appear under **Available**, make sure it appears under **Installed** and is enabled.
  
-## Snapshot Installation
+## Plugin Source Build Installation
 See [Plugin Source Build Installation](docs/SourceBuildInstallation.md) to build and install from source.
 
 ## Feature requests and bug reports
