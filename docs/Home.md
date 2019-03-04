@@ -85,4 +85,3 @@ Each GKE Builder configuration can point to a different GKE cluster. Follow the 
 The GKE Jenkins plugin requires the [kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/) binary to be installed within the Jenkins agent environment.
 
 To install a custom version of the GKE plugin in the Jenkins master environment, see the [snapshot installation instructions](SnapshotInstallation.md) for instructions on how to build and install the plugin from source.
-

@@ -10,7 +10,7 @@
     git checkout <branch name>
     ```
 1. Build the plugin into a .hpi plugin file:
-    ```
+    ```bash
     mvn hpi:hpi
     ```
 1. Go to **Manage Jenkins** then **Manage Plugins**.
