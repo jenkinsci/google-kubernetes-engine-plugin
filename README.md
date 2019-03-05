@@ -2,18 +2,20 @@
 The Google Kubernetes Engine (GKE) Plugin allows you to deploy build artifacts to Kubernetes clusters running in GKE with Jenkins.
 
 ## Documentation
-Please see the [Google Kubernetes Engine Plugin](https://wiki.jenkins.io/display/JENKINS/Google+Kubernetes+Engine+Plugin) wiki for complete documentation.
+Please see the [Google Kubernetes Engine Plugin](docs/Home.md) docs for complete documentation.
 
 ## Installation
-1. Download the plugin from [the Jenkins Graphite plugin bucket](https://storage.googleapis.com/gcp-jenkins/plugins/google-kubernetes-engine-latest.hpi).
-
 1. Go to **Manage Jenkins** then **Manage Plugins**.
-1. In the Plugin Manager, click the **Advanced** tab and then **Choose File** under the **Upload Plugin** section.
-1. Choose the Jenkins plugin file downloaded in Step 1.
-1. Click the **Upload** button.
+1. (Optional) Make sure the plugin manager has updated data by clicking the **Check now** button.
+1. In the Plugin Manager, click the **Available** tab and look for the "Google Kubernetes Engine Plugin".
+1. Check the box under the **Install** column and click the **Install without restart** button.
+1. If the plugin does not appear under **Available**, make sure it appears under **Installed** and is enabled.
+ 
+## Plugin Source Build Installation
+See [Plugin Source Build Installation](docs/SourceBuildInstallation.md) to build and install from source.
 
 ## Feature requests and bug reports
-Please file feature requests and bug reports under the [google-kubernetes-engine-plugin](https://issues.jenkins-ci.org/issues/?jql=project+%3D+JENKINS+AND+component+%3D+google-kubernetes-engine-plugin) component of the [Jenkins CI JIRA](https://issues.jenkins-ci.org).
+Please file feature requests and bug reports as [github issues](https://github.com/jenkinsci/google-kubernetes-engine-plugin/issues).
 
 ## Contributing
 See [CONTRIBUTING.md](CONTRIBUTING.md)
