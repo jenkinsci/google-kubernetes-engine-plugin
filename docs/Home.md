@@ -23,7 +23,7 @@ View Google Kubernetes Engine [on the plugin site](https://plugins.jenkins.io/go
 
 1. Create a service account using the Google Cloud SDK.
     ```bash
-    gcloud iam service-accounts keys create ~/jenkins-gke-key.json --iam-account jenkins-gke@${PROJECT}.iam.gserviceaccount.com
+    gcloud iam service-accounts create jenkins-gke
     ```
 1. Add the KubernetesEngineAdmin, serviceAccountUser, and computeNetworkViewer roles to the service account:
     ```bash
@@ -35,7 +35,7 @@ View Google Kubernetes Engine [on the plugin site](https://plugins.jenkins.io/go
     ```
 1. Download a JSON Service Account key for your newly created service account. Take note of where the file was created, you will upload it to Jenkins in a subsequent step.
     ```bash
-    gcloud iam service-accounts create jenkins-gke
+    gcloud iam service-accounts keys create ~/jenkins-gke-key.json --iam-account jenkins-gke@${PROJECT}.iam.gserviceaccount.com
     ```
 1. In Jenkins, click the Credentials button on the left side of the screen. Then click System.
 1. Click Global credentials then **Add credentials** on the left.
