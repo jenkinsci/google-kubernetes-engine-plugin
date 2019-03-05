@@ -14,7 +14,7 @@ View Google Kubernetes Engine [on the plugin site](https://plugins.jenkins.io/go
     ```bash
     export PROJECT=$(gcloud info --format='value(config.project)')
     ```
-2. Enable GKE, Google Compute Engine (GCE), Service Management, and Cloud Resource Manager APIs.
+2. Enable Google Kubernetes Engine (GKE), Google Compute Engine (GCE), Service Management, and Cloud Resource Manager APIs.
     ```bash
     gcloud services enable --project $PROJECT compute.googleapis.com container.googleapis.com servicemanagement.googleapis.com cloudresourcemanager.googleapis.com
     ```
@@ -25,7 +25,7 @@ View Google Kubernetes Engine [on the plugin site](https://plugins.jenkins.io/go
     ```bash
     gcloud iam service-accounts create jenkins-gke
     ```
-1. Add the KubernetesEngineAdmin, serviceAccountUser, and computeNetworkViewer roles to the service account:
+1. Add required service account roles:
     ```bash
     export SA_EMAIL=$(gcloud iam service-accounts list --filter="name:jenkins-gke" --format='value(email)')
     gcloud projects add-iam-policy-binding --member serviceAccount:$SA_EMAIL --role roles/iam.serviceAccountUser $PROJECT
@@ -35,7 +35,7 @@ View Google Kubernetes Engine [on the plugin site](https://plugins.jenkins.io/go
     ```
 1. Download a JSON Service Account key for your newly created service account. Take note of where the file was created, you will upload it to Jenkins in a subsequent step.
     ```bash
-    gcloud iam service-accounts keys create ~/jenkins-gke-key.json --iam-account jenkins-gke@${PROJECT}.iam.gserviceaccount.com
+    gcloud iam service-accounts keys create ~/jenkins-gke-key.json --iam-account $SA_EMAIL
     ```
 1. In Jenkins, click the Credentials button on the left side of the screen. Then click System.
 1. Click Global credentials then **Add credentials** on the left.
@@ -67,7 +67,7 @@ View Google Kubernetes Engine [on the plugin site](https://plugins.jenkins.io/go
     kubectl create clusterrolebinding serviceaccounts-cluster-admin --group=system:serviceaccounts --clusterrole=cluster-admin
     ```
 
-### Google Kubernetes Engine Build Step configuration
+### Google Kubernetes Engine Build Step Configuration
 
 Each GKE Build Step configuration can point to a different GKE cluster. Follow the steps below to create one.
 
@@ -80,7 +80,7 @@ Each GKE Build Step configuration can point to a different GKE cluster. Follow t
 1. Select the Cluster to be published to.
 1. Enter the file path of the Kubernetes [manifest](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/) within your project to be used for deployment.
 
-### Jenkins environment configuration
+### Jenkins Environment Configuration
 
 <!--- TODO(stephenshank): Link to an image that adds kubectl to the existing jenkins agent image: https://hub.docker.com/r/jenkinsci/jnlp-slave/ --->
 
