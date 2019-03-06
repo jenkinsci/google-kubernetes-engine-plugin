@@ -24,6 +24,7 @@ import com.google.api.services.cloudresourcemanager.CloudResourceManager.Project
 import com.google.api.services.cloudresourcemanager.model.ListProjectsResponse;
 import com.google.api.services.cloudresourcemanager.model.Project;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import hudson.AbortException;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -31,16 +32,19 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import jenkins.model.Jenkins;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentMatchers;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.stubbing.Answer;
 
 @RunWith(MockitoJUnitRunner.class)
 public class CloudResourceManagerClientTest {
-  private static final String TEST_CREDENTIALS_ID = "test-credentials";
+  private static final String SORTED_CREDENTIALS_ID = "sorted-credentials";
+  private static final String UNSORTED_CREDENTIALS_ID = "unsorted-credentials";
+  private static final String EMPTY_CREDENTIALS_ID = "empty-credentials";
   private static final String ERROR_CREDENTIALS_ID = "error-credentials";
   private static final String NULL_CREDENTIALS_ID = "null-credentials";
   private static final List<String> TEST_PROJECT_IDS_SORTED =
@@ -48,66 +52,22 @@ public class CloudResourceManagerClientTest {
   private static final List<String> TEST_PROJECT_IDS_UNSORTED =
       Arrays.asList("test-project-id-b4", "test-project-id-b2", "test-project-id-b5");
 
-  private static List<Project> listOfProjects;
   private static Jenkins jenkins;
   private static ClientFactory clientFactorySpy;
 
   @BeforeClass
   public static void init() throws IOException {
-    listOfProjects = new ArrayList<>();
-
-    CloudResourceManager cloudResourceManager = Mockito.mock(CloudResourceManager.class);
-    Projects projects = Mockito.mock(Projects.class);
-    Projects.List listProjects = Mockito.mock(Projects.List.class);
-    ListProjectsResponse listProjectsResponse = Mockito.mock(ListProjectsResponse.class);
-    Mockito.when(cloudResourceManager.projects()).thenReturn(projects);
-    Mockito.when(projects.list()).thenReturn(listProjects);
-    Mockito.when(listProjects.execute()).thenReturn(listProjectsResponse);
-    Mockito.when(listProjectsResponse.getProjects()).thenReturn(listOfProjects);
-    CloudResourceManagerClient client = new CloudResourceManagerClient(cloudResourceManager);
-
-    CloudResourceManager errorCloudResourceManager = Mockito.mock(CloudResourceManager.class);
-    Projects errorProjects = Mockito.mock(Projects.class);
-    Projects.List errorListProjects = Mockito.mock(Projects.List.class);
-    Mockito.when(errorCloudResourceManager.projects()).thenReturn(errorProjects);
-    Mockito.when(errorProjects.list()).thenReturn(errorListProjects);
-    Mockito.when(errorListProjects.execute()).thenThrow(new IOException());
-    CloudResourceManagerClient errorClient =
-        new CloudResourceManagerClient(errorCloudResourceManager);
-
-    CloudResourceManager nullCloudResourceManager = Mockito.mock(CloudResourceManager.class);
-    Projects nullProjects = Mockito.mock(Projects.class);
-    Projects.List nullListProjects = Mockito.mock(Projects.List.class);
-    ListProjectsResponse nullListProjectsResponse = Mockito.mock(ListProjectsResponse.class);
-    Mockito.when(nullCloudResourceManager.projects()).thenReturn(nullProjects);
-    Mockito.when(nullProjects.list()).thenReturn(nullListProjects);
-    Mockito.when(nullListProjects.execute()).thenReturn(nullListProjectsResponse);
-    Mockito.when(nullListProjectsResponse.getProjects()).thenReturn(null);
-    CloudResourceManagerClient nullClient = new CloudResourceManagerClient(nullCloudResourceManager);
-
-    // Credentials are passed in at the time of creation.
     jenkins = Mockito.mock(Jenkins.class);
     clientFactorySpy = Mockito.spy(ClientFactory.class);
-    ClientFactory clientFactory = Mockito.mock(ClientFactory.class);
-    ClientFactory errorClientFactory = Mockito.mock(ClientFactory.class);
-    ClientFactory nullClientFactory = Mockito.mock(ClientFactory.class);
-    Mockito.when(clientFactory.cloudResourceManagerClient()).thenReturn(client);
-    Mockito.when(errorClientFactory.cloudResourceManagerClient()).thenReturn(errorClient);
-    Mockito.when(nullClientFactory.cloudResourceManagerClient()).thenReturn(nullClient);
-    Mockito.doReturn(clientFactory)
+    Mockito.doAnswer(
+            mockClientFactoryAnswer(
+                new ImmutableMap.Builder<String, List<Project>>()
+                    .put(SORTED_CREDENTIALS_ID, initProjectList(TEST_PROJECT_IDS_SORTED))
+                    .put(UNSORTED_CREDENTIALS_ID, initProjectList(TEST_PROJECT_IDS_UNSORTED))
+                    .put(EMPTY_CREDENTIALS_ID, ImmutableList.of())
+                    .build()))
         .when(clientFactorySpy)
-        .makeClientFactory(jenkins, TEST_CREDENTIALS_ID);
-    Mockito.doReturn(errorClientFactory)
-        .when(clientFactorySpy)
-        .makeClientFactory(jenkins, ERROR_CREDENTIALS_ID);
-    Mockito.doReturn(nullClientFactory)
-        .when(clientFactorySpy)
-        .makeClientFactory(jenkins, NULL_CREDENTIALS_ID);
-  }
-
-  @Before
-  public void before() {
-    listOfProjects.clear();
+        .makeClientFactory(ArgumentMatchers.any(), ArgumentMatchers.anyString());
   }
 
   @Test(expected = IOException.class)
@@ -126,7 +86,7 @@ public class CloudResourceManagerClientTest {
 
   @Test
   public void testGetAccountProjectsEmptyReturnsEmpty() throws IOException {
-    CloudResourceManagerClient client = getClient(TEST_CREDENTIALS_ID);
+    CloudResourceManagerClient client = getClient(EMPTY_CREDENTIALS_ID);
     List<Project> projects = client.getAccountProjects();
     assertNotNull(projects);
     assertEquals(ImmutableList.of(), projects);
@@ -134,8 +94,7 @@ public class CloudResourceManagerClientTest {
 
   @Test
   public void testGetAccountProjectsSorted() throws IOException {
-    fillListOfProjects(TEST_PROJECT_IDS_SORTED, listOfProjects);
-    CloudResourceManagerClient client = getClient(TEST_CREDENTIALS_ID);
+    CloudResourceManagerClient client = getClient(SORTED_CREDENTIALS_ID);
     List<Project> projects = client.getAccountProjects();
     assertNotNull(projects);
     assertEquals(initProjectList(TEST_PROJECT_IDS_SORTED), projects);
@@ -143,27 +102,52 @@ public class CloudResourceManagerClientTest {
 
   @Test
   public void testGetAccountProjectsUnsortedReturnedAsSorted() throws IOException {
-    fillListOfProjects(TEST_PROJECT_IDS_UNSORTED, listOfProjects);
     List<Project> expected = initProjectList(TEST_PROJECT_IDS_UNSORTED);
     expected.sort(Comparator.comparing(Project::getProjectId));
-    CloudResourceManagerClient client = getClient(TEST_CREDENTIALS_ID);
+    CloudResourceManagerClient client = getClient(UNSORTED_CREDENTIALS_ID);
     List<Project> projects = client.getAccountProjects();
     assertNotNull(projects);
     assertEquals(expected, projects);
   }
 
+  // Credentials are passed in when creating the ClientFactory, which makes this step necessary.
   private static CloudResourceManagerClient getClient(String credentialsId) throws AbortException {
     ClientFactory clientFactory = clientFactorySpy.makeClientFactory(jenkins, credentialsId);
     return clientFactory.cloudResourceManagerClient();
   }
 
-  private static void fillListOfProjects(List<String> projectIds, List<Project> projects) {
-    projectIds.forEach(id -> projects.add(new Project().setProjectId(id)));
-  }
-
   private static List<Project> initProjectList(List<String> projectIds) {
     List<Project> projects = new ArrayList<>();
-    fillListOfProjects(projectIds, projects);
+    projectIds.forEach(id -> projects.add(new Project().setProjectId(id)));
     return projects;
+  }
+
+  private static Answer<ClientFactory> mockClientFactoryAnswer(
+      ImmutableMap<String, List<Project>> credentialsIdToProjects) {
+    return invocation -> {
+      // Argument 0 is the Jenkins context.
+      String credentialsId = invocation.getArgument(1);
+
+      Projects.List projectsListCall = Mockito.mock(Projects.List.class);
+      if (credentialsIdToProjects.containsKey(credentialsId)) {
+        List<Project> projectsList = new ArrayList<>(credentialsIdToProjects.get(credentialsId));
+        Mockito.when(projectsListCall.execute())
+            .thenReturn(new ListProjectsResponse().setProjects(projectsList));
+      } else if (ERROR_CREDENTIALS_ID.equals(credentialsId)) {
+        Mockito.when(projectsListCall.execute()).thenThrow(new IOException());
+      } else {
+        Mockito.when(projectsListCall.execute())
+            .thenReturn(new ListProjectsResponse().setProjects(null));
+      }
+
+      CloudResourceManager cloudResourceManager = Mockito.mock(CloudResourceManager.class);
+      Projects projects = Mockito.mock(Projects.class);
+      Mockito.when(cloudResourceManager.projects()).thenReturn(projects);
+      Mockito.when(projects.list()).thenReturn(projectsListCall);
+      CloudResourceManagerClient client = new CloudResourceManagerClient(cloudResourceManager);
+      ClientFactory clientFactory = Mockito.mock(ClientFactory.class);
+      Mockito.when(clientFactory.cloudResourceManagerClient()).thenReturn(client);
+      return clientFactory;
+    };
   }
 }
