@@ -28,6 +28,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.google.jenkins.plugins.credentials.oauth.GoogleOAuth2Credentials;
 import com.google.jenkins.plugins.k8sengine.client.ClientFactory;
 import com.google.jenkins.plugins.k8sengine.client.CloudResourceManagerClient;
@@ -49,6 +50,7 @@ import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 import hudson.util.ListBoxModel.Option;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.io.Serializable;
 import java.util.Collections;
 import java.util.List;
@@ -67,9 +69,9 @@ import org.kohsuke.stapler.QueryParameter;
 /** Provides a build step for publishing build artifacts to a Kubernetes cluster running on GKE. */
 public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep, Serializable {
   private static final Logger LOGGER = Logger.getLogger(KubernetesEngineBuilder.class.getName());
-
   static final String EMPTY_NAME = "- none -";
   static final String EMPTY_VALUE = "";
+  static final int DEFAULT_VERIFY_TIMEOUT_MINUTES = 5;
 
   private String credentialsId;
   private String projectId;
@@ -77,6 +79,7 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
   private String clusterName;
   private String manifestPattern;
   private boolean verifyDeployments;
+  private int verifyTimeoutInMinutes = DEFAULT_VERIFY_TIMEOUT_MINUTES;
   private boolean verifyServices;
   private boolean isTestCleanup;
   private KubeConfigAfterBuildStep afterBuildStep = null;
@@ -153,6 +156,15 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
     return this.verifyServices;
   }
 
+  public int getVerifyTimeoutInMinutes() {
+    return verifyTimeoutInMinutes;
+  }
+
+  @DataBoundSetter
+  public void setVerifyTimeoutInMinutes(int verifyTimeoutInMinutes) {
+    this.verifyTimeoutInMinutes = verifyTimeoutInMinutes;
+  }
+
   @VisibleForTesting
   void setAfterBuildStep(KubeConfigAfterBuildStep afterBuildStep) {
     this.afterBuildStep = afterBuildStep;
@@ -165,7 +177,7 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
       @Nonnull FilePath workspace,
       @Nonnull Launcher launcher,
       @Nonnull TaskListener listener)
-      throws AbortException, InterruptedException, IOException {
+      throws InterruptedException, IOException {
     LOGGER.log(
         Level.INFO,
         String.format(
@@ -180,17 +192,21 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
     // generate a kubeconfig for the cluster
     KubeConfig kubeConfig = KubeConfig.fromCluster(projectId, cluster);
 
-    // run kubectl apply
-    KubectlWrapper.runKubectlCommand(
+    JenkinsRunContext context =
         new JenkinsRunContext.Builder()
             .workspace(workspace)
             .launcher(launcher)
             .taskListener(listener)
             .run(run)
-            .build(),
-        kubeConfig,
-        "apply",
-        ImmutableList.<String>of("-f", workspace.child(manifestPattern).getRemote()));
+            .build();
+
+    KubectlWrapper kubectl = new KubectlWrapper(context, kubeConfig);
+    kubectl.runKubectlCommand(
+        "apply", ImmutableList.<String>of("-f", workspace.child(manifestPattern).getRemote()));
+
+    if (verifyDeployments && !verify(kubectl, manifestPattern, workspace, listener.getLogger())) {
+      throw new AbortException(Messages.KubernetesEngineBuilder_KubernetesObjectsNotVerified());
+    }
 
     // run the after build step if it exists
     // NOTE(craigatgoogle): Due to the reflective way this class is created, initializers aren't
@@ -198,6 +214,41 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
     if (afterBuildStep != null) {
       afterBuildStep.perform(kubeConfig, run, workspace, launcher, listener);
     }
+  }
+
+  /**
+   * Verify the application of the supplied {@link Manifests.ManifestObject}'s to the Kubernetes
+   * cluster.
+   *
+   * @param kubectl The {@link KubectlWrapper} for running the queries on the Kubernetes cluster.
+   * @param manifestPattern The manifest pattern for the list of manifest files to use.
+   * @param workspace The {@link FilePath} to the build workspace directory.
+   * @param consoleLogger The {@link PrintStream} for Jenkins console output.
+   * @return If the verification succeeded.
+   */
+  private boolean verify(
+      KubectlWrapper kubectl, String manifestPattern, FilePath workspace, PrintStream consoleLogger)
+      throws InterruptedException, IOException {
+    LOGGER.log(
+        Level.INFO,
+        String.format(
+            "GKE verifying deployment to, projectId: %s cluster: %s zone: %s manifests: %s",
+            projectId, clusterName, zone, workspace.child(manifestPattern)));
+
+    consoleLogger.println(
+        String.format("Verifying manifests: %s", workspace.child(manifestPattern)));
+
+    Manifests manifests = Manifests.fromFile(workspace.child(manifestPattern));
+
+    // Filter by the kinds of manifests being verified.
+    List<Manifests.ManifestObject> manifestObjects =
+        manifests.getObjectManifestsOfKinds(ImmutableSet.of(KubernetesVerifiers.DEPLOYMENT_KIND));
+
+    consoleLogger.println(
+        Messages.KubernetesEngineBuilder_VerifyingNObjects(manifestObjects.size()));
+
+    return VerificationTask.verifyObjects(
+        kubectl, manifestObjects, consoleLogger, verifyTimeoutInMinutes);
   }
 
   @Override
@@ -532,6 +583,21 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
       if (Strings.isNullOrEmpty(manifestPattern)) {
         return FormValidation.error(Messages.KubernetesEngineBuilder_ManifestRequired());
       }
+      return FormValidation.ok();
+    }
+
+    public FormValidation doCheckVerifyTimeoutInMinutes(
+        @QueryParameter("verifyTimeoutInMinutes") final String verifyTimeoutInMinutes) {
+      if (Strings.isNullOrEmpty(verifyTimeoutInMinutes)) {
+        return FormValidation.error(
+            Messages.KubernetesEngineBuilder_VerifyTimeoutInMinutesRequired());
+      }
+
+      if (!verifyTimeoutInMinutes.matches("([1-9]\\d*)")) {
+        return FormValidation.error(
+            Messages.KubernetesEngineBuilder_VerifyTimeoutInMinutesFormatError());
+      }
+
       return FormValidation.ok();
     }
   }

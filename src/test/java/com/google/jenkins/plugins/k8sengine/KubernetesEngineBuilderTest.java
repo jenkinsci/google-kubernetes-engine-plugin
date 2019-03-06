@@ -681,6 +681,36 @@ public class KubernetesEngineBuilderTest {
     assertEquals(Messages.KubernetesEngineBuilder_ClusterVerificationError(), result.getMessage());
   }
 
+  @Test
+  public void testDoCheckVerifyTimeoutInMinutesNAN() throws IOException {
+    DescriptorImpl descriptor =
+        setUpClusterDescriptor(ImmutableList.of(OTHER_CLUSTER, TEST_CLUSTER), null, null);
+    FormValidation result = descriptor.doCheckVerifyTimeoutInMinutes("abc");
+    assertNotNull(result);
+    assertEquals(
+        Messages.KubernetesEngineBuilder_VerifyTimeoutInMinutesFormatError(), result.getMessage());
+  }
+
+  @Test
+  public void testDoCheckVerifyTimeoutInMinutesZero() throws IOException {
+    DescriptorImpl descriptor =
+        setUpClusterDescriptor(ImmutableList.of(OTHER_CLUSTER, TEST_CLUSTER), null, null);
+    FormValidation result = descriptor.doCheckVerifyTimeoutInMinutes("0");
+    assertNotNull(result);
+    assertEquals(
+        Messages.KubernetesEngineBuilder_VerifyTimeoutInMinutesFormatError(), result.getMessage());
+  }
+
+  @Test
+  public void testDoCheckVerifyTimeoutInMinutesEmpty() throws IOException {
+    DescriptorImpl descriptor =
+        setUpClusterDescriptor(ImmutableList.of(OTHER_CLUSTER, TEST_CLUSTER), null, null);
+    FormValidation result = descriptor.doCheckVerifyTimeoutInMinutes("");
+    assertNotNull(result);
+    assertEquals(
+        Messages.KubernetesEngineBuilder_VerifyTimeoutInMinutesRequired(), result.getMessage());
+  }
+
   private DescriptorImpl setUpProjectDescriptor(
       List<String> initialProjects,
       String defaultProjectId,
