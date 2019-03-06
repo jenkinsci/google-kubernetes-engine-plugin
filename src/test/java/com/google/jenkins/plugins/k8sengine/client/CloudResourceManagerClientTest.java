@@ -23,11 +23,12 @@ import com.google.api.services.cloudresourcemanager.CloudResourceManager;
 import com.google.api.services.cloudresourcemanager.CloudResourceManager.Projects;
 import com.google.api.services.cloudresourcemanager.model.ListProjectsResponse;
 import com.google.api.services.cloudresourcemanager.model.Project;
+import com.google.common.collect.ImmutableList;
 import hudson.AbortException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import jenkins.model.Jenkins;
 import org.junit.Before;
@@ -41,6 +42,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 public class CloudResourceManagerClientTest {
   private static final String TEST_CREDENTIALS_ID = "test-credentials";
   private static final String ERROR_CREDENTIALS_ID = "error-credentials";
+  private static final String NULL_CREDENTIALS_ID = "null-credentials";
   private static final List<String> TEST_PROJECT_IDS_SORTED =
       Arrays.asList("test-project-id-a1", "test-project-id-a2", "test-project-id-a3");
   private static final List<String> TEST_PROJECT_IDS_UNSORTED =
@@ -73,19 +75,34 @@ public class CloudResourceManagerClientTest {
     CloudResourceManagerClient errorClient =
         new CloudResourceManagerClient(errorCloudResourceManager);
 
+    CloudResourceManager nullCloudResourceManager = Mockito.mock(CloudResourceManager.class);
+    Projects nullProjects = Mockito.mock(Projects.class);
+    Projects.List nullListProjects = Mockito.mock(Projects.List.class);
+    ListProjectsResponse nullListProjectsResponse = Mockito.mock(ListProjectsResponse.class);
+    Mockito.when(nullCloudResourceManager.projects()).thenReturn(nullProjects);
+    Mockito.when(nullProjects.list()).thenReturn(nullListProjects);
+    Mockito.when(nullListProjects.execute()).thenReturn(nullListProjectsResponse);
+    Mockito.when(nullListProjectsResponse.getProjects()).thenReturn(null);
+    CloudResourceManagerClient nullClient = new CloudResourceManagerClient(nullCloudResourceManager);
+
     // Credentials are passed in at the time of creation.
     jenkins = Mockito.mock(Jenkins.class);
     clientFactorySpy = Mockito.spy(ClientFactory.class);
     ClientFactory clientFactory = Mockito.mock(ClientFactory.class);
     ClientFactory errorClientFactory = Mockito.mock(ClientFactory.class);
+    ClientFactory nullClientFactory = Mockito.mock(ClientFactory.class);
     Mockito.when(clientFactory.cloudResourceManagerClient()).thenReturn(client);
     Mockito.when(errorClientFactory.cloudResourceManagerClient()).thenReturn(errorClient);
+    Mockito.when(nullClientFactory.cloudResourceManagerClient()).thenReturn(nullClient);
     Mockito.doReturn(clientFactory)
         .when(clientFactorySpy)
         .makeClientFactory(jenkins, TEST_CREDENTIALS_ID);
     Mockito.doReturn(errorClientFactory)
         .when(clientFactorySpy)
         .makeClientFactory(jenkins, ERROR_CREDENTIALS_ID);
+    Mockito.doReturn(nullClientFactory)
+        .when(clientFactorySpy)
+        .makeClientFactory(jenkins, NULL_CREDENTIALS_ID);
   }
 
   @Before
@@ -95,24 +112,44 @@ public class CloudResourceManagerClientTest {
 
   @Test(expected = IOException.class)
   public void testGetAccountProjectsErrorWithInvalidCredentials() throws IOException {
-    testGetProjects(ERROR_CREDENTIALS_ID, Collections.emptyList());
+    CloudResourceManagerClient client = getClient(ERROR_CREDENTIALS_ID);
+    client.getAccountProjects();
+  }
+
+  @Test
+  public void testGetAccountProjectsNullReturnsEmpty() throws IOException {
+    CloudResourceManagerClient client = getClient(NULL_CREDENTIALS_ID);
+    List<Project> projects = client.getAccountProjects();
+    assertNotNull(projects);
+    assertEquals(ImmutableList.of(), projects);
   }
 
   @Test
   public void testGetAccountProjectsEmptyReturnsEmpty() throws IOException {
-    testGetProjects(TEST_CREDENTIALS_ID, Collections.emptyList());
+    CloudResourceManagerClient client = getClient(TEST_CREDENTIALS_ID);
+    List<Project> projects = client.getAccountProjects();
+    assertNotNull(projects);
+    assertEquals(ImmutableList.of(), projects);
   }
 
   @Test
   public void testGetAccountProjectsSorted() throws IOException {
-    fillListOfProjects(TEST_PROJECT_IDS_SORTED);
-    testGetProjects(TEST_CREDENTIALS_ID, TEST_PROJECT_IDS_SORTED);
+    fillListOfProjects(TEST_PROJECT_IDS_SORTED, listOfProjects);
+    CloudResourceManagerClient client = getClient(TEST_CREDENTIALS_ID);
+    List<Project> projects = client.getAccountProjects();
+    assertNotNull(projects);
+    assertEquals(initProjectList(TEST_PROJECT_IDS_SORTED), projects);
   }
 
   @Test
   public void testGetAccountProjectsUnsortedReturnedAsSorted() throws IOException {
-    fillListOfProjects(TEST_PROJECT_IDS_UNSORTED);
-    testGetProjects(TEST_CREDENTIALS_ID, TEST_PROJECT_IDS_UNSORTED);
+    fillListOfProjects(TEST_PROJECT_IDS_UNSORTED, listOfProjects);
+    List<Project> expected = initProjectList(TEST_PROJECT_IDS_UNSORTED);
+    expected.sort(Comparator.comparing(Project::getProjectId));
+    CloudResourceManagerClient client = getClient(TEST_CREDENTIALS_ID);
+    List<Project> projects = client.getAccountProjects();
+    assertNotNull(projects);
+    assertEquals(expected, projects);
   }
 
   private static CloudResourceManagerClient getClient(String credentialsId) throws AbortException {
@@ -120,33 +157,13 @@ public class CloudResourceManagerClientTest {
     return clientFactory.cloudResourceManagerClient();
   }
 
-  private static void fillListOfProjects(List<String> projectIds) {
-    projectIds.forEach(id -> listOfProjects.add(new Project().setProjectId(id)));
+  private static void fillListOfProjects(List<String> projectIds, List<Project> projects) {
+    projectIds.forEach(id -> projects.add(new Project().setProjectId(id)));
   }
 
-  private static void testGetProjects(String credentialsId, List<String> projectIds)
-      throws IOException {
-    CloudResourceManagerClient client = getClient(credentialsId);
-    List<String> expectedProjectIds = new ArrayList<>(projectIds);
-    List<Project> projects = client.getAccountProjects();
-    assertNotNull("projects was null.", projects);
-    assertEquals(
-        String.format(
-            "Excepted %d projects but %d projects retrieved.",
-            expectedProjectIds.size(), projects.size()),
-        expectedProjectIds.size(),
-        projects.size());
-
-    if (expectedProjectIds.size() > 0) {
-      expectedProjectIds.sort(String::compareTo);
-      for (int i = 0; i < expectedProjectIds.size(); i++) {
-        assertEquals(
-            String.format(
-                "Projects not sorted. Expected %s but was %s.",
-                expectedProjectIds.get(i), projects.get(i).getName()),
-            expectedProjectIds.get(i),
-            projects.get(i).getProjectId());
-      }
-    }
+  private static List<Project> initProjectList(List<String> projectIds) {
+    List<Project> projects = new ArrayList<>();
+    fillListOfProjects(projectIds, projects);
+    return projects;
   }
 }
