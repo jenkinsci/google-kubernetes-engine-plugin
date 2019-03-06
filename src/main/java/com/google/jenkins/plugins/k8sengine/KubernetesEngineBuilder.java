@@ -514,6 +514,8 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
         List<Cluster> clusters = client.listClusters(projectId, zone);
         if (Strings.isNullOrEmpty(clusterName)) {
           return FormValidation.error(Messages.KubernetesEngineBuilder_ClusterRequired());
+        } else if (clusters.size() == 0) {
+          return FormValidation.error(Messages.KubernetesEngineBuilder_NoClusterInProjectZone());
         }
         Optional<Cluster> cluster =
             clusters.stream().filter(c -> clusterName.equals(c.getName())).findFirst();
