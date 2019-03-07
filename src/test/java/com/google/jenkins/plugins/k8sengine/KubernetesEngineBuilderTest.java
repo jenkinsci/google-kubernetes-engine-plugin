@@ -515,6 +515,21 @@ public class KubernetesEngineBuilderTest {
   }
 
   @Test
+  public void testDoFillClusterNameMessageWithInvalidClusterName() {
+    initClusters(ImmutableList.of(TEST_CLUSTER));
+    ListBoxModel expected =
+        initExpected(
+            ImmutableList.of(EMPTY_NAME, TEST_CLUSTER),
+            ImmutableList.of(EMPTY_VALUE, TEST_CLUSTER));
+    ListBoxModel result =
+        descriptor.doFillClusterNameItems(
+            jenkins, "wrong", TEST_CREDENTIALS_ID, TEST_PROJECT_ID, TEST_ZONE_A);
+    assertNotNull(result);
+    assertListBoxModelEquals(expected, result);
+    assertValueSelected(result, TEST_CLUSTER);
+  }
+
+  @Test
   public void testDoFillClusterNameItemsEmptyWithValidInputsNoClusters() {
     ListBoxModel expected =
         initExpected(ImmutableList.of(EMPTY_NAME), ImmutableList.of(EMPTY_VALUE));

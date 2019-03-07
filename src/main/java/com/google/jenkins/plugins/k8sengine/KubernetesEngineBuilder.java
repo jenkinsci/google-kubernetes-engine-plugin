@@ -539,12 +539,14 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
 
   private static void selectOption(ListBoxModel listBoxModel, String optionValue) {
     Optional<Option> item;
-    if (Strings.isNullOrEmpty(optionValue)) {
-      item =
-          listBoxModel.stream().filter(option -> !Strings.isNullOrEmpty(option.value)).findFirst();
-    } else {
+    if (!Strings.isNullOrEmpty(optionValue)) {
       item = listBoxModel.stream().filter(option -> optionValue.equals(option.value)).findFirst();
+      if (item.isPresent()) {
+        item.get().selected = true;
+        return;
+      }
     }
+    item = listBoxModel.stream().filter(option -> !Strings.isNullOrEmpty(option.value)).findFirst();
     item.ifPresent(i -> i.selected = true);
   }
 
