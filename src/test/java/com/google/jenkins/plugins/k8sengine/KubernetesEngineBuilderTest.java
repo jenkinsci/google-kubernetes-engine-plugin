@@ -515,7 +515,7 @@ public class KubernetesEngineBuilderTest {
   }
 
   @Test
-  public void testDoFillClusterNameMessageWithInvalidClusterName() {
+  public void testDoFillClusterNameItemsWithInvalidClusterName() {
     initClusters(ImmutableList.of(TEST_CLUSTER));
     ListBoxModel expected =
         initExpected(
