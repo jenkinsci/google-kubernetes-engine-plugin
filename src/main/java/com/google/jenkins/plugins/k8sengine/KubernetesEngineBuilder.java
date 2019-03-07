@@ -514,6 +514,8 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
         List<Cluster> clusters = client.listClusters(projectId, zone);
         if (Strings.isNullOrEmpty(clusterName)) {
           return FormValidation.error(Messages.KubernetesEngineBuilder_ClusterRequired());
+        } else if (clusters.size() == 0) {
+          return FormValidation.error(Messages.KubernetesEngineBuilder_NoClusterInProjectZone());
         }
         Optional<Cluster> cluster =
             clusters.stream().filter(c -> clusterName.equals(c.getName())).findFirst();
@@ -537,12 +539,14 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
 
   private static void selectOption(ListBoxModel listBoxModel, String optionValue) {
     Optional<Option> item;
-    if (Strings.isNullOrEmpty(optionValue)) {
-      item =
-          listBoxModel.stream().filter(option -> !Strings.isNullOrEmpty(option.value)).findFirst();
-    } else {
+    if (!Strings.isNullOrEmpty(optionValue)) {
       item = listBoxModel.stream().filter(option -> optionValue.equals(option.value)).findFirst();
+      if (item.isPresent()) {
+        item.get().selected = true;
+        return;
+      }
     }
+    item = listBoxModel.stream().filter(option -> !Strings.isNullOrEmpty(option.value)).findFirst();
     item.ifPresent(i -> i.selected = true);
   }
 

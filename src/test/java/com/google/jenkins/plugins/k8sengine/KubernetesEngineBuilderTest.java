@@ -83,6 +83,8 @@ public class KubernetesEngineBuilderTest {
     ContainerClient containerClient = Mockito.mock(ContainerClient.class);
     Mockito.when(containerClient.listClusters(TEST_PROJECT_ID, TEST_ZONE_A))
         .thenReturn(listOfClusters);
+    Mockito.when(containerClient.listClusters(TEST_PROJECT_ID, TEST_ZONE_B))
+        .thenReturn(ImmutableList.of());
     Mockito.when(containerClient.listClusters(ERROR_PROJECT_ID, TEST_ZONE_A))
         .thenThrow(new IOException());
 
@@ -513,6 +515,21 @@ public class KubernetesEngineBuilderTest {
   }
 
   @Test
+  public void testDoFillClusterNameItemsWithInvalidClusterName() {
+    initClusters(ImmutableList.of(TEST_CLUSTER));
+    ListBoxModel expected =
+        initExpected(
+            ImmutableList.of(EMPTY_NAME, TEST_CLUSTER),
+            ImmutableList.of(EMPTY_VALUE, TEST_CLUSTER));
+    ListBoxModel result =
+        descriptor.doFillClusterNameItems(
+            jenkins, "wrong", TEST_CREDENTIALS_ID, TEST_PROJECT_ID, TEST_ZONE_A);
+    assertNotNull(result);
+    assertListBoxModelEquals(expected, result);
+    assertValueSelected(result, TEST_CLUSTER);
+  }
+
+  @Test
   public void testDoFillClusterNameItemsEmptyWithValidInputsNoClusters() {
     ListBoxModel expected =
         initExpected(ImmutableList.of(EMPTY_NAME), ImmutableList.of(EMPTY_VALUE));
@@ -616,6 +633,15 @@ public class KubernetesEngineBuilderTest {
             jenkins, TEST_CLUSTER, TEST_CREDENTIALS_ID, TEST_PROJECT_ID, null);
     assertNotNull(result);
     assertEquals(Messages.KubernetesEngineBuilder_ClusterZoneRequired(), result.getMessage());
+  }
+
+  @Test
+  public void testDoCheckClusterNameMessageWithValidInputsNoClusters() {
+    FormValidation result =
+        descriptor.doCheckClusterName(
+            jenkins, TEST_CLUSTER, TEST_CREDENTIALS_ID, TEST_PROJECT_ID, TEST_ZONE_B);
+    assertNotNull(result);
+    assertEquals(Messages.KubernetesEngineBuilder_NoClusterInProjectZone(), result.getMessage());
   }
 
   @Test
