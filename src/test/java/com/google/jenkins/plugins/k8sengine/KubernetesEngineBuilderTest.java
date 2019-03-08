@@ -40,11 +40,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import jenkins.model.Jenkins;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
@@ -60,24 +58,9 @@ public class KubernetesEngineBuilderTest {
 
   private static Jenkins jenkins;
 
-  @Mock ClientFactory clientFactory;
-
-  @Mock CloudResourceManagerClient cloudResourceManagerClient;
-
-  @Mock ComputeClient computeClient;
-
-  @Mock ContainerClient containerClient;
-
   @BeforeClass
   public static void init() {
     jenkins = Mockito.mock(Jenkins.class);
-  }
-
-  @Before
-  public void before() {
-    Mockito.when(clientFactory.cloudResourceManagerClient()).thenReturn(cloudResourceManagerClient);
-    Mockito.when(clientFactory.computeClient()).thenReturn(computeClient);
-    Mockito.when(clientFactory.containerClient()).thenReturn(containerClient);
   }
 
   @Test
@@ -698,30 +681,30 @@ public class KubernetesEngineBuilderTest {
     assertEquals(Messages.KubernetesEngineBuilder_ClusterVerificationError(), result.getMessage());
   }
 
-  private DescriptorImpl setUpDescriptor(AbortException abortException) throws AbortException {
-    DescriptorImpl descriptor = Mockito.spy(DescriptorImpl.class);
-    if (abortException != null) {
-      Mockito.doThrow(abortException)
-          .when(descriptor)
-          .getClientFactory(any(Jenkins.class), anyString());
-      return descriptor;
-    }
-    Mockito.doReturn(clientFactory)
-        .when(descriptor)
-        .getClientFactory(any(Jenkins.class), anyString());
-
-    return descriptor;
-  }
-
   private DescriptorImpl setUpProjectDescriptor(
       List<String> initialProjects,
       String defaultProjectId,
       AbortException abortException,
       IOException ioException)
       throws IOException {
-    DescriptorImpl descriptor = setUpDescriptor(abortException);
+    DescriptorImpl descriptor = Mockito.spy(DescriptorImpl.class);
+
+    if (abortException != null) {
+      Mockito.doThrow(abortException)
+          .when(descriptor)
+          .getClientFactory(any(Jenkins.class), anyString());
+      return descriptor;
+    }
+
+    ClientFactory clientFactory = Mockito.mock(ClientFactory.class);
+    Mockito.doReturn(clientFactory)
+        .when(descriptor)
+        .getClientFactory(any(Jenkins.class), anyString());
 
     Mockito.when(clientFactory.getDefaultProjectId()).thenReturn(defaultProjectId);
+    CloudResourceManagerClient cloudResourceManagerClient =
+        Mockito.mock(CloudResourceManagerClient.class);
+    Mockito.when(clientFactory.cloudResourceManagerClient()).thenReturn(cloudResourceManagerClient);
 
     if (ioException != null) {
       Mockito.when(cloudResourceManagerClient.getAccountProjects()).thenThrow(ioException);
@@ -738,7 +721,22 @@ public class KubernetesEngineBuilderTest {
   private DescriptorImpl setUpZoneDescriptor(
       List<String> initialZones, AbortException abortException, IOException ioException)
       throws IOException {
-    DescriptorImpl descriptor = setUpDescriptor(abortException);
+    DescriptorImpl descriptor = Mockito.spy(DescriptorImpl.class);
+
+    if (abortException != null) {
+      Mockito.doThrow(abortException)
+          .when(descriptor)
+          .getClientFactory(any(Jenkins.class), anyString());
+      return descriptor;
+    }
+
+    ClientFactory clientFactory = Mockito.mock(ClientFactory.class);
+    Mockito.doReturn(clientFactory)
+        .when(descriptor)
+        .getClientFactory(any(Jenkins.class), anyString());
+
+    ComputeClient computeClient = Mockito.mock(ComputeClient.class);
+    Mockito.when(clientFactory.computeClient()).thenReturn(computeClient);
 
     if (ioException != null) {
       Mockito.when(computeClient.getZones(anyString())).thenThrow(ioException);
@@ -754,7 +752,22 @@ public class KubernetesEngineBuilderTest {
   private DescriptorImpl setUpClusterDescriptor(
       List<String> initialClusters, AbortException abortException, IOException ioException)
       throws IOException {
-    DescriptorImpl descriptor = setUpDescriptor(abortException);
+    DescriptorImpl descriptor = Mockito.spy(DescriptorImpl.class);
+
+    if (abortException != null) {
+      Mockito.doThrow(abortException)
+          .when(descriptor)
+          .getClientFactory(any(Jenkins.class), anyString());
+      return descriptor;
+    }
+
+    ClientFactory clientFactory = Mockito.mock(ClientFactory.class);
+    Mockito.doReturn(clientFactory)
+        .when(descriptor)
+        .getClientFactory(any(Jenkins.class), anyString());
+
+    ContainerClient containerClient = Mockito.mock(ContainerClient.class);
+    Mockito.when(clientFactory.containerClient()).thenReturn(containerClient);
 
     if (ioException != null) {
       Mockito.when(containerClient.listClusters(anyString(), anyString())).thenThrow(ioException);
