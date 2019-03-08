@@ -19,8 +19,6 @@ import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.domains.DomainRequirement;
 import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
-import com.google.api.client.googleapis.services.AbstractGoogleClientRequest;
-import com.google.api.client.googleapis.services.GoogleClientRequestInitializer;
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.jackson2.JacksonFactory;
@@ -28,7 +26,6 @@ import com.google.api.services.cloudresourcemanager.CloudResourceManager;
 import com.google.api.services.cloudresourcemanager.CloudResourceManagerRequestInitializer;
 import com.google.api.services.compute.Compute;
 import com.google.api.services.container.Container;
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
@@ -49,15 +46,6 @@ public class ClientFactory {
   private final JsonFactory jsonFactory;
   private final String credentialsId;
   private final String defaultProjectId;
-
-  @VisibleForTesting
-  ClientFactory() throws AbortException {
-    credential = null;
-    transport = null;
-    jsonFactory = null;
-    defaultProjectId = null;
-    credentialsId = null;
-  }
 
   /**
    * Creates a {@link ClientFactory} instance.
@@ -131,14 +119,9 @@ public class ClientFactory {
     return new ContainerClient(
         new Container.Builder(transport, jsonFactory, credential)
             .setGoogleClientRequestInitializer(
-                new GoogleClientRequestInitializer() {
-                  @Override
-                  public void initialize(AbstractGoogleClientRequest<?> request)
-                      throws IOException {
+                request ->
                     request.setRequestHeaders(
-                        request.getRequestHeaders().setUserAgent(APPLICATION_NAME));
-                  }
-                })
+                        request.getRequestHeaders().setUserAgent(APPLICATION_NAME)))
             .setHttpRequestInitializer(new RetryHttpInitializerWrapper(credential))
             .setApplicationName(APPLICATION_NAME)
             .build());
@@ -153,14 +136,9 @@ public class ClientFactory {
     return new ComputeClient(
         new Compute.Builder(transport, jsonFactory, credential)
             .setGoogleClientRequestInitializer(
-                new GoogleClientRequestInitializer() {
-                  @Override
-                  public void initialize(AbstractGoogleClientRequest<?> request)
-                      throws IOException {
+                request ->
                     request.setRequestHeaders(
-                        request.getRequestHeaders().setUserAgent(APPLICATION_NAME));
-                  }
-                })
+                        request.getRequestHeaders().setUserAgent(APPLICATION_NAME)))
             .setHttpRequestInitializer(new RetryHttpInitializerWrapper(credential))
             .setApplicationName(APPLICATION_NAME)
             .build());
@@ -176,14 +154,9 @@ public class ClientFactory {
         new CloudResourceManager.Builder(
                 transport, jsonFactory, new RetryHttpInitializerWrapper(credential))
             .setGoogleClientRequestInitializer(
-                new GoogleClientRequestInitializer() {
-                  @Override
-                  public void initialize(AbstractGoogleClientRequest<?> request)
-                      throws IOException {
+                request ->
                     request.setRequestHeaders(
-                        request.getRequestHeaders().setUserAgent(APPLICATION_NAME));
-                  }
-                })
+                        request.getRequestHeaders().setUserAgent(APPLICATION_NAME)))
             .setApplicationName(APPLICATION_NAME)
             .setCloudResourceManagerRequestInitializer(new CloudResourceManagerRequestInitializer())
             .build());
@@ -197,10 +170,5 @@ public class ClientFactory {
   /** @return The Credentials ID for this ClientFactory. */
   public String getCredentialsId() {
     return this.credentialsId;
-  }
-
-  @VisibleForTesting
-  ClientFactory makeClientFactory(ItemGroup itemGroup, String credentialsId) throws AbortException {
-    return new ClientFactory(itemGroup, credentialsId);
   }
 }
