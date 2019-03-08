@@ -19,11 +19,14 @@ import static com.google.jenkins.plugins.k8sengine.KubernetesEngineBuilder.EMPTY
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 
 import com.google.api.services.cloudresourcemanager.model.Project;
 import com.google.api.services.compute.model.Zone;
 import com.google.api.services.container.model.Cluster;
 import com.google.common.collect.ImmutableList;
+import com.google.jenkins.plugins.k8sengine.KubernetesEngineBuilder.DescriptorImpl;
 import com.google.jenkins.plugins.k8sengine.client.ClientFactory;
 import com.google.jenkins.plugins.k8sengine.client.CloudResourceManagerClient;
 import com.google.jenkins.plugins.k8sengine.client.ComputeClient;
@@ -33,12 +36,15 @@ import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 import hudson.util.ListBoxModel.Option;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import jenkins.model.Jenkins;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
@@ -48,121 +54,61 @@ public class KubernetesEngineBuilderTest {
   private static final String TEST_ZONE_B = "us-central1-b";
   private static final String TEST_PROJECT_ID = "test-project-id";
   private static final String OTHER_PROJECT_ID = "other-project-id";
-  private static final String NO_ZONES_PROJECT_ID = "no-zones-project-id";
-  private static final String ERROR_PROJECT_ID = "error-project-id";
   private static final String TEST_CLUSTER = "testCluster";
   private static final String OTHER_CLUSTER = "otherCluster";
   private static final String TEST_CREDENTIALS_ID = "test-credentials-id";
-  private static final String OTHER_CREDENTIALS_ID = "other-credentials-id";
-  private static final String NO_DEFAULT_PROJECT_CREDENTIALS_ID = "empty-project-credentials-id";
-  private static final String PROJECT_ERROR_CREDENTIALS_ID = "project-error-credentials-id";
-  private static final String ERROR_CREDENTIALS_ID = "error-credentials-id";
-  private static final String TEST_ERROR_MESSAGE = "error";
 
   private static Jenkins jenkins;
-  private static KubernetesEngineBuilder.DescriptorImpl descriptor;
+
+  @Mock ClientFactory clientFactory;
+
+  @Mock CloudResourceManagerClient cloudResourceManagerClient;
+
+  @Mock ComputeClient computeClient;
+
+  @Mock ContainerClient containerClient;
 
   @BeforeClass
-  public static void init() throws IOException {
-    descriptor = Mockito.spy(KubernetesEngineBuilder.DescriptorImpl.class);
+  public static void init() {
     jenkins = Mockito.mock(Jenkins.class);
-    ComputeClient computeClient = Mockito.mock(ComputeClient.class);
-    Zone testZoneA = new Zone().setName(TEST_ZONE_A);
-    Zone testZoneB = new Zone().setName(TEST_ZONE_B);
-    Mockito.when(computeClient.getZones(TEST_PROJECT_ID))
-        .thenReturn(ImmutableList.of(testZoneA, testZoneB));
-    Mockito.when(computeClient.getZones(OTHER_PROJECT_ID)).thenReturn(ImmutableList.of(testZoneB));
-    Mockito.when(computeClient.getZones(NO_ZONES_PROJECT_ID)).thenReturn(ImmutableList.of());
-    Mockito.when(computeClient.getZones(ERROR_PROJECT_ID)).thenThrow(new IOException());
+  }
 
-    Project testProject = new Project().setProjectId(TEST_PROJECT_ID);
-    Project otherProject = new Project().setProjectId(OTHER_PROJECT_ID);
-    CloudResourceManagerClient cloudResourceManagerClient =
-        Mockito.mock(CloudResourceManagerClient.class);
-    Mockito.when(cloudResourceManagerClient.getAccountProjects())
-        .thenReturn(ImmutableList.of(otherProject, testProject));
-
-    CloudResourceManagerClient otherCloudResourceManagerClient =
-        Mockito.mock(CloudResourceManagerClient.class);
-    Mockito.when(otherCloudResourceManagerClient.getAccountProjects())
-        .thenReturn(ImmutableList.of(otherProject));
-
-    Cluster testCluster = new Cluster().setName(TEST_CLUSTER);
-    Cluster otherCluster = new Cluster().setName(OTHER_CLUSTER);
-    ContainerClient containerClient = Mockito.mock(ContainerClient.class);
-    Mockito.when(containerClient.listClusters(TEST_PROJECT_ID, TEST_ZONE_A))
-        .thenReturn(ImmutableList.of(testCluster));
-    Mockito.when(containerClient.listClusters(OTHER_PROJECT_ID, TEST_ZONE_A))
-        .thenReturn(ImmutableList.of());
-    Mockito.when(containerClient.listClusters(TEST_PROJECT_ID, TEST_ZONE_B))
-        .thenReturn(ImmutableList.of(otherCluster, testCluster));
-    Mockito.when(containerClient.listClusters(ERROR_PROJECT_ID, TEST_ZONE_A))
-        .thenThrow(new IOException());
-
-    ClientFactory clientFactory = Mockito.mock(ClientFactory.class);
-    Mockito.when(clientFactory.getDefaultProjectId()).thenReturn(TEST_PROJECT_ID);
+  @Before
+  public void before() {
     Mockito.when(clientFactory.cloudResourceManagerClient()).thenReturn(cloudResourceManagerClient);
     Mockito.when(clientFactory.computeClient()).thenReturn(computeClient);
     Mockito.when(clientFactory.containerClient()).thenReturn(containerClient);
-    Mockito.doReturn(clientFactory).when(descriptor).getClientFactory(jenkins, TEST_CREDENTIALS_ID);
-
-    ClientFactory otherClientFactory = Mockito.mock(ClientFactory.class);
-    Mockito.when(otherClientFactory.getDefaultProjectId()).thenReturn(TEST_PROJECT_ID);
-    Mockito.when(otherClientFactory.cloudResourceManagerClient())
-        .thenReturn(otherCloudResourceManagerClient);
-    Mockito.doReturn(otherClientFactory)
-        .when(descriptor)
-        .getClientFactory(jenkins, OTHER_CREDENTIALS_ID);
-
-    ClientFactory noDefaultProjectClientFactory = Mockito.mock(ClientFactory.class);
-    Mockito.when(noDefaultProjectClientFactory.getDefaultProjectId()).thenReturn("");
-    Mockito.when(noDefaultProjectClientFactory.cloudResourceManagerClient())
-        .thenReturn(cloudResourceManagerClient);
-    Mockito.doReturn(noDefaultProjectClientFactory)
-        .when(descriptor)
-        .getClientFactory(jenkins, NO_DEFAULT_PROJECT_CREDENTIALS_ID);
-
-    CloudResourceManagerClient errorCloudResourceManagerClient =
-        Mockito.mock(CloudResourceManagerClient.class);
-    Mockito.when(errorCloudResourceManagerClient.getAccountProjects()).thenThrow(new IOException());
-    ClientFactory projectErrorClientFactory = Mockito.mock(ClientFactory.class);
-    Mockito.when(projectErrorClientFactory.getDefaultProjectId()).thenReturn(ERROR_PROJECT_ID);
-    Mockito.when(projectErrorClientFactory.cloudResourceManagerClient())
-        .thenReturn(errorCloudResourceManagerClient);
-    Mockito.doReturn(projectErrorClientFactory)
-        .when(descriptor)
-        .getClientFactory(jenkins, PROJECT_ERROR_CREDENTIALS_ID);
-
-    Mockito.doThrow(new AbortException(TEST_ERROR_MESSAGE))
-        .when(descriptor)
-        .getClientFactory(jenkins, ERROR_CREDENTIALS_ID);
   }
 
   @Test
-  public void testDoFillProjectIdItemsErrorMessageWithAbortException() {
+  public void testDoFillProjectIdItemsErrorMessageWithAbortException() throws IOException {
+    DescriptorImpl descriptor =
+        setUpProjectDescriptor(ImmutableList.of(), "", new AbortException(), null);
     ListBoxModel expected =
         initExpected(
             ImmutableList.of(Messages.KubernetesEngineBuilder_CredentialAuthFailed()),
             ImmutableList.of(EMPTY_VALUE));
-    ListBoxModel result = descriptor.doFillProjectIdItems(jenkins, null, ERROR_CREDENTIALS_ID);
+    ListBoxModel result = descriptor.doFillProjectIdItems(jenkins, null, TEST_CREDENTIALS_ID);
     assertNotNull(result);
     assertListBoxModelEquals(expected, result);
   }
 
   @Test
-  public void testDoFillProjectIdItemsErrorMessageWithIOException() {
+  public void testDoFillProjectIdItemsErrorMessageWithIOException() throws IOException {
+    DescriptorImpl descriptor =
+        setUpProjectDescriptor(ImmutableList.of(), "", null, new IOException());
     ListBoxModel expected =
         initExpected(
             ImmutableList.of(Messages.KubernetesEngineBuilder_ProjectIDFillError()),
             ImmutableList.of(EMPTY_VALUE));
-    ListBoxModel result =
-        descriptor.doFillProjectIdItems(jenkins, null, PROJECT_ERROR_CREDENTIALS_ID);
+    ListBoxModel result = descriptor.doFillProjectIdItems(jenkins, null, TEST_CREDENTIALS_ID);
     assertNotNull(result);
     assertListBoxModelEquals(expected, result);
   }
 
   @Test
-  public void testDoFillProjectIdItemsEmptyWithEmptyCredentialsId() {
+  public void testDoFillProjectIdItemsEmptyWithEmptyCredentialsId() throws IOException {
+    DescriptorImpl descriptor = setUpProjectDescriptor(ImmutableList.of(), "", null, null);
     ListBoxModel expected =
         initExpected(ImmutableList.of(EMPTY_NAME), ImmutableList.of(EMPTY_VALUE));
     ListBoxModel result = descriptor.doFillProjectIdItems(jenkins, null, null);
@@ -171,7 +117,11 @@ public class KubernetesEngineBuilderTest {
   }
 
   @Test
-  public void testDoFillProjectIdItemsWithValidCredentialsId() {
+  public void testDoFillProjectIdItemsWithValidCredentialsId() throws IOException {
+    DescriptorImpl descriptor =
+        setUpProjectDescriptor(
+            ImmutableList.of(OTHER_PROJECT_ID, TEST_PROJECT_ID), TEST_PROJECT_ID, null, null);
+
     ListBoxModel expected =
         initExpected(
             ImmutableList.of(EMPTY_NAME, OTHER_PROJECT_ID, TEST_PROJECT_ID),
@@ -183,7 +133,11 @@ public class KubernetesEngineBuilderTest {
   }
 
   @Test
-  public void testDoFillProjectIdItemsWithValidCredentialsIdAndPreviousValueAndDefault() {
+  public void testDoFillProjectIdItemsWithValidCredentialsIdAndPreviousValueAndDefault()
+      throws IOException {
+    DescriptorImpl descriptor =
+        setUpProjectDescriptor(
+            ImmutableList.of(OTHER_PROJECT_ID, TEST_PROJECT_ID), TEST_PROJECT_ID, null, null);
     ListBoxModel expected =
         initExpected(
             ImmutableList.of(EMPTY_NAME, OTHER_PROJECT_ID, TEST_PROJECT_ID),
@@ -195,51 +149,60 @@ public class KubernetesEngineBuilderTest {
   }
 
   @Test
-  public void testDoFillProjectIdItemsWithValidCredentialsIdAndPreviousValueAndEmptyDefault() {
+  public void testDoFillProjectIdItemsWithValidCredentialsIdAndPreviousValueAndEmptyDefault()
+      throws IOException {
+    DescriptorImpl descriptor =
+        setUpProjectDescriptor(ImmutableList.of(OTHER_PROJECT_ID, TEST_PROJECT_ID), "", null, null);
     ListBoxModel expected =
         initExpected(
             ImmutableList.of(EMPTY_NAME, OTHER_PROJECT_ID, TEST_PROJECT_ID),
             ImmutableList.of(EMPTY_VALUE, OTHER_PROJECT_ID, TEST_PROJECT_ID));
     ListBoxModel result =
-        descriptor.doFillProjectIdItems(
-            jenkins, OTHER_PROJECT_ID, NO_DEFAULT_PROJECT_CREDENTIALS_ID);
+        descriptor.doFillProjectIdItems(jenkins, OTHER_PROJECT_ID, TEST_CREDENTIALS_ID);
     assertListBoxModelEquals(expected, result);
     assertValueSelected(result, OTHER_PROJECT_ID);
   }
 
   @Test
-  public void testDoFillProjectIdItemsWithValidCredentialsIdMissingDefaultProject() {
+  public void testDoFillProjectIdItemsWithValidCredentialsIdMissingDefaultProject()
+      throws IOException {
+    DescriptorImpl descriptor =
+        setUpProjectDescriptor(ImmutableList.of(OTHER_PROJECT_ID), TEST_PROJECT_ID, null, null);
     ListBoxModel expected =
         initExpected(
             ImmutableList.of(EMPTY_NAME, OTHER_PROJECT_ID, TEST_PROJECT_ID),
             ImmutableList.of(EMPTY_VALUE, OTHER_PROJECT_ID, TEST_PROJECT_ID));
-    ListBoxModel result = descriptor.doFillProjectIdItems(jenkins, null, OTHER_CREDENTIALS_ID);
+    ListBoxModel result = descriptor.doFillProjectIdItems(jenkins, null, TEST_CREDENTIALS_ID);
     assertListBoxModelEquals(expected, result);
     assertValueSelected(result, OTHER_PROJECT_ID);
   }
 
   @Test
-  public void testDoFillProjectIdItemsWithValidCredentialsAndEmptyProject() {
+  public void testDoFillProjectIdItemsWithValidCredentialsAndEmptyProject() throws IOException {
+    DescriptorImpl descriptor =
+        setUpProjectDescriptor(
+            ImmutableList.of(OTHER_PROJECT_ID, TEST_PROJECT_ID), TEST_PROJECT_ID, null, null);
     ListBoxModel expected =
         initExpected(
             ImmutableList.of(EMPTY_NAME, OTHER_PROJECT_ID, TEST_PROJECT_ID),
             ImmutableList.of(EMPTY_VALUE, OTHER_PROJECT_ID, TEST_PROJECT_ID));
     ListBoxModel result =
-        descriptor.doFillProjectIdItems(
-            jenkins, OTHER_PROJECT_ID, NO_DEFAULT_PROJECT_CREDENTIALS_ID);
+        descriptor.doFillProjectIdItems(jenkins, OTHER_PROJECT_ID, TEST_CREDENTIALS_ID);
     assertListBoxModelEquals(expected, result);
     assertValueSelected(result, OTHER_PROJECT_ID);
   }
 
   @Test
-  public void testDoCheckProjectIdMessageWithEmptyProjectID() {
+  public void testDoCheckProjectIdMessageWithEmptyProjectID() throws IOException {
+    DescriptorImpl descriptor = setUpProjectDescriptor(ImmutableList.of(), "", null, null);
     FormValidation result = descriptor.doCheckProjectId(jenkins, null, TEST_CREDENTIALS_ID);
     assertNotNull(result);
     assertEquals(Messages.KubernetesEngineBuilder_ProjectIDRequired(), result.getMessage());
   }
 
   @Test
-  public void testDoCheckProjectIdMessageWithEmptyCredentialsID() {
+  public void testDoCheckProjectIdMessageWithEmptyCredentialsID() throws IOException {
+    DescriptorImpl descriptor = setUpProjectDescriptor(ImmutableList.of(), "", null, null);
     FormValidation result = descriptor.doCheckProjectId(jenkins, TEST_PROJECT_ID, null);
     assertNotNull(result);
     assertEquals(
@@ -247,58 +210,70 @@ public class KubernetesEngineBuilderTest {
   }
 
   @Test
-  public void testDoCheckProjectIdMessageWithAbortException() {
+  public void testDoCheckProjectIdMessageWithAbortException() throws IOException {
+    DescriptorImpl descriptor =
+        setUpProjectDescriptor(ImmutableList.of(), "", new AbortException(), null);
     FormValidation result =
-        descriptor.doCheckProjectId(jenkins, TEST_PROJECT_ID, ERROR_CREDENTIALS_ID);
+        descriptor.doCheckProjectId(jenkins, TEST_PROJECT_ID, TEST_CREDENTIALS_ID);
     assertNotNull(result);
     assertEquals(Messages.KubernetesEngineBuilder_CredentialAuthFailed(), result.getMessage());
   }
 
   @Test
-  public void testDoCheckProjectIdMessageWithIOException() {
+  public void testDoCheckProjectIdMessageWithIOException() throws IOException {
+    DescriptorImpl descriptor =
+        setUpProjectDescriptor(ImmutableList.of(), "", null, new IOException());
     FormValidation result =
-        descriptor.doCheckProjectId(jenkins, TEST_PROJECT_ID, PROJECT_ERROR_CREDENTIALS_ID);
+        descriptor.doCheckProjectId(jenkins, TEST_PROJECT_ID, TEST_CREDENTIALS_ID);
     assertNotNull(result);
     assertEquals(
         Messages.KubernetesEngineBuilder_ProjectIDVerificationError(), result.getMessage());
   }
 
   @Test
-  public void testDoCheckProjectIdMessageWithAbortExceptionAndEmptyProjectId() {
-    FormValidation result = descriptor.doCheckProjectId(jenkins, null, ERROR_CREDENTIALS_ID);
+  public void testDoCheckProjectIdMessageWithAbortExceptionAndEmptyProjectId() throws IOException {
+    DescriptorImpl descriptor =
+        setUpProjectDescriptor(ImmutableList.of(), "", new AbortException(), null);
+    FormValidation result = descriptor.doCheckProjectId(jenkins, null, TEST_CREDENTIALS_ID);
     assertNotNull(result);
     assertEquals(Messages.KubernetesEngineBuilder_CredentialAuthFailed(), result.getMessage());
   }
 
   @Test
-  public void testDoCheckProjectIdMessageWithIOExceptionAndEmptyProjectId() {
-    FormValidation result =
-        descriptor.doCheckProjectId(jenkins, null, PROJECT_ERROR_CREDENTIALS_ID);
+  public void testDoCheckProjectIdMessageWithIOExceptionAndEmptyProjectId() throws IOException {
+    DescriptorImpl descriptor =
+        setUpProjectDescriptor(ImmutableList.of(), "", null, new IOException());
+    FormValidation result = descriptor.doCheckProjectId(jenkins, null, TEST_CREDENTIALS_ID);
     assertNotNull(result);
     assertEquals(
         Messages.KubernetesEngineBuilder_ProjectIDVerificationError(), result.getMessage());
   }
 
   @Test
-  public void testDoCheckProjectIdMessageWithNoProjects() {
+  public void testDoCheckProjectIdMessageWithNoProjects() throws IOException {
+    DescriptorImpl descriptor = setUpProjectDescriptor(ImmutableList.of(), "", null, null);
     FormValidation result =
-        descriptor.doCheckProjectId(jenkins, TEST_PROJECT_ID, OTHER_CREDENTIALS_ID);
+        descriptor.doCheckProjectId(jenkins, TEST_PROJECT_ID, TEST_CREDENTIALS_ID);
     assertNotNull(result);
     assertEquals(
         Messages.KubernetesEngineBuilder_ProjectIDNotUnderCredential(), result.getMessage());
   }
 
   @Test
-  public void testDoCheckProjectIdMessageWithWrongProjects() {
+  public void testDoCheckProjectIdMessageWithWrongProjects() throws IOException {
+    DescriptorImpl descriptor =
+        setUpProjectDescriptor(ImmutableList.of(OTHER_PROJECT_ID), "", null, null);
     FormValidation result =
-        descriptor.doCheckProjectId(jenkins, TEST_PROJECT_ID, OTHER_CREDENTIALS_ID);
+        descriptor.doCheckProjectId(jenkins, TEST_PROJECT_ID, TEST_CREDENTIALS_ID);
     assertNotNull(result);
     assertEquals(
         Messages.KubernetesEngineBuilder_ProjectIDNotUnderCredential(), result.getMessage());
   }
 
   @Test
-  public void testDoCheckProjectIdMessageWithValidProject() {
+  public void testDoCheckProjectIdMessageWithValidProject() throws IOException {
+    DescriptorImpl descriptor =
+        setUpProjectDescriptor(ImmutableList.of(OTHER_PROJECT_ID, TEST_PROJECT_ID), "", null, null);
     FormValidation result =
         descriptor.doCheckProjectId(jenkins, TEST_PROJECT_ID, TEST_CREDENTIALS_ID);
     assertNotNull(result);
@@ -306,7 +281,8 @@ public class KubernetesEngineBuilderTest {
   }
 
   @Test
-  public void testDoFillZoneItemsEmptyWithEmptyProjectId() {
+  public void testDoFillZoneItemsEmptyWithEmptyProjectId() throws IOException {
+    DescriptorImpl descriptor = setUpZoneDescriptor(ImmutableList.of(), null, null);
     ListBoxModel expected =
         initExpected(ImmutableList.of(EMPTY_NAME), ImmutableList.of(EMPTY_VALUE));
     ListBoxModel result = descriptor.doFillZoneItems(jenkins, null, TEST_CREDENTIALS_ID, null);
@@ -315,7 +291,8 @@ public class KubernetesEngineBuilderTest {
   }
 
   @Test
-  public void testDoFillZoneItemsEmptyWithEmptyCredentialsId() {
+  public void testDoFillZoneItemsEmptyWithEmptyCredentialsId() throws IOException {
+    DescriptorImpl descriptor = setUpZoneDescriptor(ImmutableList.of(), null, null);
     ListBoxModel expected =
         initExpected(ImmutableList.of(EMPTY_NAME), ImmutableList.of(EMPTY_VALUE));
     ListBoxModel result = descriptor.doFillZoneItems(jenkins, null, null, TEST_PROJECT_ID);
@@ -324,7 +301,9 @@ public class KubernetesEngineBuilderTest {
   }
 
   @Test
-  public void testDoFillZoneItemsWithValidArguments() {
+  public void testDoFillZoneItemsWithValidArguments() throws IOException {
+    DescriptorImpl descriptor =
+        setUpZoneDescriptor(ImmutableList.of(TEST_ZONE_A, TEST_ZONE_B), null, null);
     ListBoxModel expected =
         initExpected(
             ImmutableList.of(EMPTY_NAME, TEST_ZONE_A, TEST_ZONE_B),
@@ -337,7 +316,9 @@ public class KubernetesEngineBuilderTest {
   }
 
   @Test
-  public void testDoFillZoneItemsWithValidArgumentsAndPreviousValue() {
+  public void testDoFillZoneItemsWithValidArgumentsAndPreviousValue() throws IOException {
+    DescriptorImpl descriptor =
+        setUpZoneDescriptor(ImmutableList.of(TEST_ZONE_A, TEST_ZONE_B), null, null);
     ListBoxModel expected =
         initExpected(
             ImmutableList.of(EMPTY_NAME, TEST_ZONE_A, TEST_ZONE_B),
@@ -350,41 +331,45 @@ public class KubernetesEngineBuilderTest {
   }
 
   @Test
-  public void testDoFillZoneItemsEmptyWithValidArgumentsNoZones() {
+  public void testDoFillZoneItemsEmptyWithValidArgumentsNoZones() throws IOException {
+    DescriptorImpl descriptor = setUpZoneDescriptor(ImmutableList.of(), null, null);
     ListBoxModel expected =
         initExpected(ImmutableList.of(EMPTY_NAME), ImmutableList.of(EMPTY_VALUE));
     ListBoxModel result =
-        descriptor.doFillZoneItems(jenkins, null, TEST_CREDENTIALS_ID, NO_ZONES_PROJECT_ID);
+        descriptor.doFillZoneItems(jenkins, null, TEST_CREDENTIALS_ID, TEST_PROJECT_ID);
     assertNotNull(result);
     assertListBoxModelEquals(expected, result);
   }
 
   @Test
-  public void testDoFillZoneItemsErrorMessageWithAbortException() {
+  public void testDoFillZoneItemsErrorMessageWithAbortException() throws IOException {
+    DescriptorImpl descriptor = setUpZoneDescriptor(ImmutableList.of(), new AbortException(), null);
     ListBoxModel expected =
         initExpected(
             ImmutableList.of(Messages.KubernetesEngineBuilder_CredentialAuthFailed()),
             ImmutableList.of(EMPTY_VALUE));
     ListBoxModel result =
-        descriptor.doFillZoneItems(jenkins, null, ERROR_CREDENTIALS_ID, TEST_PROJECT_ID);
+        descriptor.doFillZoneItems(jenkins, null, TEST_CREDENTIALS_ID, TEST_PROJECT_ID);
     assertNotNull(result);
     assertListBoxModelEquals(expected, result);
   }
 
   @Test
-  public void testDoFillZoneItemsErrorMessageWithIOException() {
+  public void testDoFillZoneItemsErrorMessageWithIOException() throws IOException {
+    DescriptorImpl descriptor = setUpZoneDescriptor(ImmutableList.of(), null, new IOException());
     ListBoxModel expected =
         initExpected(
             ImmutableList.of(Messages.KubernetesEngineBuilder_ZoneFillError()),
             ImmutableList.of(EMPTY_VALUE));
     ListBoxModel result =
-        descriptor.doFillZoneItems(jenkins, null, TEST_CREDENTIALS_ID, ERROR_PROJECT_ID);
+        descriptor.doFillZoneItems(jenkins, null, TEST_CREDENTIALS_ID, TEST_PROJECT_ID);
     assertNotNull(result);
     assertListBoxModelEquals(expected, result);
   }
 
   @Test
-  public void testDoCheckZoneMessageWithEmptyZone() {
+  public void testDoCheckZoneMessageWithEmptyZone() throws IOException {
+    DescriptorImpl descriptor = setUpZoneDescriptor(ImmutableList.of(), null, null);
     FormValidation result =
         descriptor.doCheckZone(jenkins, null, TEST_CREDENTIALS_ID, TEST_PROJECT_ID);
     assertNotNull(result);
@@ -392,29 +377,33 @@ public class KubernetesEngineBuilderTest {
   }
 
   @Test
-  public void testDoCheckZoneMessageWithEmptyProjectId() {
+  public void testDoCheckZoneMessageWithEmptyProjectId() throws IOException {
+    DescriptorImpl descriptor = setUpZoneDescriptor(ImmutableList.of(), null, null);
     FormValidation result = descriptor.doCheckZone(jenkins, TEST_ZONE_A, TEST_CREDENTIALS_ID, null);
     assertNotNull(result);
     assertEquals(Messages.KubernetesEngineBuilder_ZoneProjectIDRequired(), result.getMessage());
   }
 
   @Test
-  public void testDoCheckZoneMessageWithEmptyCredentialsId() {
+  public void testDoCheckZoneMessageWithEmptyCredentialsId() throws IOException {
+    DescriptorImpl descriptor = setUpZoneDescriptor(ImmutableList.of(), null, null);
     FormValidation result = descriptor.doCheckZone(jenkins, TEST_ZONE_A, null, TEST_PROJECT_ID);
     assertNotNull(result);
     assertEquals(Messages.KubernetesEngineBuilder_ZoneCredentialIDRequired(), result.getMessage());
   }
 
   @Test
-  public void testDoCheckZoneMessageWithNoAvailableZones() {
+  public void testDoCheckZoneMessageWithNoAvailableZones() throws IOException {
+    DescriptorImpl descriptor = setUpZoneDescriptor(ImmutableList.of(), null, null);
     FormValidation result =
-        descriptor.doCheckZone(jenkins, TEST_ZONE_A, TEST_CREDENTIALS_ID, NO_ZONES_PROJECT_ID);
+        descriptor.doCheckZone(jenkins, TEST_ZONE_A, TEST_CREDENTIALS_ID, TEST_PROJECT_ID);
     assertNotNull(result);
     assertEquals(Messages.KubernetesEngineBuilder_ZoneNotInProject(), result.getMessage());
   }
 
   @Test
-  public void testDoCheckZoneMessageWithNonMatchingZones() {
+  public void testDoCheckZoneMessageWithNonMatchingZones() throws IOException {
+    DescriptorImpl descriptor = setUpZoneDescriptor(ImmutableList.of(TEST_ZONE_B), null, null);
     FormValidation result =
         descriptor.doCheckZone(jenkins, TEST_ZONE_A, TEST_CREDENTIALS_ID, OTHER_PROJECT_ID);
     assertNotNull(result);
@@ -422,31 +411,45 @@ public class KubernetesEngineBuilderTest {
   }
 
   @Test
-  public void testDoCheckZoneMessageWithIOException() {
+  public void testDoCheckZoneMessageWithAbortException() throws IOException {
+    DescriptorImpl descriptor = setUpZoneDescriptor(ImmutableList.of(), new AbortException(), null);
     FormValidation result =
-        descriptor.doCheckZone(jenkins, TEST_ZONE_A, TEST_CREDENTIALS_ID, ERROR_PROJECT_ID);
-    assertNotNull(result);
-    assertEquals(Messages.KubernetesEngineBuilder_ZoneVerificationError(), result.getMessage());
-  }
-
-  @Test
-  public void testDoCheckZoneMessageWithAbortExceptionAndEmptyZone() {
-    FormValidation result =
-        descriptor.doCheckZone(jenkins, null, ERROR_CREDENTIALS_ID, TEST_PROJECT_ID);
+        descriptor.doCheckZone(jenkins, TEST_ZONE_A, TEST_CREDENTIALS_ID, TEST_PROJECT_ID);
     assertNotNull(result);
     assertEquals(Messages.KubernetesEngineBuilder_CredentialAuthFailed(), result.getMessage());
   }
 
   @Test
-  public void testDoCheckZonedMessageWithIOExceptionAndEmptyZone() {
+  public void testDoCheckZoneMessageWithIOException() throws IOException {
+    DescriptorImpl descriptor = setUpZoneDescriptor(ImmutableList.of(), null, new IOException());
     FormValidation result =
-        descriptor.doCheckZone(jenkins, null, TEST_CREDENTIALS_ID, ERROR_PROJECT_ID);
+        descriptor.doCheckZone(jenkins, TEST_ZONE_A, TEST_CREDENTIALS_ID, TEST_PROJECT_ID);
     assertNotNull(result);
     assertEquals(Messages.KubernetesEngineBuilder_ZoneVerificationError(), result.getMessage());
   }
 
   @Test
-  public void testDoCheckZoneOKWithMatchingZones() {
+  public void testDoCheckZoneMessageWithAbortExceptionAndEmptyZone() throws IOException {
+    DescriptorImpl descriptor = setUpZoneDescriptor(ImmutableList.of(), new AbortException(), null);
+    FormValidation result =
+        descriptor.doCheckZone(jenkins, null, TEST_CREDENTIALS_ID, TEST_PROJECT_ID);
+    assertNotNull(result);
+    assertEquals(Messages.KubernetesEngineBuilder_CredentialAuthFailed(), result.getMessage());
+  }
+
+  @Test
+  public void testDoCheckZoneMessageWithIOExceptionAndEmptyZone() throws IOException {
+    DescriptorImpl descriptor = setUpZoneDescriptor(ImmutableList.of(), null, new IOException());
+    FormValidation result =
+        descriptor.doCheckZone(jenkins, null, TEST_CREDENTIALS_ID, TEST_PROJECT_ID);
+    assertNotNull(result);
+    assertEquals(Messages.KubernetesEngineBuilder_ZoneVerificationError(), result.getMessage());
+  }
+
+  @Test
+  public void testDoCheckZoneOKWithMatchingZones() throws IOException {
+    DescriptorImpl descriptor =
+        setUpZoneDescriptor(ImmutableList.of(TEST_ZONE_A, TEST_ZONE_B), null, null);
     FormValidation result =
         descriptor.doCheckZone(jenkins, TEST_ZONE_A, TEST_CREDENTIALS_ID, TEST_PROJECT_ID);
     assertNotNull(result);
@@ -454,7 +457,8 @@ public class KubernetesEngineBuilderTest {
   }
 
   @Test
-  public void testDoFillClusterNameItemsEmptyWithEmptyCredentialsId() {
+  public void testDoFillClusterNameItemsEmptyWithEmptyCredentialsId() throws IOException {
+    DescriptorImpl descriptor = setUpClusterDescriptor(ImmutableList.of(), null, null);
     ListBoxModel expected =
         initExpected(ImmutableList.of(EMPTY_NAME), ImmutableList.of(EMPTY_VALUE));
     ListBoxModel result =
@@ -464,7 +468,8 @@ public class KubernetesEngineBuilderTest {
   }
 
   @Test
-  public void testDoFillClusterNameItemsEmptyWithEmptyProjectId() {
+  public void testDoFillClusterNameItemsEmptyWithEmptyProjectId() throws IOException {
+    DescriptorImpl descriptor = setUpClusterDescriptor(ImmutableList.of(), null, null);
     ListBoxModel expected =
         initExpected(ImmutableList.of(EMPTY_NAME), ImmutableList.of(EMPTY_VALUE));
     ListBoxModel result =
@@ -474,7 +479,8 @@ public class KubernetesEngineBuilderTest {
   }
 
   @Test
-  public void testDoFillClusterNameItemsEmptyWithEmptyZone() {
+  public void testDoFillClusterNameItemsEmptyWithEmptyZone() throws IOException {
+    DescriptorImpl descriptor = setUpClusterDescriptor(ImmutableList.of(), null, null);
     ListBoxModel expected =
         initExpected(ImmutableList.of(EMPTY_NAME), ImmutableList.of(EMPTY_VALUE));
     ListBoxModel result =
@@ -485,20 +491,23 @@ public class KubernetesEngineBuilderTest {
   }
 
   @Test
-  public void testDoFillClusterNameItemsErrorMessageWithAbortException() {
+  public void testDoFillClusterNameItemsErrorMessageWithAbortException() throws IOException {
+    DescriptorImpl descriptor =
+        setUpClusterDescriptor(ImmutableList.of(), new AbortException(), null);
     ListBoxModel expected =
         initExpected(
             ImmutableList.of(Messages.KubernetesEngineBuilder_CredentialAuthFailed()),
             ImmutableList.of(EMPTY_VALUE));
     ListBoxModel result =
         descriptor.doFillClusterNameItems(
-            jenkins, null, ERROR_CREDENTIALS_ID, TEST_PROJECT_ID, TEST_ZONE_A);
+            jenkins, null, TEST_CREDENTIALS_ID, TEST_PROJECT_ID, TEST_ZONE_A);
     assertNotNull(result);
     assertListBoxModelEquals(expected, result);
   }
 
   @Test
-  public void testDoFillClusterNameItemsWithInvalidClusterName() {
+  public void testDoFillClusterNameItemsWithInvalidClusterName() throws IOException {
+    DescriptorImpl descriptor = setUpClusterDescriptor(ImmutableList.of(TEST_CLUSTER), null, null);
     ListBoxModel expected =
         initExpected(
             ImmutableList.of(EMPTY_NAME, TEST_CLUSTER),
@@ -512,7 +521,8 @@ public class KubernetesEngineBuilderTest {
   }
 
   @Test
-  public void testDoFillClusterNameItemsEmptyWithValidInputsNoClusters() {
+  public void testDoFillClusterNameItemsEmptyWithValidInputsNoClusters() throws IOException {
+    DescriptorImpl descriptor = setUpClusterDescriptor(ImmutableList.of(), null, null);
     ListBoxModel expected =
         initExpected(ImmutableList.of(EMPTY_NAME), ImmutableList.of(EMPTY_VALUE));
     ListBoxModel result =
@@ -523,7 +533,8 @@ public class KubernetesEngineBuilderTest {
   }
 
   @Test
-  public void testDoFillClusterNameItemsWithValidInputsOneCluster() {
+  public void testDoFillClusterNameItemsWithValidInputsOneCluster() throws IOException {
+    DescriptorImpl descriptor = setUpClusterDescriptor(ImmutableList.of(TEST_CLUSTER), null, null);
     ListBoxModel expected =
         initExpected(
             ImmutableList.of(EMPTY_NAME, TEST_CLUSTER),
@@ -537,7 +548,9 @@ public class KubernetesEngineBuilderTest {
   }
 
   @Test
-  public void testDoFillClusterNameItemsWithValidInputsMultipleClusters() {
+  public void testDoFillClusterNameItemsWithValidInputsMultipleClusters() throws IOException {
+    DescriptorImpl descriptor =
+        setUpClusterDescriptor(ImmutableList.of(OTHER_CLUSTER, TEST_CLUSTER), null, null);
     ListBoxModel expected =
         initExpected(
             ImmutableList.of(EMPTY_NAME, OTHER_CLUSTER, TEST_CLUSTER),
@@ -551,7 +564,10 @@ public class KubernetesEngineBuilderTest {
   }
 
   @Test
-  public void testDoFillClusterNameItemsWithValidInputsMultipleClustersAndPreviousValue() {
+  public void testDoFillClusterNameItemsWithValidInputsMultipleClustersAndPreviousValue()
+      throws IOException {
+    DescriptorImpl descriptor =
+        setUpClusterDescriptor(ImmutableList.of(OTHER_CLUSTER, TEST_CLUSTER), null, null);
     ListBoxModel expected =
         initExpected(
             ImmutableList.of(EMPTY_NAME, OTHER_CLUSTER, TEST_CLUSTER),
@@ -565,20 +581,22 @@ public class KubernetesEngineBuilderTest {
   }
 
   @Test
-  public void testDoFillClusterNameItemsErrorMessageWithIOException() {
+  public void testDoFillClusterNameItemsWithIOException() throws IOException {
+    DescriptorImpl descriptor = setUpClusterDescriptor(ImmutableList.of(), null, new IOException());
     ListBoxModel expected =
         initExpected(
             ImmutableList.of(Messages.KubernetesEngineBuilder_ClusterFillError()),
             ImmutableList.of(EMPTY_VALUE));
     ListBoxModel result =
         descriptor.doFillClusterNameItems(
-            jenkins, null, TEST_CREDENTIALS_ID, ERROR_PROJECT_ID, TEST_ZONE_A);
+            jenkins, null, TEST_CREDENTIALS_ID, TEST_PROJECT_ID, TEST_ZONE_A);
     assertNotNull(result);
     assertListBoxModelEquals(expected, result);
   }
 
   @Test
-  public void testDoCheckClusterNameMessageWithEmptyClusterName() {
+  public void testDoCheckClusterNameMessageWithEmptyClusterName() throws IOException {
+    DescriptorImpl descriptor = setUpClusterDescriptor(ImmutableList.of(), null, null);
     FormValidation result =
         descriptor.doCheckClusterName(
             jenkins, null, TEST_CREDENTIALS_ID, TEST_PROJECT_ID, TEST_ZONE_A);
@@ -587,7 +605,8 @@ public class KubernetesEngineBuilderTest {
   }
 
   @Test
-  public void testDoCheckClusterNameMessageWithEmptyCredentialsId() {
+  public void testDoCheckClusterNameMessageWithEmptyCredentialsId() throws IOException {
+    DescriptorImpl descriptor = setUpClusterDescriptor(ImmutableList.of(), null, null);
     FormValidation result =
         descriptor.doCheckClusterName(jenkins, TEST_CLUSTER, null, TEST_PROJECT_ID, TEST_ZONE_A);
     assertNotNull(result);
@@ -596,7 +615,8 @@ public class KubernetesEngineBuilderTest {
   }
 
   @Test
-  public void testDoCheckClusterNameMessageWithEmptyProjectId() {
+  public void testDoCheckClusterNameMessageWithEmptyProjectId() throws IOException {
+    DescriptorImpl descriptor = setUpClusterDescriptor(ImmutableList.of(), null, null);
     FormValidation result =
         descriptor.doCheckClusterName(
             jenkins, TEST_CLUSTER, TEST_CREDENTIALS_ID, null, TEST_ZONE_A);
@@ -605,7 +625,8 @@ public class KubernetesEngineBuilderTest {
   }
 
   @Test
-  public void testDoCheckClusterNameMessageWithEmptyZone() {
+  public void testDoCheckClusterNameMessageWithEmptyZone() throws IOException {
+    DescriptorImpl descriptor = setUpClusterDescriptor(ImmutableList.of(), null, null);
     FormValidation result =
         descriptor.doCheckClusterName(
             jenkins, TEST_CLUSTER, TEST_CREDENTIALS_ID, TEST_PROJECT_ID, null);
@@ -614,16 +635,19 @@ public class KubernetesEngineBuilderTest {
   }
 
   @Test
-  public void testDoCheckClusterNameMessageWithValidInputsNoClusters() {
+  public void testDoCheckClusterNameMessageWithValidInputsNoClusters() throws IOException {
+    DescriptorImpl descriptor = setUpClusterDescriptor(ImmutableList.of(), null, null);
     FormValidation result =
         descriptor.doCheckClusterName(
-            jenkins, TEST_CLUSTER, TEST_CREDENTIALS_ID, OTHER_PROJECT_ID, TEST_ZONE_A);
+            jenkins, TEST_CLUSTER, TEST_CREDENTIALS_ID, TEST_PROJECT_ID, TEST_ZONE_A);
     assertNotNull(result);
     assertEquals(Messages.KubernetesEngineBuilder_NoClusterInProjectZone(), result.getMessage());
   }
 
   @Test
-  public void testDoCheckClusterNameOkWithValidInputs() {
+  public void testDoCheckClusterNameOkWithValidInputs() throws IOException {
+    DescriptorImpl descriptor =
+        setUpClusterDescriptor(ImmutableList.of(OTHER_CLUSTER, TEST_CLUSTER), null, null);
     FormValidation result =
         descriptor.doCheckClusterName(
             jenkins, TEST_CLUSTER, TEST_CREDENTIALS_ID, TEST_PROJECT_ID, TEST_ZONE_A);
@@ -632,39 +656,116 @@ public class KubernetesEngineBuilderTest {
   }
 
   @Test
-  public void testDoCheckClusterNameMessageWithAbortException() {
+  public void testDoCheckClusterNameMessageWithAbortException() throws IOException {
+    DescriptorImpl descriptor =
+        setUpClusterDescriptor(ImmutableList.of(), new AbortException(), null);
     FormValidation result =
         descriptor.doCheckClusterName(
-            jenkins, TEST_CLUSTER, ERROR_CREDENTIALS_ID, TEST_PROJECT_ID, TEST_ZONE_A);
+            jenkins, TEST_CLUSTER, TEST_CREDENTIALS_ID, TEST_PROJECT_ID, TEST_ZONE_A);
     assertNotNull(result);
     assertEquals(Messages.KubernetesEngineBuilder_CredentialAuthFailed(), result.getMessage());
   }
 
   @Test
-  public void testDoCheckClusterNameMessageWithIOException() {
+  public void testDoCheckClusterNameMessageWithIOException() throws IOException {
+    DescriptorImpl descriptor = setUpClusterDescriptor(ImmutableList.of(), null, new IOException());
     FormValidation result =
         descriptor.doCheckClusterName(
-            jenkins, TEST_CLUSTER, TEST_CREDENTIALS_ID, ERROR_PROJECT_ID, TEST_ZONE_A);
+            jenkins, TEST_CLUSTER, TEST_CREDENTIALS_ID, TEST_PROJECT_ID, TEST_ZONE_A);
     assertNotNull(result);
     assertEquals(Messages.KubernetesEngineBuilder_ClusterVerificationError(), result.getMessage());
   }
 
   @Test
-  public void testDoCheckClusterNameMessageWithAbortExceptionAndEmptyClusterName() {
+  public void testDoCheckClusterNameMessageWithAbortExceptionAndEmptyClusterName()
+      throws IOException {
+    DescriptorImpl descriptor =
+        setUpClusterDescriptor(ImmutableList.of(), new AbortException(), null);
     FormValidation result =
         descriptor.doCheckClusterName(
-            jenkins, null, ERROR_CREDENTIALS_ID, TEST_PROJECT_ID, TEST_ZONE_A);
+            jenkins, null, TEST_CREDENTIALS_ID, TEST_PROJECT_ID, TEST_ZONE_A);
     assertNotNull(result);
     assertEquals(Messages.KubernetesEngineBuilder_CredentialAuthFailed(), result.getMessage());
   }
 
   @Test
-  public void testDoCheckClusterNameMessageWithIOExceptionAndEmptyClusterName() {
+  public void testDoCheckClusterNameMessageWithIOExceptionAndEmptyClusterName() throws IOException {
+    DescriptorImpl descriptor = setUpClusterDescriptor(ImmutableList.of(), null, new IOException());
     FormValidation result =
         descriptor.doCheckClusterName(
-            jenkins, null, TEST_CREDENTIALS_ID, ERROR_PROJECT_ID, TEST_ZONE_A);
+            jenkins, null, TEST_CREDENTIALS_ID, TEST_PROJECT_ID, TEST_ZONE_A);
     assertNotNull(result);
     assertEquals(Messages.KubernetesEngineBuilder_ClusterVerificationError(), result.getMessage());
+  }
+
+  private DescriptorImpl setUpDescriptor(AbortException abortException) throws AbortException {
+    DescriptorImpl descriptor = Mockito.spy(DescriptorImpl.class);
+    if (abortException != null) {
+      Mockito.doThrow(abortException)
+          .when(descriptor)
+          .getClientFactory(any(Jenkins.class), anyString());
+      return descriptor;
+    }
+    Mockito.doReturn(clientFactory)
+        .when(descriptor)
+        .getClientFactory(any(Jenkins.class), anyString());
+
+    return descriptor;
+  }
+
+  private DescriptorImpl setUpProjectDescriptor(
+      List<String> initialProjects,
+      String defaultProjectId,
+      AbortException abortException,
+      IOException ioException)
+      throws IOException {
+    DescriptorImpl descriptor = setUpDescriptor(abortException);
+
+    Mockito.when(clientFactory.getDefaultProjectId()).thenReturn(defaultProjectId);
+
+    if (ioException != null) {
+      Mockito.when(cloudResourceManagerClient.getAccountProjects()).thenThrow(ioException);
+      return descriptor;
+    }
+
+    List<Project> projects = new ArrayList<>();
+    initialProjects.forEach(p -> projects.add(new Project().setProjectId(p)));
+    Mockito.when(cloudResourceManagerClient.getAccountProjects())
+        .thenReturn(ImmutableList.copyOf(projects));
+    return descriptor;
+  }
+
+  private DescriptorImpl setUpZoneDescriptor(
+      List<String> initialZones, AbortException abortException, IOException ioException)
+      throws IOException {
+    DescriptorImpl descriptor = setUpDescriptor(abortException);
+
+    if (ioException != null) {
+      Mockito.when(computeClient.getZones(anyString())).thenThrow(ioException);
+      return descriptor;
+    }
+
+    List<Zone> zones = new ArrayList<>();
+    initialZones.forEach(z -> zones.add(new Zone().setName(z)));
+    Mockito.when(computeClient.getZones(anyString())).thenReturn(ImmutableList.copyOf(zones));
+    return descriptor;
+  }
+
+  private DescriptorImpl setUpClusterDescriptor(
+      List<String> initialClusters, AbortException abortException, IOException ioException)
+      throws IOException {
+    DescriptorImpl descriptor = setUpDescriptor(abortException);
+
+    if (ioException != null) {
+      Mockito.when(containerClient.listClusters(anyString(), anyString())).thenThrow(ioException);
+      return descriptor;
+    }
+
+    List<Cluster> clusters = new ArrayList<>();
+    initialClusters.forEach(c -> clusters.add(new Cluster().setName(c)));
+    Mockito.when(containerClient.listClusters(anyString(), anyString()))
+        .thenReturn(ImmutableList.copyOf(clusters));
+    return descriptor;
   }
 
   private static ListBoxModel initExpected(
