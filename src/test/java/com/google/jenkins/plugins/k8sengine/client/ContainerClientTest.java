@@ -39,6 +39,24 @@ public class ContainerClientTest {
   private static final String TEST_CLUSTER = "testCluster";
   private static final String OTHER_CLUSTER = "otherCluster";
 
+  @Test(expected = IllegalArgumentException.class)
+  public void testGetClustersErrorWithNullProjectId() throws IOException {
+    ContainerClient containerClient = setUpGetClient(null, null);
+    containerClient.getCluster(null, TEST_ZONE, TEST_CLUSTER);
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testGetClustersErrorWithNullZone() throws IOException {
+    ContainerClient containerClient = setUpGetClient(null, null);
+    containerClient.getCluster(TEST_PROJECT_ID, null, TEST_CLUSTER);
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testGetClustersErrorWithNullClusterName() throws IOException {
+    ContainerClient containerClient = setUpGetClient(null, null);
+    containerClient.getCluster(TEST_PROJECT_ID, TEST_ZONE, null);
+  }
+
   @Test
   public void testGetClusterReturnsProperlyWhenClusterExists() throws IOException {
     ContainerClient containerClient = setUpGetClient(TEST_CLUSTER, null);
