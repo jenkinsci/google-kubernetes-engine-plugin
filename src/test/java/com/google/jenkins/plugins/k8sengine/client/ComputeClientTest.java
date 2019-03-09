@@ -43,10 +43,16 @@ public class ComputeClientTest {
   private static final List<String> ZONE_NAMES =
       Arrays.asList(TEST_ZONE_B, TEST_ZONE_A, TEST_ZONE_C);
 
-  @Test(expected = NullPointerException.class)
-  public void testGetZonesExceptionWhenProjectIdNull() throws NullPointerException, IOException {
+  @Test(expected = IllegalArgumentException.class)
+  public void testGetZonesExceptionWhenProjectIdNull() throws IOException {
     ComputeClient computeClient = setUpClient(null, null);
     computeClient.getZones(null);
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testGetZonesExceptionWhenProjectIdEmpty() throws IOException {
+    ComputeClient computeClient = setUpClient(null, null);
+    computeClient.getZones("");
   }
 
   @Test(expected = IOException.class)

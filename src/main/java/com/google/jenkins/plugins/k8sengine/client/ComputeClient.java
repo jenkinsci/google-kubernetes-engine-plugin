@@ -17,6 +17,7 @@ package com.google.jenkins.plugins.k8sengine.client;
 import com.google.api.services.compute.Compute;
 import com.google.api.services.compute.model.Zone;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.util.Comparator;
@@ -41,7 +42,7 @@ public class ComputeClient {
   }
 
   /**
-   * Retrieves a list of {@link Zone} objects from the container client.
+   * Retrieves a list of {@link Zone} objects representing the zones in the project.
    *
    * @param projectId The ID of the project that zone usage is needed for.
    * @return The retrieved list of {@link Zone} objects. This will not be null if the request was
@@ -49,7 +50,7 @@ public class ComputeClient {
    * @throws IOException When an error occurred attempting to get the list of zones.
    */
   public ImmutableList<Zone> getZones(String projectId) throws IOException {
-    Preconditions.checkNotNull(projectId);
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(projectId));
     List<Zone> zones = compute.zones().list(projectId).execute().getItems();
     if (zones == null) {
       zones = ImmutableList.of();

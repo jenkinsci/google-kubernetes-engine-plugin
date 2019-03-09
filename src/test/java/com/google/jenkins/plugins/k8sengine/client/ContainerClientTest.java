@@ -57,6 +57,24 @@ public class ContainerClientTest {
     containerClient.getCluster(TEST_PROJECT_ID, TEST_ZONE, null);
   }
 
+  @Test(expected = IllegalArgumentException.class)
+  public void testGetClustersErrorWithEmptyProjectId() throws IOException {
+    ContainerClient containerClient = setUpGetClient(null, null);
+    containerClient.getCluster("", TEST_ZONE, TEST_CLUSTER);
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testGetClustersErrorWithEmptyZone() throws IOException {
+    ContainerClient containerClient = setUpGetClient(null, null);
+    containerClient.getCluster(TEST_PROJECT_ID, "", TEST_CLUSTER);
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testGetClustersErrorWithEmptyClusterName() throws IOException {
+    ContainerClient containerClient = setUpGetClient(null, null);
+    containerClient.getCluster(TEST_PROJECT_ID, TEST_ZONE, "");
+  }
+
   @Test
   public void testGetClusterReturnsProperlyWhenClusterExists() throws IOException {
     ContainerClient containerClient = setUpGetClient(TEST_CLUSTER, null);
@@ -82,6 +100,18 @@ public class ContainerClientTest {
   public void testListClustersErrorWithNullZone() throws IOException {
     ContainerClient containerClient = setUpListClient(null, null);
     containerClient.listClusters(TEST_PROJECT_ID, null);
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testListClustersErrorWithEmptyProjectId() throws IOException {
+    ContainerClient containerClient = setUpListClient(null, null);
+    containerClient.listClusters("", TEST_ZONE);
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testListClustersErrorWithEmptyZone() throws IOException {
+    ContainerClient containerClient = setUpListClient(null, null);
+    containerClient.listClusters(TEST_PROJECT_ID, "");
   }
 
   @Test
