@@ -49,7 +49,7 @@ public class CloudResourceManagerClient {
    * @return The retrieved list of projects
    * @throws IOException When an error occurred attempting to get the projects.
    */
-  public List<Project> getAccountProjects() throws IOException {
+  public ImmutableList<Project> getAccountProjects() throws IOException {
     List<Project> projects = cloudResourceManager.projects().list().execute().getProjects();
     if (projects == null) {
       projects = ImmutableList.of();
