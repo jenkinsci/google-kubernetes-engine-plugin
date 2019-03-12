@@ -6,43 +6,47 @@
 GCP console. All commands listed below are to be run from the Cloud Shell CLI
 
 ### Google Cloud Platform Prerequisites
+1. If you are performing these steps in a different CLI session than the one you used for the
+[usage](Home.md#usage) tutorial then make sure the `$PROJECT` environment variable is exported:
+    ```bash
+    export PROJECT=$(gcloud info --format='value(config.project)')
+    ```
 
 1. Make sure that `kubectl` is installed:
     ```bash
     kubectl version
     ```
-    
+
     You can install through the [Google Cloud SDK](
     https://kubernetes.io/docs/tasks/tools/install-kubectl/#download-as-part-of-the-google-cloud-sdk)
-    (which should also be installed on Cloud Shell):
-    
+    (which should also be installed on Cloud Shell):    
     ```bash
     gcloud components install kubectl
     ```
-    
+
     If not, choose one of the other installation methods
     [here](https://kubernetes.io/docs/tasks/tools/install-kubectl/).
-    
+
 1. Create a GKE cluster similar to step 1 of [Configure GKE Cluster](Home.md#configure-gke-cluster):
     ```bash
     export CLUSTER=jenkins-master
     export ZONE=us-central1-c
     gcloud container clusters create --zone $ZONE $CLUSTER
     ```
-    
+
 1. Create a [domain](https://domains.google/) for hosting your jenkins instance. Export that now:
     ```bash
     export DOMAIN=example.com
     ```
- 
+
 1. Create a global [static external IP address](
  https://cloud.google.com/compute/docs/ip-addresses/reserve-static-external-ip-address#reserve_new_static):
-
     ```bash
     export ADDRESS_NAME=jenkins-address
     gcloud compute addresses create $ADDRESS_NAME --global
     gcloud compute addresses describe $ADDRESS_NAME --global
     ```
+
     The A record for the domain you created should point to the IP address that the describe command
     outputs.
 
@@ -55,21 +59,24 @@ https://cloud.google.com/load-balancing/docs/ssl-certificates#create-managed-ssl
 
     Don't worry about any of the other steps, as the helm installation process will take care of
     that.
+    
+1. If you haven't already, clone the google-kubernetes-engine-plugin repository on your Cloud Shell
+instance. This contains some of the resources needed.
+    ```bash
+    git clone git@github.com:jenkinsci/google-kubernetes-engine-plugin.git
+    ```
 
     <!--TODO(stephenshank): Create publically available docker image -->
-1.  Create a Jenkins agent image, using this [Dockerfile](resources/helm/Dockerfile):
-
+1.  Create a Jenkins agent image, using the [Dockerfile](resources/helm/Dockerfile) from the
+documentation resources:
     ```bash
-    mkdir jenkinsagent
-    cd jenkinsagent
-    wget https://raw.githubusercontent.com/jenkinsci/google-kubernetes-engine-plugin/develop/docs/resources/helm/Dockerfile
+    cp docs/resources/helm/Dockerfile Dockerfile
     docker build -t us.gcr.io/$PROJECT_NAME/jenkinsagent
     docker push us.gcr.io/$PROJECT_NAME/jenkinsagent
     ```
-    
+
     More detailed instructions are available
-    [here](https://cloud.google.com/container-registry/docs/pushing-and-pulling). You can also 
-    upload the Dockerfile to Cloud Shell from your locally cloned repo instead.
+    [here](https://cloud.google.com/container-registry/docs/pushing-and-pulling).
 
 ### Helm Setup
 
@@ -80,23 +87,22 @@ https://cloud.google.com/load-balancing/docs/ssl-certificates#create-managed-ssl
 
 1. Run the following commands from the Cloud Shell CLI to install the
 [helm](https://helm.sh/docs/using_helm/#from-the-binary-releases) client:
-
-    ```$bash
+    ```bash
     wget "https://storage.googleapis.com/kubernetes-helm/helm-v$HELM_VERSION-linux-amd64.tar.gz"
     tar -zxvf helm-v$HELM_VERSION-linux-amd64.tar.gz
     sudo cp linux-amd64/helm /usr/local/bin/helm 
     ```
-    
+
    If you've previously followed these steps and are running Cloud Shell from the same GCP account
    you can simply run:
-    ```$bash
+    ```bash
     sudo cp linux-amd64/helm /usr/local/bin/helm
     ```
- 
+
     Note: Your home directory for Cloud Shell will persist between sessions, but `/usr/local/bin`
     will not. That is why you must use `cp` to install rather than `mv` if you want to avoid
     downloading it again.
- 
+
 1. Create an RBAC service account called `tiller` as described
 [here](https://helm.sh/docs/using_helm/#example-service-account-with-cluster-admin-role).
 
@@ -105,11 +111,18 @@ https://cloud.google.com/load-balancing/docs/ssl-certificates#create-managed-ssl
     helm init --service-account tiller
     ```
 
-1. Download and the [custom config file](resources/helm/values.yaml) to override the defaults for the 
-[Jenkins helm chart](https://github.com/helm/charts/tree/master/stable/jenkins):
-
+1. Move the values.yaml file to your working directory and replace the placeholder values with the
+environment variables that you have configured.
     ```bash
-    wget https://raw.githubusercontent.com/jenkinsci/google-kubernetes-engine-plugin/develop/docs/resources/helm/values.yaml
+    cp google-kubernetes-engine-plugin/docs/resources/helm/values.yaml values.yaml
+    sed -i s/\$DOMAIN/$DOMAIN/g values.yaml
+    sed -i s/\$ADDRESS_NAME/$ADDRESS_NAME/g values.yaml
+    sed -i s/\$CERTIFICATE_NAME/$CERTIFICATE_NAME/g values.yaml
+    sed -i s/\$PROJECT/$PROJECT/g values.yaml
+    ```
+
+1. Install the jenkins helm chart using your custom config:
+    ```bash
     helm install --name=jenkins-test-host -f values.yaml stable/jenkins 
     ```
 
@@ -123,7 +136,7 @@ https://cloud.google.com/load-balancing/docs/ssl-certificates#certificate-resour
     ```bash
     gcloud beta compute ssl-certificate list
     ```
-    
+
     You should see the status as `ACTIVE`. This may take a few minutes after the first helm install.
 
 1. Run the following to check the status of the Kubernetes objects involved with running Jenkins on
@@ -132,9 +145,10 @@ your cluster.
     kubectl describe deployment
     kubectl describe ingress
     ```
+
     You should see `jenkins-test-host` for the deployment name, and you should see your domain and
     and your global static IP address on port 443 for the ingress.
-    
+
 ### Testing the plugin on Jenkins
 1. Make sure you have another cluster and service account set up for testing deployments as
 described in the GKE Plugin [usage documentation](Home.md#usage). You will need to repeat steps 3-8 
