@@ -123,7 +123,8 @@ environment variables that you have configured.
 
 1. Install the jenkins helm chart using your custom config:
     ```bash
-    helm install --name=jenkins-test-host -f values.yaml stable/jenkins 
+    export JENKINS_NAME=jenkins-test-host
+    helm install --name=$JENKINS_NAME -f values.yaml stable/jenkins 
     ```
 
 1. Run the command provided in the output to print your jenkins password to the Cloud Shell console.
@@ -137,17 +138,50 @@ https://cloud.google.com/load-balancing/docs/ssl-certificates#certificate-resour
     gcloud beta compute ssl-certificates describe $CERTIFICATE_NAME
     ```
 
-    You should see the status as `ACTIVE`. This may take a few minutes after the first helm install.
+    You should see the status as `ACTIVE`. This may take up to an hour after the first helm install.
 
 1. Run the following to check the status of the Kubernetes objects involved with running Jenkins on
 your cluster.
     ```bash
-    kubectl describe deployment
-    kubectl describe ingress
+    kubectl describe deployment $JENKINS_NAME
+    kubectl describe ingress $JENKINS_NAME
     ```
 
-    You should see `jenkins-test-host` for the deployment name, and you should see your domain and
-    and your global static IP address on port 443 for the ingress.
+    Here's what that should look like (`#` can be any number, including hex digits):
+    
+    ```
+    $ user@cloudshell:~ (exampleproject)$ kubectl describe deployment $JENKINS_NAME
+    Name:               jenkins-test-host
+    Namespace:          default
+    CreationTimestamp:  ...
+    Labels:             chart=jenkins-0.32.9
+                        component=jenkins-test-host-jenkins-master
+                        heritage=Tiller
+                        release=jenkins-test-host
+    ...
+    ...
+    ...
+    
+    $ user@cloudshell:~ (exampleproject)$ kubectl describe ingress $JENKINS_NAME
+    Name:             jenkins-test-host
+    Namespace:        default
+    Address:          #.#.#.#
+    Default backend:  default-http-backend:80 (#.#.#.#:8080)
+    Rules:
+      Host                              Path  Backends
+      ----                              ----  --------
+      example.com
+                                           jenkins-test-host:8080 (<none>)
+    Annotations:
+      ingress.kubernetes.io/url-map:                k8s-um-default-jenkins-test-host--7f##############
+      kubernetes.io/ingress.allow-http:             false
+      kubernetes.io/ingress.global-static-ip-name:  jenkins-address
+      ingress.gcp.kubernetes.io/pre-shared-cert:    jenkins-host-certificate
+      ingress.kubernetes.io/backends:               {"k8s-be-#####--7f##############":"HEALTHY","k8s-be-#####--7f##############":"HEALTHY"}
+      ingress.kubernetes.io/https-forwarding-rule:  k8s-fws-default-jenkins-test-host--7f##############
+      ingress.kubernetes.io/https-target-proxy:     k8s-tps-default-jenkins-test-host--7f##############
+      ingress.kubernetes.io/ssl-cert:               jenkins-host-certificate
+    ```
 
 ### Testing the plugin on Jenkins
 1. Make sure you have another cluster and service account set up for testing deployments as
