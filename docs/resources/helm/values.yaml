@@ -1,0 +1,25 @@
+Master:
+  InstallPlugins:
+    - kubernetes:1.14.0
+    - workflow-job:2.31
+    - workflow-aggregator:2.6
+    - credentials-binding:1.17
+    - git:3.9.3
+    - google-oauth-plugin:0.7
+    - google-kubernetes-engine:0.2.0
+  OverwritePlugins: false
+  ServiceType: NodePort
+  HostName: $DOMAIN
+  Ingress:
+    ApiVersion: extensions/v1beta1
+    enabled: true
+    Annotations:
+      kubernetes.io/ingress.allow-http: "false"
+      ingress.gcp.kubernetes.io/pre-shared-cert: $CERTIFICATE_NAME
+      kubernetes.io/ingress-global-static-ip-name: $ADDRESS_NAME
+Agent:
+  Image: us.gcr.io/$PROJECT/jenkinsagent
+  ImageTag: latest
+  Privileged: true
+rbac:
+  Install: true
