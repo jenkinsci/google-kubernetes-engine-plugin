@@ -63,7 +63,7 @@ https://cloud.google.com/load-balancing/docs/ssl-certificates#create-managed-ssl
 1. If you haven't already, clone the google-kubernetes-engine-plugin repository on your Cloud Shell
 instance. This contains some of the resources needed.
     ```bash
-    git clone git@github.com:jenkinsci/google-kubernetes-engine-plugin.git
+    git clone https://github.com/jenkinsci/google-kubernetes-engine-plugin.git
     ```
 
     <!--TODO(stephenshank): Create publically available docker image -->
@@ -100,7 +100,7 @@ documentation resources:
     ```
 
     Note: Your home directory for Cloud Shell will persist between sessions, but `/usr/local/bin`
-    will not. That is why you must use `cp` to install rather than `mv` if you want to avoid
+    will not. That is why you should use `cp` to install rather than `mv` if you want to avoid
     downloading it again.
 
 1. Create an RBAC service account called `tiller` as described
@@ -134,7 +134,7 @@ You will need this to log in, and a new password is created whenever you run `he
 1. Run the following to check the [status of your certificate](
 https://cloud.google.com/load-balancing/docs/ssl-certificates#certificate-resource-status):
     ```bash
-    gcloud beta compute ssl-certificate list
+    gcloud beta compute ssl-certificates describe $CERTIFICATE_NAME
     ```
 
     You should see the status as `ACTIVE`. This may take a few minutes after the first helm install.

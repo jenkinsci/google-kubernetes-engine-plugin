@@ -16,7 +16,7 @@ Master:
     Annotations:
       kubernetes.io/ingress.allow-http: "false"
       ingress.gcp.kubernetes.io/pre-shared-cert: $CERTIFICATE_NAME
-      kubernetes.io/ingress-global-static-ip-name: $ADDRESS_NAME
+      kubernetes.io/ingress.global-static-ip-name: $ADDRESS_NAME
 Agent:
   Image: us.gcr.io/$PROJECT/jenkinsagent
   ImageTag: latest
