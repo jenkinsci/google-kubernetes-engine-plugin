@@ -71,8 +71,8 @@ instance. This contains some of the resources needed.
 documentation resources:
     ```bash
     cp docs/resources/helm/Dockerfile Dockerfile
-    docker build -t us.gcr.io/$PROJECT_NAME/jenkinsagent
-    docker push us.gcr.io/$PROJECT_NAME/jenkinsagent
+    docker build -t us.gcr.io/$PROJECT/jenkinsagent
+    docker push us.gcr.io/$PROJECT/jenkinsagent
     ```
 
     More detailed instructions are available
@@ -172,3 +172,4 @@ https://github.com/craigatgoogle/testthrowaway.git
 
 1. Follow the instructions at
 [GKE Build Step Configuration](Home.md#google-kubernetes-engine-build-step-configuration) to test.
+You will enter `manifest.yml` in the Kubernetes Manifests field.
