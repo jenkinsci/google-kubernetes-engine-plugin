@@ -1,0 +1,5 @@
+<?jelly escape-by-default='true'?>
+<div>
+  <p>${%text}</p>
+  <a href="${%link.url}" target="_blank">${%link.text}</a>
+</div>
