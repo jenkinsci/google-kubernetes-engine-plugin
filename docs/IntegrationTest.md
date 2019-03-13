@@ -80,36 +80,18 @@ documentation resources:
 
 ### Helm Setup
 
-1. Choose a helm version and export it as `$HELM_VERSION`:
-    ```$bash
-    export HELM_VERSION=2.13.0
-    ```
-
-1. Run the following commands from the Cloud Shell CLI to install the
-[helm](https://helm.sh/docs/using_helm/#from-the-binary-releases) client:
-    ```bash
-    wget "https://storage.googleapis.com/kubernetes-helm/helm-v$HELM_VERSION-linux-amd64.tar.gz"
-    tar -zxvf helm-v$HELM_VERSION-linux-amd64.tar.gz
-    sudo cp linux-amd64/helm /usr/local/bin/helm 
-    ```
-
-   If you've previously followed these steps and are running Cloud Shell from the same GCP account
-   you can simply run:
-    ```bash
-    sudo cp linux-amd64/helm /usr/local/bin/helm
-    ```
+1. Follow these instructions for [installing helm](
+https://helm.sh/docs/using_helm/#from-the-binary-releases).
 
     Note: Your home directory for Cloud Shell will persist between sessions, but `/usr/local/bin`
-    will not. That is why you should use `cp` to install rather than `mv` if you want to avoid
-    downloading it again.
+    will not. It is recommended using `cp` to install rather than `mv` if you want to avoid
+    downloading it again. You will need `sudo` for root access when copying to `/usr/local/bin`.
 
 1. Create an RBAC service account called `tiller` as described
 [here](https://helm.sh/docs/using_helm/#example-service-account-with-cluster-admin-role).
 
-1. Install [tiller](https://helm.sh/docs/using_helm/#installing-tiller) on GKE:
-    ```bash
-    helm init --service-account tiller
-    ```
+1. Install [tiller](https://helm.sh/docs/using_helm/#installing-tiller) on GKE using the service
+account you created above.
 
 1. Move the values.yaml file to your working directory and replace the placeholder values with the
 environment variables that you have configured.
