@@ -61,4 +61,3 @@ https://github.com/jenkinsci/google-kubernetes-engine-plugin.git
 1. Follow the instructions at
 [GKE Build Step Configuration](Home.md#google-kubernetes-engine-build-step-configuration) to test.
 Enter [`docs/resources/manifest.yaml`](resources/manifest.yaml) in the Kubernetes Manifests field.
-
