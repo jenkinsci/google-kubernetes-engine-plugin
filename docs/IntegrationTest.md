@@ -24,14 +24,14 @@ through the helm chart after refactoring the Google Oauth Plugin.
 -->
 Before running `helm install`, add the following modification to the file `jenkins/values.yaml`:
 
-* Directly below the line which reads `Agent:`, add these three lines:
+* Directly below the line which reads `Agent:`, add the additional lines shown here:
     ```yaml
     Agent:
-        Image: us.gcr.io/jenkins-gke-plugin/jenkinsagent
+        Image: gcr.io/jenkins-gke-plugin/jenkinsagent
         ImageTag: latest
     ```
 
-See the [Dockerfile](../jenkinsagent/Dockerfile) for the `us.gcr.io/jenkins-gke-plugin/jenkinsagent`
+See the [Dockerfile](../jenkinsagent/Dockerfile) for the `gcr.io/jenkins-gke-plugin/jenkinsagent`
 image.
 
 When running `helm install` remove the flag `--version` and its argument.
@@ -55,8 +55,10 @@ plugin build that you will be testing.
 1. From the main jenkins page click **New Item**, then enter a name and choose
 **Freestyle project**.
 
-1. Under **Source Code Management**, select Git and enter this repository:
+1. Under **Source Code Management**, select Git and enter this repository.:
 https://github.com/jenkinsci/google-kubernetes-engine-plugin.git
+
+1. Enter Branch Specifier as develop
 
 1. Follow the instructions at
 [GKE Build Step Configuration](Home.md#google-kubernetes-engine-build-step-configuration) to test.
