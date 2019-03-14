@@ -22,19 +22,19 @@ Jenkins on GKE.
 TODO(stephenashank): Add another step for the CasC config when we are able to pre-load credentials
 through the helm chart after refactoring the Google Oauth Plugin.
 -->
-Before running helm install, add the following modification to the file `jenkins/values.yaml`:
+Before running `helm install`, add the following modification to the file `jenkins/values.yaml`:
 
 * Directly below the line which reads `Agent:`, add these three lines:
     ```yaml
     Agent:
         Image: us.gcr.io/jenkins-gke-plugin/jenkinsagent
         ImageTag: latest
-        Privileged: true
     ```
 
-The Privileged flag is needed for installing the image on the Kubernetes pods, but the agent will 
-begin as the Jenkins user after setup. See the [Dockerfile](../jenkinsagent/Dockerfile) for the 
-`us.gcr.io/jenkins-gke-plugin/jenkinsagent` image.
+See the [Dockerfile](../jenkinsagent/Dockerfile) for the `us.gcr.io/jenkins-gke-plugin/jenkinsagent`
+image.
+
+When running `helm install` remove the flag `--version` and its argument.
 
 After logging in to the Jenkins instance, continue to the next section.
 
