@@ -27,8 +27,7 @@
   <packaging>hpi</packaging>
 
   <name>Google Kubernetes Engine Plugin</name>
-  <description>This plugin allows Jenkins to publish build artifacts to Kubernetes clusters running on Google Kubernetes Engine.
-  </description>
+  <description>This plugin allows Jenkins to publish build artifacts to Kubernetes clusters running on Google Kubernetes Engine.</description>
   <!-- Jenkins CI hosting -->
   <url>https://wiki.jenkins.io/display/JENKINS/Google+Kubernetes+Engine+Plugin</url>
   <organization>
@@ -63,8 +62,7 @@
 
   <scm>
     <connection>scm:git:git://github.com/jenkinsci/${project.artifactId}-plugin.git</connection>
-    <developerConnection>scm:git:git@github.com:jenkinsci/${project.artifactId}-plugin.git
-    </developerConnection>
+    <developerConnection>scm:git:git@github.com:jenkinsci/${project.artifactId}-plugin.git</developerConnection>
     <url>https://github.com/jenkinsci/${project.artifactId}-plugin</url>
     <tag>HEAD</tag>
   </scm>
@@ -170,6 +168,23 @@
         </configuration>
       </plugin>
       <plugin>
+        <groupId>au.com.acegi</groupId>
+        <artifactId>xml-format-maven-plugin</artifactId>
+        <version>3.0.7</version>
+        <executions>
+          <execution>
+            <id>validate</id>
+            <phase>validate</phase>
+            <goals>
+              <goal>xml-format</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <includes>pom.xml</includes>
+        </configuration>
+      </plugin>
+      <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>tidy-maven-plugin</artifactId>
         <version>1.1.0</version>
@@ -243,8 +258,7 @@
         <version>2.7</version>
         <configuration>
           <instrumentation>
-            <excludes>
-            </excludes>
+            <excludes/>
           </instrumentation>
           <formats>
             <format>html</format>
