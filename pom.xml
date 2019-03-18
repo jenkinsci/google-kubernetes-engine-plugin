@@ -29,7 +29,7 @@
   <name>Google Kubernetes Engine Plugin</name>
   <description>This plugin allows Jenkins to publish build artifacts to Kubernetes clusters running on Google Kubernetes Engine.</description>
   <!-- Jenkins CI hosting -->
-  <url>https://wiki.jenkins.io/display/JENKINS/Google+Kubernetes+Engine+Plugin</url>
+  <url>https://github.com/jenkinsci/google-kubernetes-engine-plugin</url>
   <organization>
     <name>Google</name>
     <url>https://www.google.com</url>
