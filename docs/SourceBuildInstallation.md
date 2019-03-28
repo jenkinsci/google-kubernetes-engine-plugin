@@ -11,6 +11,7 @@
  implied. See the License for the specific language governing permissions and limitations under the
  License.
 -->
+
 # Plugin Source Build Installation
 
 1. Clone the plugin and enter the directory:
@@ -19,7 +20,7 @@
     cd google-kubernetes-engine-plugin
     ```
 1. Checkout the branch that you would like to build from:
-    ```bash      
+    ```bash
     git checkout <branch name>
     ```
 1. Build the plugin into a .hpi plugin file:
