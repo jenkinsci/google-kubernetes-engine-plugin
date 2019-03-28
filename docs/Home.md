@@ -33,11 +33,12 @@ to publish deployments built within Jenkins to your Kubernetes clusters running 
 
 1. Create a service account using the Google Cloud SDK:
     ```bash
-    gcloud iam service-accounts create jenkins-gke
+    export SA=jenkins-gke
+    gcloud iam service-accounts create $SA
     ```
 1. Add required service account roles:
     ```bash
-    export SA_EMAIL=$(gcloud iam service-accounts list --filter="name:jenkins-gke" --format='value(email)')
+    export SA_EMAIL=$SA@$PROJECT.iam.gserviceaccount.com
     gcloud projects add-iam-policy-binding --member serviceAccount:$SA_EMAIL --role roles/iam.serviceAccountUser $PROJECT
     gcloud projects add-iam-policy-binding --member serviceAccount:$SA_EMAIL --role roles/container.clusterAdmin $PROJECT
     gcloud projects add-iam-policy-binding --member serviceAccount:$SA_EMAIL --role roles/container.admin $PROJECT
