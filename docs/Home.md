@@ -13,7 +13,8 @@
 -->
 # Google Kubernetes Engine Plugin Documentation
 
-The [Google Kubernetes Engine](https://cloud.google.com/kubernetes-engine/) (GKE) Plugin allows you to publish deployments built within Jenkins to your Kubernetes clusters running within GKE.
+The [Google Kubernetes Engine](https://cloud.google.com/kubernetes-engine/) (GKE) Plugin allows you
+to publish deployments built within Jenkins to your Kubernetes clusters running within GKE.
 
 ## Usage
 
@@ -42,7 +43,8 @@ The [Google Kubernetes Engine](https://cloud.google.com/kubernetes-engine/) (GKE
     gcloud projects add-iam-policy-binding --member serviceAccount:$SA_EMAIL --role roles/container.admin $PROJECT
     gcloud projects add-iam-policy-binding --member serviceAccount:$SA_EMAIL --role roles/compute.networkViewer $PROJECT
     ```
-1. Download a JSON Service Account key for your newly created service account. Take note of where the file was created, you will upload it to Jenkins in a subsequent step:
+1. Download a JSON Service Account key for your newly created service account. Take note of where
+the file was created, you will upload it to Jenkins in a subsequent step:
     ```bash
     gcloud iam service-accounts keys create ~/jenkins-gke-key.json --iam-account $SA_EMAIL
     ```
@@ -78,11 +80,13 @@ The [Google Kubernetes Engine](https://cloud.google.com/kubernetes-engine/) (GKE
 
 ### Google Kubernetes Engine Build Step Configuration
 
-Each GKE Build Step configuration can point to a different GKE cluster. Follow the steps below to create one.
+Each GKE Build Step configuration can point to a different GKE cluster. Follow the steps below to
+create one.
 
 1. Go to Jenkins home, and select the project to be published to GKE.
 1. Click the "Configure" button on the left nav-bar.
-1. At the bottom of the page there will be a button labeled "Add build step", click the button then click Google Kubernetes Engine.
+1. At the bottom of the page there will be a button labeled "Add build step", click the button then
+click Google Kubernetes Engine.
 1. In the Service Account Credentials dropdown, select the credentials that you uploaded earlier.
 1. Select the Project ID housing the GKE cluster to be published to.
 1. Select the Zone housing the GKE cluster to be published to.
@@ -93,4 +97,5 @@ Each GKE Build Step configuration can point to a different GKE cluster. Follow t
 
 <!--- TODO(stephenshank): Link to an image that adds kubectl to the existing jenkins agent image: https://hub.docker.com/r/jenkinsci/jnlp-slave/ --->
 
-The GKE Jenkins plugin requires the [kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/) binary to be installed within the Jenkins agent environment.
+The GKE Jenkins plugin requires the [kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/)
+binary to be installed within the Jenkins agent environment.
