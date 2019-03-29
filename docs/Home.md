@@ -33,11 +33,12 @@ to publish deployments built within Jenkins to your Kubernetes clusters running 
 
 1. Create a service account using the Google Cloud SDK:
     ```bash
-    gcloud iam service-accounts create jenkins-gke
+    export SA=jenkins-gke
+    gcloud iam service-accounts create $SA
     ```
 1. Add required service account roles:
     ```bash
-    export SA_EMAIL=$(gcloud iam service-accounts list --filter="name:jenkins-gke" --format='value(email)')
+    export SA_EMAIL=$SA@$PROJECT.iam.gserviceaccount.com
     gcloud projects add-iam-policy-binding --member serviceAccount:$SA_EMAIL --role roles/iam.serviceAccountUser $PROJECT
     gcloud projects add-iam-policy-binding --member serviceAccount:$SA_EMAIL --role roles/container.clusterAdmin $PROJECT
     gcloud projects add-iam-policy-binding --member serviceAccount:$SA_EMAIL --role roles/container.admin $PROJECT
@@ -56,13 +57,13 @@ the file was created, you will upload it to Jenkins in a subsequent step:
 
 ### Configure GKE Cluster
 
-1. Create GKE cluster (if it doesn't already exist):
+1. Create a GKE cluster*:
     ```bash
     export CLUSTER=my-jenkins-cluster
     export ZONE=us-central1-c
-    gcloud container clusters create --zone $ZONE $CLUSTER
+    gcloud container clusters create --issue-client-certificate --enable-legacy-authorizaton --zone $ZONE $CLUSTER
     ```
-1. Enable legacy authorization on the cluster:
+1. If using an existing cluster, enable legacy authorization on the cluster:
     ```bash
     gcloud container clusters update --enable-legacy-authorization --zone $ZONE $CLUSTER
     ```
@@ -70,6 +71,14 @@ the file was created, you will upload it to Jenkins in a subsequent step:
     ```bash
     gcloud container clusters get-credentials --zone $ZONE $CLUSTER
     ```
+
+\***Note**: You can use an existing cluster but it must have been created with Client Certificates
+enabled. If creating your cluster through Cloud Console, click **Advanced Options** and then
+under **Security** make sure that "Issue a client certificate" is checked. This is a ***permanent***
+property of the cluster. The "Your first cluster" template, for example, does not have this checked
+by default so it won't be possible to use such a cluster. Also check "Enable legacy authorization",
+which is always disabled by default. From Cloud Console you can also select an existing cluster,
+click **EDIT** and change the **Legacy Authorization** dropdown to "Enabled".
 
 ### Configure Kubernetes Cluster Permissions
 
