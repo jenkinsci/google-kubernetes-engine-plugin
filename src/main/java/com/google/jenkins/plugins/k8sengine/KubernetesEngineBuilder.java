@@ -291,8 +291,7 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
           return items;
         }
 
-        projects
-            .stream()
+        projects.stream()
             .filter(p -> !p.getProjectId().equals(defaultProjectId))
             .forEach(p -> items.add(p.getProjectId()));
 
