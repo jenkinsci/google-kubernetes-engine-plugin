@@ -56,6 +56,8 @@ public class KubernetesEngineBuilderIT {
   private static final Logger LOGGER = Logger.getLogger(KubernetesEngineBuilderIT.class.getName());
   private static final String TEST_DEPLOYMENT_MANIFEST = "testDeployment.yml";
   private static final String TEST_DEPLOYMENT_MALFORMED_MANIFEST = "testMalformedDeployment.yml";
+  private static final String TEST_DEPLOYMENT_UNVERIFIABLE_MANIFEST =
+      "testUnverifiableDeployment.yml";
 
   @ClassRule public static JenkinsRule jenkinsRule = new JenkinsRule();
 
@@ -137,7 +139,28 @@ public class KubernetesEngineBuilderIT {
     FreeStyleBuild build = testJenkinsProject.scheduleBuild2(0).get();
     dumpLog(build);
     assertEquals(Result.SUCCESS, build.getResult());
-    // TODO(craigbarber): Add service verification
+  }
+
+  @Test
+  public void testWellFormedFailedDeploymentNotVerified() throws Exception {
+    LOGGER.info("Testing well-formed unverifiable deployment fails verification");
+
+    KubernetesEngineBuilder gkeBuilder = getDefaultGKEBuilder();
+    testJenkinsProject.getBuildersList().add(gkeBuilder);
+    gkeBuilder.setManifestPattern(TEST_DEPLOYMENT_UNVERIFIABLE_MANIFEST);
+    copyTestFileToDir(
+        testJenkinsProject.getCustomWorkspace(), TEST_DEPLOYMENT_UNVERIFIABLE_MANIFEST);
+
+    FreeStyleBuild build = testJenkinsProject.scheduleBuild2(0).get();
+
+    dumpLog(build);
+
+    /* Because the above build fails this the simplest way to clean
+     * up after this test right now. */
+    assertEquals(Result.FAILURE, build.getResult());
+    copyTestFileToDir(testJenkinsProject.getCustomWorkspace(), TEST_DEPLOYMENT_MANIFEST);
+    gkeBuilder.setManifestPattern((TEST_DEPLOYMENT_MANIFEST));
+    testJenkinsProject.scheduleBuild2(0).get();
   }
 
   @Test
@@ -253,19 +276,23 @@ public class KubernetesEngineBuilderIT {
     gkeBuilder.setCredentialsId(credentialsId);
     gkeBuilder.setZone(testZone);
     gkeBuilder.setManifestPattern(TEST_DEPLOYMENT_MANIFEST);
+    gkeBuilder.setVerifyDeployments(true);
+    gkeBuilder.setVerifyTimeoutInMinutes(1);
     gkeBuilder.setAfterBuildStep(
-        (kubeConfig, run, workspace, launcher, listener) ->
-            KubectlWrapper.runKubectlCommand(
-                new JenkinsRunContext.Builder()
-                    .workspace(workspace)
-                    .launcher(launcher)
-                    .taskListener(listener)
-                    .run(run)
-                    .build(),
-                kubeConfig,
-                "delete",
-                ImmutableList.<String>of(
-                    "daemonsets,replicasets,services,deployments,pods,rc", "--all")));
+        (kubeConfig, run, workspace, launcher, listener) -> {
+          JenkinsRunContext context =
+              new JenkinsRunContext.Builder()
+                  .workspace(workspace)
+                  .launcher(launcher)
+                  .taskListener(listener)
+                  .run(run)
+                  .build();
+          KubectlWrapper kubectl = new KubectlWrapper(context, kubeConfig);
+          kubectl.runKubectlCommand(
+              "delete",
+              ImmutableList.<String>of(
+                  "daemonsets,replicasets,services,deployments,pods,rc", "--all"));
+        });
     return gkeBuilder;
   }
 }

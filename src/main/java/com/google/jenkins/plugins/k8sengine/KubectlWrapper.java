@@ -15,6 +15,8 @@
 package com.google.jenkins.plugins.k8sengine;
 
 import com.google.common.collect.ImmutableList;
+import com.jayway.jsonpath.Configuration;
+import com.jayway.jsonpath.InvalidJsonException;
 import hudson.EnvVars;
 import hudson.FilePath;
 import hudson.Launcher;
@@ -23,9 +25,11 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 /**
  * Encapsulates the logic of executing kubectl commands in the workspace. NOTE(craigatgoogle): This
@@ -36,21 +40,34 @@ public class KubectlWrapper {
   private static final Logger LOGGER = Logger.getLogger(KubectlWrapper.class.getName());
   private static final String CHARSET = "UTF-8";
 
+  private JenkinsRunContext context;
+  private KubeConfig kubeConfig;
+
+  /**
+   * Kubectl wrapper that encapsulate the JenkinsRunContext and KubeConfig.
+   *
+   * @param context The {@link JenkinsRunContext} the jenkins context environment the command will
+   *     execute in.
+   * @param kubeConfig The {@link KubeConfig} containing the credentials for the cluster being
+   *     executed against.
+   */
+  public KubectlWrapper(JenkinsRunContext context, KubeConfig kubeConfig) {
+    this.context = context;
+    this.kubeConfig = kubeConfig;
+  }
   /**
    * Runs the specified kubectl command within the specified {@link JenkinsRunContext}'s
    * environment.
    *
-   * @param context The {@link JenkinsRunContext} whose environment the command will execute in.
-   * @param kubeConfig The {@link KubeConfig} containing the credentials for the cluster being
-   *     executed against.
    * @param command The kubectl command to be run.
    * @param args Arguments for the command.
    * @throws IOException If an error occurred while executing the command.
    * @throws InterruptedException If an error occured while executing the command.
+   * @return result From kubectl command.
    */
-  public static void runKubectlCommand(
-      JenkinsRunContext context, KubeConfig kubeConfig, String command, ImmutableList<String> args)
+  public String runKubectlCommand(String command, ImmutableList<String> args)
       throws IOException, InterruptedException {
+    String output = "";
     Set<String> tempFiles = new HashSet<>();
     try {
       // Set up the kubeconfig file for authentication
@@ -81,7 +98,7 @@ public class KubectlWrapper {
               .add(kubeConfigFile.getRemote())
               .add(command);
       args.forEach(kubectlCmdBuilder::add);
-      launchAndJoinCommand(context.getLauncher(), kubectlCmdBuilder.toList());
+      output = launchAndJoinCommand(context.getLauncher(), kubectlCmdBuilder.toList());
     } catch (IOException | InterruptedException e) {
       LOGGER.log(
           Level.SEVERE,
@@ -93,6 +110,8 @@ public class KubectlWrapper {
         context.getWorkspace().child(tempFile).delete();
       }
     }
+
+    return output;
   }
 
   private static String launchAndJoinCommand(Launcher launcher, List<String> args)
@@ -107,5 +126,45 @@ public class KubectlWrapper {
     }
 
     return cmdLogStream.toString(CHARSET);
+  }
+
+  /**
+   * Using the kubectl CLI tool as the API client for the caller, this method unmarshalls the JSON
+   * output of the CLI to a JSON Object.
+   *
+   * @param kind The kind of Kubernetes Object.
+   * @param name The name of the Kubernetes Object.
+   * @return The JSON object unmarshalled from the kubectl get command's output.
+   * @throws IOException If an error occurred while executing the command.
+   * @throws InterruptedException If an error occurred while executing the command.
+   */
+  public Object getObject(String kind, String name) throws IOException, InterruptedException {
+    String json = runKubectlCommand("get", ImmutableList.<String>of(kind, name, "-o", "json"));
+    return Configuration.defaultConfiguration().jsonProvider().parse(json);
+  }
+
+  /**
+   * Using the kubectl CLI tool as the API client for the caller, this method unmarshalls the JSON
+   * output of objects matching the supplied labels.
+   *
+   * @param kind The kind of Kubernetes Object.
+   * @param labels The key-value labels set represented as a map.
+   * @return A list of JSON Objects unmarshalled from the kubectl get command's output.
+   * @throws IOException If an error occurred while executing the command.
+   * @throws InterruptedException If an error occurred while executing the command.
+   * @throws InvalidJsonException If an error occurred parsing the JSON return value.
+   */
+  @SuppressWarnings("unchecked")
+  public ImmutableList<Object> getObjectsThatMatchLabels(String kind, Map<String, String> labels)
+      throws IOException, InterruptedException, InvalidJsonException {
+    String labelsArg =
+        labels.keySet().stream()
+            .map((k) -> String.format("%s=%s", k, labels.get(k)))
+            .collect(Collectors.joining(","));
+    String json = runKubectlCommand("get", ImmutableList.<String>of(kind + "s", labelsArg));
+    Map<String, Object> result =
+        (Map<String, Object>) Configuration.defaultConfiguration().jsonProvider().parse(json);
+    List<Object> items = (List<Object>) result.get("items");
+    return ImmutableList.copyOf(items);
   }
 }

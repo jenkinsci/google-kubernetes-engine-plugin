@@ -29,12 +29,18 @@
     <f:entry field="manifestPattern" title="${%Kubernetes Manifests}">
         <f:textbox/>
     </f:entry>
-    <!-- TODO(craigatgoogle): re-enable once these QOL features are complete.
-    <f:entry field="verifyDeployments" title="${%Verify Deployments}">
-        <f:checkbox name="verifyDeployments" checked="${it.verifyDeployments}"/>
-    </f:entry>
-    <f:entry field="verifyServices" title="${%Verify Services}">
-        <f:checkbox name="verifyServices" checked="${it.verifyServices}"/>
-    </f:entry>
-    -->
+    <f:block>
+      <table>
+        <f:optionalBlock field="verifyDeployments" title="Verify Deployments" checked="${it.verifyDeployments}" inline="true">
+           <!-- TODO(johnlabarge): add once serivce verification implemented (verifying services requires verifying deployments).
+              <f:entry field="verifyServices" title="${%Verify Services}">
+                  <f:checkbox name="verifyServices" checked="${it.verifyServices}"/>
+              </f:entry>
+           -->
+          <f:entry field="verifyTimeoutInMinutes" title="${%Verify Timeout in Minutes}">
+            <f:textbox type="number" default="5"/>
+          </f:entry>
+        </f:optionalBlock>
+      </table>
+    </f:block>
 </j:jelly>
