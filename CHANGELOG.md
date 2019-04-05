@@ -28,7 +28,32 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
  ### Removed
 				 
  ### Fixed
+ 
+## [0.3.0] - 2019-04-04
 
+ ### Security
+ 
+ ### Added
+  - Issue #16: Migrated wiki from wiki.jenkins.io to this repository.
+  - Issue #21: Added help text for all fields.
+  - PRs #32, #40: Added tutorial and resources for running jenkins on GKE.
+  - Issue #35: Added xml-format-maven-plugin for consistent formatting of pom file.
+  - Issue #23: Deployment verification.
+  
+ ### Changed
+  - Issue #21: Changed display name of build step to use verb form.
+  - Issue #27: Removed shared mutable states from tests.
+  - Issue #35: Made pom file indentation and spacing consistent.
+  - Issue #38: Corrections clarification for usage documentation.
+  - Enabled google-java-format for fmt-maven-plugin.
+				
+ ### Removed
+				 
+ ### Fixed
+  - Issue #29: Fixed inaccuracy of verification messages when there are no resources available or
+    when a previously configured value corresponds to a GCP resource that has been deleted.
+  - Added missing license headers and updated license header format.
+ 
 ## [0.2.0] - 2019-03-01
 
  ### Security
