@@ -17,10 +17,15 @@
 package com.google.jenkins.plugins.k8sengine;
 
 import com.cloudbees.plugins.credentials.CredentialsMatchers;
+import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.common.StandardCredentials;
 import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
 import com.cloudbees.plugins.credentials.domains.DomainRequirement;
+import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
 import com.google.api.client.http.HttpTransport;
+import com.google.api.client.http.javanet.NetHttpTransport;
+import com.google.api.client.json.JsonFactory;
+import com.google.api.client.json.jackson.JacksonFactory;
 import com.google.api.services.cloudresourcemanager.model.Project;
 import com.google.api.services.compute.model.Zone;
 import com.google.api.services.container.model.Cluster;
@@ -30,6 +35,8 @@ import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.jenkins.plugins.credentials.oauth.GoogleOAuth2Credentials;
+import com.google.jenkins.plugins.credentials.oauth.GoogleRobotPrivateKeyCredentials;
+import com.google.jenkins.plugins.credentials.oauth.ServiceAccountConfig;
 import com.google.jenkins.plugins.k8sengine.client.ClientFactory;
 import com.google.jenkins.plugins.k8sengine.client.CloudResourceManagerClient;
 import com.google.jenkins.plugins.k8sengine.client.ComputeClient;
@@ -52,6 +59,7 @@ import hudson.util.ListBoxModel.Option;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -203,7 +211,9 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
             "GKE Deploying, projectId: %s cluster: %s zone: %s", projectId, clusterName, zone));
     ContainerClient client = getContainerClient(credentialsId);
     Cluster cluster = client.getCluster(projectId, zone, clusterName);
-    KubeConfig kubeConfig = KubeConfig.fromCluster(projectId, cluster);
+
+    // generate a kubeconfig for the cluster
+    KubeConfig kubeConfig = KubeConfig.fromCluster(projectId, cluster, getAccessToken(credentialsId));
 
     KubectlWrapper kubectl =
         new KubectlWrapper.Builder()
@@ -287,6 +297,48 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
 
     return VerificationTask.verifyObjects(
         kubectl, manifestObjects, consoleLogger, verifyTimeoutInMinutes);
+  }
+
+  /**
+   * @param credentialsId The service account credential's id.
+   * @return Access token from OAuth to allow kubectl to interact with the cluster.
+   * @throws IOException If an error occurred fetching the access token.
+   */
+  public static String getAccessToken(String credentialsId) throws IOException {
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(credentialsId));
+    HttpTransport HTTP_TRANSPORT = new NetHttpTransport();
+    JsonFactory JSON_FACTORY = new JacksonFactory();
+
+    // get the credential from jenkins
+    List<DomainRequirement> domainRequirements = new ArrayList<>();
+
+    GoogleRobotPrivateKeyCredentials cred =
+        CredentialsMatchers.firstOrNull(
+            CredentialsProvider.lookupCredentials(
+                GoogleRobotPrivateKeyCredentials.class,
+                Jenkins.get(),
+                ACL.SYSTEM,
+                domainRequirements),
+            CredentialsMatchers.withId(credentialsId));
+
+    if (cred != null) {
+      ServiceAccountConfig sac = cred.getServiceAccountConfig();
+
+      GoogleCredential credential =
+          new GoogleCredential.Builder()
+              .setTransport(HTTP_TRANSPORT)
+              .setJsonFactory(JSON_FACTORY)
+              .setServiceAccountId(sac.getAccountId())
+              .setServiceAccountScopes(
+                  ImmutableList.<String>of("https://www.googleapis.com/auth/cloud-platform"))
+              .setServiceAccountPrivateKey(sac.getPrivateKey())
+              .build();
+
+      credential.refreshToken();
+      return credential.getAccessToken();
+    }
+
+    return "";
   }
 
   @Override
