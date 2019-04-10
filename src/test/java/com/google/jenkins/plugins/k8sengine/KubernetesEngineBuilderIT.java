@@ -18,6 +18,7 @@ package com.google.jenkins.plugins.k8sengine;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import com.cloudbees.plugins.credentials.Credentials;
 import com.cloudbees.plugins.credentials.CredentialsStore;
@@ -31,6 +32,7 @@ import com.google.jenkins.plugins.credentials.oauth.GoogleRobotPrivateKeyCredent
 import com.google.jenkins.plugins.credentials.oauth.ServiceAccountConfig;
 import com.google.jenkins.plugins.k8sengine.client.ClientFactory;
 import com.google.jenkins.plugins.k8sengine.client.ContainerClient;
+import com.jayway.jsonpath.JsonPath;
 import hudson.FilePath;
 import hudson.model.FreeStyleBuild;
 import hudson.model.FreeStyleProject;
@@ -40,6 +42,8 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.Map;
 import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -134,6 +138,27 @@ public class KubernetesEngineBuilderIT {
 
     // copy test deployment into project workspace
     copyTestFileToDir(testJenkinsProject.getCustomWorkspace(), TEST_DEPLOYMENT_MANIFEST);
+
+    // ensure metrics label was properly applied
+    gkeBuilder.pushAfterBuildStep(
+        (kubeConfig, run, workspace, launcher, listener) -> {
+          JenkinsRunContext context =
+              new JenkinsRunContext.Builder()
+                  .workspace(workspace)
+                  .launcher(launcher)
+                  .taskListener(listener)
+                  .run(run)
+                  .build();
+          KubectlWrapper kubectl = new KubectlWrapper(context, kubeConfig);
+          Object json = kubectl.getObject("deployment", "nginx-deployment");
+          Map<String, Object> labels = JsonPath.read(json, "metadata.labels");
+          assertNotNull(labels);
+          assertNotNull(labels.get(KubernetesEngineBuilder.METRICS_LABEL_KEY));
+          String labelValues = (String) labels.get(KubernetesEngineBuilder.METRICS_LABEL_KEY);
+          assertTrue(
+              Arrays.asList(labelValues.split(","))
+                  .contains(KubernetesEngineBuilder.METRICS_LABEL_VALUE));
+        });
 
     // execute a build
     FreeStyleBuild build = testJenkinsProject.scheduleBuild2(0).get();
@@ -278,7 +303,7 @@ public class KubernetesEngineBuilderIT {
     gkeBuilder.setManifestPattern(TEST_DEPLOYMENT_MANIFEST);
     gkeBuilder.setVerifyDeployments(true);
     gkeBuilder.setVerifyTimeoutInMinutes(1);
-    gkeBuilder.setAfterBuildStep(
+    gkeBuilder.pushAfterBuildStep(
         (kubeConfig, run, workspace, launcher, listener) -> {
           JenkinsRunContext context =
               new JenkinsRunContext.Builder()

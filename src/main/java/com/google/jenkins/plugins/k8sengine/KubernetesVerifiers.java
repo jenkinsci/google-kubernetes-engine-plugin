@@ -151,12 +151,14 @@ public class KubernetesVerifiers {
      *     replicas.
      */
     public VerificationResult verify(KubectlWrapper kubectl, Manifests.ManifestObject object) {
-      LOGGER.info(String.format("Verifying deployment, %s", object.getName()));
+      Preconditions.checkArgument(object.getName().isPresent());
+      String name = object.getName().get();
+      LOGGER.info(String.format("Verifying deployment, %s", name));
       StringBuilder log = new StringBuilder();
       Object json = null;
 
       try {
-        json = kubectl.getObject(object.getKind().toLowerCase(), object.getName());
+        json = kubectl.getObject(object.getKind().toLowerCase(), name);
       } catch (Exception e) {
         return errorResult(e, object);
       }

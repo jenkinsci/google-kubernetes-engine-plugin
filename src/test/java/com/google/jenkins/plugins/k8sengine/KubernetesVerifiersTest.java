@@ -22,6 +22,7 @@ import com.jayway.jsonpath.Configuration;
 import com.jayway.jsonpath.JsonPath;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.Optional;
 import org.junit.Test;
 import org.mockito.Mockito;
 
@@ -39,7 +40,7 @@ public class KubernetesVerifiersTest {
 
     Manifests.ManifestObject goodDeployment = Mockito.mock(Manifests.ManifestObject.class);
     Mockito.when(goodDeployment.getKind()).thenReturn("deployment");
-    Mockito.when(goodDeployment.getName()).thenReturn("nginx-deployment");
+    Mockito.when(goodDeployment.getName()).thenReturn(Optional.<String>of("nginx-deployment"));
     Mockito.when(goodDeployment.getApiVersion()).thenReturn("apps/v1");
     KubernetesVerifiers.VerificationResult result =
         KubernetesVerifiers.verify(kubectl, goodDeployment);
@@ -62,7 +63,8 @@ public class KubernetesVerifiersTest {
 
     Manifests.ManifestObject badDeployment = Mockito.mock(Manifests.ManifestObject.class);
     Mockito.when(badDeployment.getKind()).thenReturn("deployment");
-    Mockito.when(badDeployment.getName()).thenReturn("nginx-deployment-unverifiable");
+    Mockito.when(badDeployment.getName())
+        .thenReturn(Optional.<String>of("nginx-deployment-unverifiable"));
     Mockito.when(badDeployment.getApiVersion()).thenReturn("apps/v1");
     KubernetesVerifiers.VerificationResult result =
         KubernetesVerifiers.verify(kubectl, badDeployment);
