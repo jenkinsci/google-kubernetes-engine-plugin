@@ -16,6 +16,7 @@ package com.google.jenkins.plugins.k8sengine;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.anyString;
 
@@ -226,6 +227,41 @@ public class KubernetesEngineBuilderMetricsLabelTest {
                     labels.get(KubernetesEngineBuilder.METRICS_LABEL_KEY),
                     KubernetesEngineBuilder.METRICS_LABEL_VALUE);
               }
+              return null;
+            })
+        .when(manifestFile)
+        .write(anyString(), anyString());
+    KubernetesEngineBuilder.addMetricsLabel(manifestFile);
+  }
+
+  @Test
+  @SuppressWarnings("unchecked")
+  public void testAddMetricsLabelDoesNotAddLabelProperly()
+      throws IOException, InterruptedException {
+    FilePath manifestFile = Mockito.mock(FilePath.class);
+    Mockito.when(manifestFile.read())
+        .thenReturn(
+            new ByteArrayInputStream(
+                String.join(
+                        "\n",
+                        "apiVersion: apps/v1",
+                        "kind: Ingress",
+                        "metadata:",
+                        "  name: nginx-ingress",
+                        "  labels:",
+                        "    app: nginx")
+                    .getBytes()));
+
+    Mockito.doAnswer(
+            invocation -> {
+              Yaml yaml = new Yaml();
+              Manifests.ManifestObject manifest =
+                  new Manifests.ManifestObject(
+                      (Map<String, Object>) yaml.load((String) invocation.getArguments()[0]),
+                      manifestFile);
+              Map<String, String> labels = manifest.getOrCreateLabels();
+              assertNotNull(labels);
+              assertNull(labels.get(KubernetesEngineBuilder.METRICS_LABEL_KEY));
               return null;
             })
         .when(manifestFile)
