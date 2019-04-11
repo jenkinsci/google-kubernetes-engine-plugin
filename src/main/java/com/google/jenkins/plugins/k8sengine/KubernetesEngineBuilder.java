@@ -186,7 +186,7 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
       @Nonnull FilePath workspace,
       @Nonnull Launcher launcher,
       @Nonnull TaskListener listener)
-      throws InterruptedException, IOException, AbortException {
+      throws InterruptedException, IOException {
     LOGGER.log(
         Level.INFO,
         String.format(
@@ -231,7 +231,7 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
 
   /**
    * Adds a Kubernetes user label unique to this Jenkins plugin to the specified manifest,
-   * (in-place) in order to enable Jenkins GKE/GCE non-identifying usage metrics. Behavoir with
+   * (in-place) in order to enable Jenkins GKE/GCE non-identifying usage metrics. Behavior with
    * malformed manifests is undefined.
    *
    * @param manifestFile The manifest file to be modified.
