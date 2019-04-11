@@ -108,6 +108,7 @@ public class Manifests {
      */
     public void addLabel(String key, String value) {
       Map<String, String> labels = getOrCreateLabels();
+      // Add the specified label ensuring no duplicate values.
       Set<String> labelValues =
           labels.get(key) != null
               ? new HashSet<>(Arrays.asList(labels.get(key).split(",")))
