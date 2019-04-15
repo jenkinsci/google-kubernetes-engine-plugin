@@ -119,7 +119,7 @@ public class Manifests {
 
     /** @return The description of the object in {ApiVersion}/{Kind}: {Name} */
     public String describe() {
-      return String.format("%s/%s: %s", getApiVersion(), getKind(), getName());
+      return String.format("%s/%s: %s", getApiVersion(), getKind(), getName().orElse(""));
     }
 
     /** @return The metadata map for this {@link ManifestObject}. */
