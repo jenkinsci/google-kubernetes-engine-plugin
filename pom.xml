@@ -19,7 +19,7 @@
     <groupId>org.jenkins-ci.plugins</groupId>
     <artifactId>plugin</artifactId>
     <version>3.37</version>
-    <relativePath />
+    <relativePath/>
   </parent>
 
   <artifactId>google-kubernetes-engine</artifactId>
@@ -287,7 +287,7 @@
         <version>2.7</version>
         <configuration>
           <instrumentation>
-            <excludes />
+            <excludes/>
           </instrumentation>
           <formats>
             <format>html</format>

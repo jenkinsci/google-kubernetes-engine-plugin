@@ -53,6 +53,7 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.io.Serializable;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 import java.util.logging.Level;
@@ -72,6 +73,10 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
   static final String EMPTY_NAME = "- none -";
   static final String EMPTY_VALUE = "";
   static final int DEFAULT_VERIFY_TIMEOUT_MINUTES = 5;
+  static final String METRICS_LABEL_KEY = "app.kubernetes.io/managed-by";
+  static final String METRICS_LABEL_VALUE = "graphite-jenkins-gke";
+  static final ImmutableSet<String> METRICS_TARGET_TYPES =
+      ImmutableSet.<String>of("Deployment", "Service", "ReplicaSet");
 
   private String credentialsId;
   private String projectId;
@@ -82,7 +87,7 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
   private int verifyTimeoutInMinutes = DEFAULT_VERIFY_TIMEOUT_MINUTES;
   private boolean verifyServices;
   private boolean isTestCleanup;
-  private KubeConfigAfterBuildStep afterBuildStep = null;
+  private LinkedList<KubeConfigAfterBuildStep> afterBuildStepStack;
 
   /** Constructs a new {@link KubernetesEngineBuilder}. */
   @DataBoundConstructor
@@ -166,8 +171,12 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
   }
 
   @VisibleForTesting
-  void setAfterBuildStep(KubeConfigAfterBuildStep afterBuildStep) {
-    this.afterBuildStep = afterBuildStep;
+  void pushAfterBuildStep(KubeConfigAfterBuildStep afterBuildStep) {
+    if (afterBuildStepStack == null) {
+      afterBuildStepStack = new LinkedList<>();
+    }
+
+    afterBuildStepStack.push(afterBuildStep);
   }
 
   /** {@inheritDoc} */
@@ -200,9 +209,11 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
             .run(run)
             .build();
 
+    FilePath manifestFile = workspace.child(manifestPattern);
+    addMetricsLabel(manifestFile);
+
     KubectlWrapper kubectl = new KubectlWrapper(context, kubeConfig);
-    kubectl.runKubectlCommand(
-        "apply", ImmutableList.<String>of("-f", workspace.child(manifestPattern).getRemote()));
+    kubectl.runKubectlCommand("apply", ImmutableList.<String>of("-f", manifestFile.getRemote()));
 
     if (verifyDeployments && !verify(kubectl, manifestPattern, workspace, listener.getLogger())) {
       throw new AbortException(Messages.KubernetesEngineBuilder_KubernetesObjectsNotVerified());
@@ -211,9 +222,31 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
     // run the after build step if it exists
     // NOTE(craigatgoogle): Due to the reflective way this class is created, initializers aren't
     // run, so we still have to check for null.
-    if (afterBuildStep != null) {
-      afterBuildStep.perform(kubeConfig, run, workspace, launcher, listener);
+    if (afterBuildStepStack != null) {
+      while (!afterBuildStepStack.isEmpty()) {
+        afterBuildStepStack.pop().perform(kubeConfig, run, workspace, launcher, listener);
+      }
     }
+  }
+
+  /**
+   * Adds a Kubernetes user label unique to this Jenkins plugin to the specified manifest,
+   * (in-place) in order to enable Jenkins GKE/GCE non-identifying usage metrics. Behavior with
+   * malformed manifests is undefined.
+   *
+   * @param manifestFile The manifest file to be modified.
+   * @throws IOException If an error occurred while reading/writing the manifest file.
+   * @throws InterruptedException If an error occured while parsing/dumping YAML.
+   */
+  @VisibleForTesting
+  static void addMetricsLabel(FilePath manifestFile) throws InterruptedException, IOException {
+    Manifests manifests = Manifests.fromFile(manifestFile);
+    for (Manifests.ManifestObject manifest :
+        manifests.getObjectManifestsOfKinds(METRICS_TARGET_TYPES)) {
+      manifest.addLabel(METRICS_LABEL_KEY, METRICS_LABEL_VALUE);
+    }
+
+    manifests.write();
   }
 
   /**

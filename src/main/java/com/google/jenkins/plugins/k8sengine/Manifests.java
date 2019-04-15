@@ -20,8 +20,11 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import org.yaml.snakeyaml.Yaml;
@@ -31,20 +34,30 @@ import org.yaml.snakeyaml.Yaml;
  * descriptive wrappers, {@link ManifestObject}.
  */
 public class Manifests {
+  private static final String DEFAULT_ENCODING = "UTF-8";
+
   static Yaml yaml = new Yaml();
   private List<ManifestObject> objects = new ArrayList<ManifestObject>();
 
   /** ManifestObject wrapper that encapsulates an object spec loaded from a supplied manifest. */
   public static class ManifestObject {
     private Map<String, Object> source;
+    private FilePath file;
 
     /**
      * Build the manifest object from source.
      *
      * @param source The YAML map source for the object.
+     * @param file The file containing the manifest.
      */
-    public ManifestObject(Map<String, Object> source) {
+    public ManifestObject(Map<String, Object> source, FilePath file) {
       this.source = source;
+      this.file = file;
+    }
+
+    /** @return The file containing this manifest. */
+    public FilePath getFile() {
+      return file;
     }
 
     /** @return The YAML map source for the object. */
@@ -63,15 +76,70 @@ public class Manifests {
     }
 
     /** @return The name. */
+    public Optional<String> getName() {
+      return getMetadata().isPresent()
+          ? Optional.of((String) getMetadata().get().get("name"))
+          : Optional.empty();
+    }
+
+    /**
+     * Ensures this {@link ManifestObject} has labels, modifying in-place as needed, finally
+     * returning the labels.
+     *
+     * @return The labels for this {@link ManifestObject}.
+     */
     @SuppressWarnings("unchecked")
-    public String getName() {
-      Map<String, Object> metadata = (Map<String, Object>) source.get("metadata");
-      return (String) metadata.get("name");
+    public Map<String, String> getOrCreateLabels() {
+      Map<String, Object> metadata = getOrCreateMetadata();
+
+      if (!metadata.containsKey("labels")) {
+        metadata.put("labels", new LinkedHashMap<String, String>());
+      }
+
+      return (Map<String, String>) metadata.get("labels");
+    }
+
+    /**
+     * Adds the specified label key and value to this {@link ManifestObject}'s metadata labels. Will
+     * ensure a label map exists upon execution.
+     *
+     * @param key The key of the label to be added.
+     * @param value The value of the label to be added.
+     */
+    public void addLabel(String key, String value) {
+      Map<String, String> labels = getOrCreateLabels();
+      // Add the specified label ensuring no duplicate values.
+      Set<String> labelValues =
+          labels.get(key) != null
+              ? new HashSet<>(Arrays.asList(labels.get(key).split(",")))
+              : new HashSet<>();
+      labelValues.add(value);
+      labels.put(key, String.join(",", labelValues));
     }
 
     /** @return The description of the object in {ApiVersion}/{Kind}: {Name} */
     public String describe() {
-      return String.format("%s/%s: %s", getApiVersion(), getKind(), getName());
+      return String.format("%s/%s: %s", getApiVersion(), getKind(), getName().orElse(""));
+    }
+
+    /** @return The metadata map for this {@link ManifestObject}. */
+    @SuppressWarnings("unchecked")
+    private Optional<Map<String, Object>> getMetadata() {
+      return Optional.ofNullable((Map<String, Object>) source.get("metadata"));
+    }
+
+    /**
+     * Returns this {@link ManifestObject}'s metadata, ensuring its existence.
+     *
+     * @return The metadata map for this {@link ManifestObject}.
+     */
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> getOrCreateMetadata() {
+      if (source.get("metadata") == null) {
+        source.put("metadata", new LinkedHashMap<String, Object>());
+      }
+
+      return (Map<String, Object>) source.get("metadata");
     }
   }
 
@@ -121,8 +189,8 @@ public class Manifests {
   @SuppressWarnings("unchecked")
   private void loadFile(FilePath filePath) throws IOException, InterruptedException {
     InputStream mis = filePath.read();
-    Iterable<Object> iter = yaml.loadAll(new InputStreamReader(mis, "UTF-8"));
-    iter.forEach((o) -> objects.add(new ManifestObject((Map<String, Object>) o)));
+    Iterable<Object> iter = yaml.loadAll(new InputStreamReader(mis, DEFAULT_ENCODING));
+    iter.forEach((o) -> objects.add(new ManifestObject((Map<String, Object>) o, filePath)));
   }
 
   /** @return The {@link ManifestObject}'s that were loaded. */
@@ -137,8 +205,34 @@ public class Manifests {
    * @return The manifest objects that match the included kinds.
    */
   public List<ManifestObject> getObjectManifestsOfKinds(Set<String> includedKinds) {
+    final Set<String> includedKindsLowerCase =
+        includedKinds.stream().map(String::toLowerCase).collect(Collectors.toSet());
     return getObjectManifests().stream()
-        .filter((manifest) -> includedKinds.contains(manifest.getKind().toLowerCase()))
+        .filter((manifest) -> includedKindsLowerCase.contains(manifest.getKind().toLowerCase()))
         .collect(Collectors.toList());
+  }
+
+  /**
+   * Writes the contents of this {@link Manifests}'s objects back to their corresponding files.
+   *
+   * @throws InterruptedException If an error occurred while dumping to YAML.
+   * @throws IOException If an error occurred while writing the file contents.
+   */
+  public void write() throws InterruptedException, IOException {
+    Map<FilePath, List<ManifestObject>> fileToManifestListMap = new LinkedHashMap<>();
+    for (ManifestObject manifest : getObjectManifests()) {
+      List<ManifestObject> manifestList =
+          fileToManifestListMap.getOrDefault(manifest.getFile(), new ArrayList<ManifestObject>());
+      manifestList.add(manifest);
+      fileToManifestListMap.put(manifest.getFile(), manifestList);
+    }
+
+    for (Map.Entry<FilePath, List<ManifestObject>> entry : fileToManifestListMap.entrySet()) {
+      FilePath file = entry.getKey();
+      List<ManifestObject> manifestObjects = entry.getValue();
+      file.write(
+          yaml.dumpAll(manifestObjects.stream().map(m -> m.getSource()).iterator()),
+          DEFAULT_ENCODING);
+    }
   }
 }

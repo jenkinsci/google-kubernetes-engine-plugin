@@ -58,6 +58,8 @@ public class KubernetesEngineBuilderTest {
 
   private static Jenkins jenkins;
 
+  // TODO(#49): Separate out tests into separate classes for better organization.
+
   @BeforeClass
   public static void init() {
     jenkins = Mockito.mock(Jenkins.class);
