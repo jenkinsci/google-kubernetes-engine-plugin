@@ -14,28 +14,14 @@
 
 package com.google.jenkins.plugins.k8sengine;
 
-import com.cloudbees.plugins.credentials.CredentialsMatchers;
-import com.cloudbees.plugins.credentials.CredentialsProvider;
-import com.cloudbees.plugins.credentials.domains.DomainRequirement;
-import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
-import com.google.api.client.http.HttpTransport;
-import com.google.api.client.http.javanet.NetHttpTransport;
-import com.google.api.client.json.JsonFactory;
-import com.google.api.client.json.jackson.JacksonFactory;
 import com.google.api.services.container.model.Cluster;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.jenkins.plugins.credentials.oauth.GoogleRobotPrivateKeyCredentials;
-import com.google.jenkins.plugins.credentials.oauth.ServiceAccountConfig;
-import hudson.security.ACL;
 import java.io.IOException;
 import java.io.Writer;
-import java.util.ArrayList;
-import java.util.List;
-import jenkins.model.Jenkins;
 import org.yaml.snakeyaml.Yaml;
 
 /**
@@ -198,68 +184,18 @@ public class KubeConfig {
         .build();
   }
 
-    /**
-     *
-     * @param credentialsId The service account credential's id.
-     * @return Access token from OAuth to allow kubectl to interact with the cluster.
-     * @throws IOException If an error occurred fetching the access token.
-     */
-  public static String getAccessToken(String credentialsId) throws IOException {
-    HttpTransport HTTP_TRANSPORT = new NetHttpTransport();
-    JsonFactory JSON_FACTORY = new JacksonFactory();
-
-    // get the credential from jenkins
-    List<DomainRequirement> domainRequirements = new ArrayList<>();
-
-    GoogleRobotPrivateKeyCredentials cred =
-        CredentialsMatchers.firstOrNull(
-            CredentialsProvider.lookupCredentials(
-                GoogleRobotPrivateKeyCredentials.class,
-                Jenkins.get(),
-                ACL.SYSTEM,
-                domainRequirements),
-            CredentialsMatchers.withId(credentialsId));
-
-    ServiceAccountConfig sac = cred.getServiceAccountConfig();
-
-    GoogleCredential credential =
-        new GoogleCredential.Builder()
-            .setTransport(HTTP_TRANSPORT)
-            .setJsonFactory(JSON_FACTORY)
-            .setServiceAccountId(sac.getAccountId())
-            .setServiceAccountScopes(
-                ImmutableList.<String>of("https://www.googleapis.com/auth/cloud-platform"))
-            .setServiceAccountPrivateKey(sac.getPrivateKey())
-            .build();
-
-    credential.refreshToken();
-    return credential.getAccessToken();
-  }
-
-  // TODO: exception handling
-  // throw it here and catch it in the builder. Builder will throw the exception
   private static ImmutableMap<String, Object> user(
-      String currentContext, Cluster cluster, String credentialsId) {
+      String currentContext, Cluster cluster, String accessToken) {
     Preconditions.checkArgument(!Strings.isNullOrEmpty(currentContext));
     Preconditions.checkNotNull(cluster);
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(credentialsId));
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(accessToken));
 
-    String accessToken = "";
-    try {
-      accessToken = getAccessToken(credentialsId);
-    } catch (IOException ioe) {
-      // TODO
-    }
     return new ImmutableMap.Builder<String, Object>()
         .put("name", currentContext)
-        .put(
-            "user",
-                new ImmutableMap.Builder<String, Object>()
-                .put("token", accessToken).build())
+        .put("user", new ImmutableMap.Builder<String, Object>().put("token", accessToken).build())
         .build();
   }
 
-  // TODO CLIENT CERT here too
   private static ImmutableMap<String, Object> cluster(String currentContext, Cluster cluster) {
     Preconditions.checkArgument(!Strings.isNullOrEmpty(currentContext));
     Preconditions.checkNotNull(cluster);

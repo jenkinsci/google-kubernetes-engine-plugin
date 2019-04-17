@@ -213,7 +213,8 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
     Cluster cluster = client.getCluster(projectId, zone, clusterName);
 
     // generate a kubeconfig for the cluster
-    KubeConfig kubeConfig = KubeConfig.fromCluster(projectId, cluster, getAccessToken(credentialsId));
+    KubeConfig kubeConfig =
+        KubeConfig.fromCluster(projectId, cluster, getAccessToken(credentialsId));
 
     KubectlWrapper kubectl =
         new KubectlWrapper.Builder()
