@@ -28,7 +28,7 @@ import java.util.UUID;
 import java.util.logging.Logger;
 import org.junit.rules.TemporaryFolder;
 
-/** Provids a library of utility functions for integration tests. */
+/** Provides a library of utility functions for integration tests. */
 public class ITUtil {
   /**
    * Formats a random name using the given prefix.
@@ -41,7 +41,7 @@ public class ITUtil {
   }
 
   /**
-   * Creates a temporary workspace for testing, configurating it as a custom workspace for the
+   * Creates a temporary workspace for testing, configuring it as a custom workspace for the
    * specified {@link Project}.
    *
    * @param testProject The {@link Project} the test workspace for.

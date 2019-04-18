@@ -94,7 +94,7 @@ create one.
 
 #### GKE Build Step Parameters
 
-The GKE Build Step has the following required parameters:
+The GKE Build Step has the following parameters:
 
 1. credentialsId(string): The ID of the credentials that you uploaded earlier.
 1. projectId(string): The Project ID housing the GKE cluster to be published to.

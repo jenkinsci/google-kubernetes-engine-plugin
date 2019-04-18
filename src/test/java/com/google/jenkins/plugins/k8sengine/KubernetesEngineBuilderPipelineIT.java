@@ -49,7 +49,7 @@ import org.junit.ClassRule;
 import org.junit.Test;
 import org.jvnet.hudson.test.JenkinsRule;
 
-/** Tests the {@link KubernetesEngineBuilder} for use-cases involving the Jenkins Pipeline DSL */
+/** Tests the {@link KubernetesEngineBuilder} for use-cases involving the Jenkins Pipeline DSL. */
 public class KubernetesEngineBuilderPipelineIT {
   private static final Logger LOGGER =
       Logger.getLogger(KubernetesEngineBuilderPipelineIT.class.getName());
