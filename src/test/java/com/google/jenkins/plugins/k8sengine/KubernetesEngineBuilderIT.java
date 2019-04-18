@@ -16,7 +16,10 @@
 
 package com.google.jenkins.plugins.k8sengine;
 
-import static org.junit.Assert.assertEquals;
+import static com.google.jenkins.plugins.k8sengine.ITUtil.copyTestFileToDir;
+import static com.google.jenkins.plugins.k8sengine.ITUtil.createTestWorkspace;
+import static com.google.jenkins.plugins.k8sengine.ITUtil.dumpLog;
+import static com.google.jenkins.plugins.k8sengine.ITUtil.formatRandomName;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
@@ -27,32 +30,24 @@ import com.cloudbees.plugins.credentials.domains.Domain;
 import com.cloudbees.plugins.credentials.domains.DomainRequirement;
 import com.google.api.client.http.HttpTransport;
 import com.google.common.collect.ImmutableList;
-import com.google.common.io.Resources;
 import com.google.jenkins.plugins.credentials.oauth.GoogleRobotPrivateKeyCredentials;
 import com.google.jenkins.plugins.credentials.oauth.ServiceAccountConfig;
 import com.google.jenkins.plugins.k8sengine.client.ClientFactory;
 import com.google.jenkins.plugins.k8sengine.client.ContainerClient;
 import com.jayway.jsonpath.JsonPath;
-import hudson.FilePath;
 import hudson.model.FreeStyleBuild;
 import hudson.model.FreeStyleProject;
 import hudson.model.Result;
-import hudson.model.Run;
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
-import java.util.logging.Level;
+import java.util.Set;
 import java.util.logging.Logger;
-import org.junit.After;
-import org.junit.Before;
+import java.util.stream.Collectors;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
 import org.jvnet.hudson.test.JenkinsRule;
 
 /** Tests {@link KubernetesEngineBuilder}. */
@@ -71,26 +66,19 @@ public class KubernetesEngineBuilderIT {
   private static String credentialsId;
   private static ContainerClient client;
 
-  private FreeStyleProject testJenkinsProject;
-  private TemporaryFolder testWorkspace;
-
   @BeforeClass
   public static void init() throws Exception {
     LOGGER.info("Initializing KubernetesEngineBuilderIT");
 
-    // setup test project ID
     projectId = System.getenv("GOOGLE_PROJECT_ID");
     assertNotNull("GOOGLE_PROJECT_ID env var must be set", projectId);
 
-    // setup test zone
     testZone = System.getenv("GOOGLE_PROJECT_ZONE");
     assertNotNull("GOOGLE_PROJECT_ZONE env var must be set", testZone);
 
-    // setup test cluster
     clusterName = System.getenv("GOOGLE_GKE_CLUSTER");
     assertNotNull("GOOGLE_GKE_CLUSTER env var must be set", clusterName);
 
-    // setup test credentials
     LOGGER.info("Creating credentials");
     String serviceAccountKeyJson = System.getenv("GOOGLE_CREDENTIALS");
     assertNotNull("GOOGLE_CREDENTIALS env var must be set", serviceAccountKeyJson);
@@ -101,7 +89,6 @@ public class KubernetesEngineBuilderIT {
         new SystemCredentialsProvider.ProviderImpl().getStore(jenkinsRule.jenkins);
     store.addCredentials(Domain.global(), c);
 
-    // create the container client
     LOGGER.info("Creating container client");
     client =
         new ClientFactory(
@@ -112,185 +99,175 @@ public class KubernetesEngineBuilderIT {
             .containerClient();
   }
 
-  @Before
-  public void createTestProject() throws Exception {
-    String testProjectName = formatRandomName("test-jenkins");
-    LOGGER.log(Level.INFO, "Creating test jenkins project: {0}", testProjectName);
-    testJenkinsProject = jenkinsRule.createFreeStyleProject(testProjectName);
-    testWorkspace = new TemporaryFolder();
-    testWorkspace.create();
-    testJenkinsProject.setCustomWorkspace(testWorkspace.getRoot().toString());
-  }
-
-  @After
-  public void cleanupTestProject() throws Exception {
-    LOGGER.log(Level.INFO, "Deleting test jenkins project: {0}", testJenkinsProject.getName());
-    testJenkinsProject.delete();
-    testWorkspace.delete();
-  }
-
   @Test
   public void testServiceDeploymentSucceeds() throws Exception {
     LOGGER.info("Testing service deployment succeeds");
-    // setup GKE Builder
-    KubernetesEngineBuilder gkeBuilder = getDefaultGKEBuilder();
-    testJenkinsProject.getBuildersList().add(gkeBuilder);
+    FreeStyleProject testJenkinsProject =
+        jenkinsRule.createFreeStyleProject(formatRandomName("test"));
+    createTestWorkspace(testJenkinsProject);
+    try {
+      KubernetesEngineBuilder gkeBuilder = getDefaultGKEBuilder();
+      testJenkinsProject.getBuildersList().add(gkeBuilder);
+      copyTestFileToDir(
+          getClass(), testJenkinsProject.getCustomWorkspace(), TEST_DEPLOYMENT_MANIFEST);
+      gkeBuilder.pushAfterBuildStep(
+          (kubeConfig, run, workspace, launcher, listener) -> {
+            KubectlWrapper kubectl =
+                new KubectlWrapper.Builder()
+                    .workspace(workspace)
+                    .launcher(launcher)
+                    .kubeConfig(kubeConfig)
+                    .build();
+            Object json = kubectl.getObject("deployment", "nginx-deployment");
+            Map<String, Object> labels = JsonPath.read(json, "metadata.labels");
+            assertNotNull(labels);
+            assertNotNull(labels.get(KubernetesEngineBuilder.METRICS_LABEL_KEY));
+            String labelValues = (String) labels.get(KubernetesEngineBuilder.METRICS_LABEL_KEY);
+            assertTrue(
+                Arrays.asList(labelValues.split(","))
+                    .contains(KubernetesEngineBuilder.METRICS_LABEL_VALUE));
+          });
 
-    // copy test deployment into project workspace
-    copyTestFileToDir(testJenkinsProject.getCustomWorkspace(), TEST_DEPLOYMENT_MANIFEST);
-
-    // ensure metrics label was properly applied
-    gkeBuilder.pushAfterBuildStep(
-        (kubeConfig, run, workspace, launcher, listener) -> {
-          JenkinsRunContext context =
-              new JenkinsRunContext.Builder()
-                  .workspace(workspace)
-                  .launcher(launcher)
-                  .taskListener(listener)
-                  .run(run)
-                  .build();
-          KubectlWrapper kubectl = new KubectlWrapper(context, kubeConfig);
-          Object json = kubectl.getObject("deployment", "nginx-deployment");
-          Map<String, Object> labels = JsonPath.read(json, "metadata.labels");
-          assertNotNull(labels);
-          assertNotNull(labels.get(KubernetesEngineBuilder.METRICS_LABEL_KEY));
-          String labelValues = (String) labels.get(KubernetesEngineBuilder.METRICS_LABEL_KEY);
-          assertTrue(
-              Arrays.asList(labelValues.split(","))
-                  .contains(KubernetesEngineBuilder.METRICS_LABEL_VALUE));
-        });
-
-    // execute a build
-    FreeStyleBuild build = testJenkinsProject.scheduleBuild2(0).get();
-    dumpLog(build);
-    assertEquals(Result.SUCCESS, build.getResult());
+      FreeStyleBuild build = testJenkinsProject.scheduleBuild2(0).get();
+      assertNotNull(build);
+      jenkinsRule.assertBuildStatusSuccess(jenkinsRule.waitForCompletion(build));
+      dumpLog(LOGGER, build);
+    } finally {
+      testJenkinsProject.delete();
+    }
   }
 
   @Test
   public void testWellFormedFailedDeploymentNotVerified() throws Exception {
     LOGGER.info("Testing well-formed unverifiable deployment fails verification");
+    FreeStyleProject testJenkinsProject =
+        jenkinsRule.createFreeStyleProject(formatRandomName("test"));
+    createTestWorkspace(testJenkinsProject);
+    try {
+      KubernetesEngineBuilder gkeBuilder = getDefaultGKEBuilder();
+      testJenkinsProject.getBuildersList().add(gkeBuilder);
+      gkeBuilder.setManifestPattern(TEST_DEPLOYMENT_UNVERIFIABLE_MANIFEST);
+      copyTestFileToDir(
+          getClass(),
+          testJenkinsProject.getCustomWorkspace(),
+          TEST_DEPLOYMENT_UNVERIFIABLE_MANIFEST);
 
-    KubernetesEngineBuilder gkeBuilder = getDefaultGKEBuilder();
-    testJenkinsProject.getBuildersList().add(gkeBuilder);
-    gkeBuilder.setManifestPattern(TEST_DEPLOYMENT_UNVERIFIABLE_MANIFEST);
-    copyTestFileToDir(
-        testJenkinsProject.getCustomWorkspace(), TEST_DEPLOYMENT_UNVERIFIABLE_MANIFEST);
-
-    FreeStyleBuild build = testJenkinsProject.scheduleBuild2(0).get();
-
-    dumpLog(build);
-
-    /* Because the above build fails this the simplest way to clean
-     * up after this test right now. */
-    assertEquals(Result.FAILURE, build.getResult());
-    copyTestFileToDir(testJenkinsProject.getCustomWorkspace(), TEST_DEPLOYMENT_MANIFEST);
-    gkeBuilder.setManifestPattern((TEST_DEPLOYMENT_MANIFEST));
-    testJenkinsProject.scheduleBuild2(0).get();
+      FreeStyleBuild build = testJenkinsProject.scheduleBuild2(0).get();
+      assertNotNull(build);
+      jenkinsRule.assertBuildStatus(Result.FAILURE, jenkinsRule.waitForCompletion(build));
+      dumpLog(LOGGER, build);
+    } finally {
+      testJenkinsProject.delete();
+    }
   }
 
   @Test
   public void testServiceDeploymentFailsBadCluster() throws Exception {
     LOGGER.info("Testing service deployment fails bad cluster");
-    // setup GKE Builder
-    KubernetesEngineBuilder gkeBuilder = getDefaultGKEBuilder();
-    gkeBuilder.setClusterName(formatRandomName("bad-cluster"));
-    testJenkinsProject.getBuildersList().add(gkeBuilder);
+    FreeStyleProject testJenkinsProject =
+        jenkinsRule.createFreeStyleProject(formatRandomName("test"));
+    createTestWorkspace(testJenkinsProject);
+    try {
+      KubernetesEngineBuilder gkeBuilder = getDefaultGKEBuilder();
+      gkeBuilder.setClusterName(formatRandomName("bad-cluster"));
+      testJenkinsProject.getBuildersList().add(gkeBuilder);
+      copyTestFileToDir(
+          getClass(), testJenkinsProject.getCustomWorkspace(), TEST_DEPLOYMENT_MANIFEST);
 
-    // copy test deployment into project workspace
-    copyTestFileToDir(testJenkinsProject.getCustomWorkspace(), TEST_DEPLOYMENT_MANIFEST);
-
-    // execute a build
-    FreeStyleBuild build = testJenkinsProject.scheduleBuild2(0).get();
-    dumpLog(build);
-    assertEquals(Result.FAILURE, build.getResult());
+      FreeStyleBuild build = testJenkinsProject.scheduleBuild2(0).get();
+      assertNotNull(build);
+      jenkinsRule.assertBuildStatus(Result.FAILURE, jenkinsRule.waitForCompletion(build));
+      dumpLog(LOGGER, build);
+    } finally {
+      testJenkinsProject.delete();
+    }
   }
 
   @Test
   public void testServiceDeploymentFailsBadProjectId() throws Exception {
     LOGGER.info("Testing service deployment fails bad project id");
-    // setup GKE Builder
-    KubernetesEngineBuilder gkeBuilder = getDefaultGKEBuilder();
-    gkeBuilder.setProjectId(formatRandomName("bad-project"));
-    testJenkinsProject.getBuildersList().add(gkeBuilder);
+    FreeStyleProject testJenkinsProject =
+        jenkinsRule.createFreeStyleProject(formatRandomName("test"));
+    createTestWorkspace(testJenkinsProject);
+    try {
+      KubernetesEngineBuilder gkeBuilder = getDefaultGKEBuilder();
+      gkeBuilder.setProjectId(formatRandomName("bad-project"));
+      testJenkinsProject.getBuildersList().add(gkeBuilder);
+      copyTestFileToDir(
+          getClass(), testJenkinsProject.getCustomWorkspace(), TEST_DEPLOYMENT_MANIFEST);
 
-    // copy test deployment into project workspace
-    copyTestFileToDir(testJenkinsProject.getCustomWorkspace(), TEST_DEPLOYMENT_MANIFEST);
-
-    // execute a build
-    FreeStyleBuild build = testJenkinsProject.scheduleBuild2(0).get();
-    dumpLog(build);
-    assertEquals(Result.FAILURE, build.getResult());
+      FreeStyleBuild build = testJenkinsProject.scheduleBuild2(0).get();
+      assertNotNull(build);
+      jenkinsRule.assertBuildStatus(Result.FAILURE, jenkinsRule.waitForCompletion(build));
+      dumpLog(LOGGER, build);
+    } finally {
+      testJenkinsProject.delete();
+    }
   }
 
   @Test
   public void testServiceDeploymentFailsBadCredentialId() throws Exception {
     LOGGER.info("Testing service deployment fails bad credential id");
-    // setup GKE Builder
-    KubernetesEngineBuilder gkeBuilder = getDefaultGKEBuilder();
-    gkeBuilder.setCredentialsId(formatRandomName("bad-credential"));
-    testJenkinsProject.getBuildersList().add(gkeBuilder);
+    FreeStyleProject testJenkinsProject =
+        jenkinsRule.createFreeStyleProject(formatRandomName("test"));
+    createTestWorkspace(testJenkinsProject);
+    try {
+      KubernetesEngineBuilder gkeBuilder = getDefaultGKEBuilder();
+      gkeBuilder.setCredentialsId(formatRandomName("bad-credential"));
+      testJenkinsProject.getBuildersList().add(gkeBuilder);
+      copyTestFileToDir(
+          getClass(), testJenkinsProject.getCustomWorkspace(), TEST_DEPLOYMENT_MANIFEST);
 
-    // copy test deployment into project workspace
-    copyTestFileToDir(testJenkinsProject.getCustomWorkspace(), TEST_DEPLOYMENT_MANIFEST);
-
-    // execute a build
-    FreeStyleBuild build = testJenkinsProject.scheduleBuild2(0).get();
-    dumpLog(build);
-    assertEquals(Result.FAILURE, build.getResult());
+      FreeStyleBuild build = testJenkinsProject.scheduleBuild2(0).get();
+      assertNotNull(build);
+      jenkinsRule.assertBuildStatus(Result.FAILURE, jenkinsRule.waitForCompletion(build));
+      dumpLog(LOGGER, build);
+    } finally {
+      testJenkinsProject.delete();
+    }
   }
 
   @Test
   public void testServiceDeploymentFailsBadManifestPattern() throws Exception {
     LOGGER.info("Testing service deployment fails bad manifest pattern");
-    // setup GKE Builder
-    KubernetesEngineBuilder gkeBuilder = getDefaultGKEBuilder();
-    gkeBuilder.setManifestPattern(formatRandomName("bad-manifest-pattern.yml"));
-    testJenkinsProject.getBuildersList().add(gkeBuilder);
+    FreeStyleProject testJenkinsProject =
+        jenkinsRule.createFreeStyleProject(formatRandomName("test"));
+    createTestWorkspace(testJenkinsProject);
+    try {
+      KubernetesEngineBuilder gkeBuilder = getDefaultGKEBuilder();
+      gkeBuilder.setManifestPattern(formatRandomName("bad-manifest-pattern.yml"));
+      testJenkinsProject.getBuildersList().add(gkeBuilder);
+      copyTestFileToDir(
+          getClass(), testJenkinsProject.getCustomWorkspace(), TEST_DEPLOYMENT_MANIFEST);
 
-    // copy test deployment into project workspace
-    copyTestFileToDir(testJenkinsProject.getCustomWorkspace(), TEST_DEPLOYMENT_MANIFEST);
-
-    // execute a build
-    FreeStyleBuild build = testJenkinsProject.scheduleBuild2(0).get();
-    dumpLog(build);
-    assertEquals(Result.FAILURE, build.getResult());
+      FreeStyleBuild build = testJenkinsProject.scheduleBuild2(0).get();
+      assertNotNull(build);
+      jenkinsRule.assertBuildStatus(Result.FAILURE, jenkinsRule.waitForCompletion(build));
+      dumpLog(LOGGER, build);
+    } finally {
+      testJenkinsProject.delete();
+    }
   }
 
   @Test
   public void testServiceDeploymentFailsMalformedManifest() throws Exception {
     LOGGER.info("Testing service fails malformed manifest");
-    // setup GKE Builder
-    KubernetesEngineBuilder gkeBuilder = getDefaultGKEBuilder();
-    gkeBuilder.setManifestPattern(TEST_DEPLOYMENT_MALFORMED_MANIFEST);
-    testJenkinsProject.getBuildersList().add(gkeBuilder);
+    FreeStyleProject testJenkinsProject =
+        jenkinsRule.createFreeStyleProject(formatRandomName("test"));
+    createTestWorkspace(testJenkinsProject);
+    try {
+      KubernetesEngineBuilder gkeBuilder = getDefaultGKEBuilder();
+      gkeBuilder.setManifestPattern(TEST_DEPLOYMENT_MALFORMED_MANIFEST);
+      testJenkinsProject.getBuildersList().add(gkeBuilder);
+      copyTestFileToDir(
+          getClass(), testJenkinsProject.getCustomWorkspace(), TEST_DEPLOYMENT_MALFORMED_MANIFEST);
 
-    // copy test deployment into project workspace
-    copyTestFileToDir(testJenkinsProject.getCustomWorkspace(), TEST_DEPLOYMENT_MALFORMED_MANIFEST);
-
-    // execute a build
-    FreeStyleBuild build = testJenkinsProject.scheduleBuild2(0).get();
-    dumpLog(build);
-    assertEquals(Result.FAILURE, build.getResult());
-  }
-
-  private static void copyTestFileToDir(String dir, String testFile)
-      throws IOException, InterruptedException {
-    FilePath dirPath = new FilePath(new File(dir));
-    String testFileContents =
-        Resources.toString(Resources.getResource(testFile), StandardCharsets.UTF_8);
-    FilePath testWorkspaceFile = dirPath.child(testFile);
-    testWorkspaceFile.write(testFileContents, StandardCharsets.UTF_8.toString());
-  }
-
-  private static String formatRandomName(String prefix) {
-    return String.format("%s-%s", prefix, java.util.UUID.randomUUID().toString().replace("-", ""));
-  }
-
-  private static void dumpLog(Run<?, ?> run) throws IOException {
-    BufferedReader reader = new BufferedReader(run.getLogReader());
-    String line = null;
-    while ((line = reader.readLine()) != null) {
-      LOGGER.info(line);
+      FreeStyleBuild build = testJenkinsProject.scheduleBuild2(0).get();
+      assertNotNull(build);
+      jenkinsRule.assertBuildStatus(Result.FAILURE, jenkinsRule.waitForCompletion(build));
+      dumpLog(LOGGER, build);
+    } finally {
+      testJenkinsProject.delete();
     }
   }
 
@@ -305,18 +282,28 @@ public class KubernetesEngineBuilderIT {
     gkeBuilder.setVerifyTimeoutInMinutes(1);
     gkeBuilder.pushAfterBuildStep(
         (kubeConfig, run, workspace, launcher, listener) -> {
-          JenkinsRunContext context =
-              new JenkinsRunContext.Builder()
+          KubectlWrapper kubectl =
+              new KubectlWrapper.Builder()
                   .workspace(workspace)
+                  .kubeConfig(kubeConfig)
                   .launcher(launcher)
-                  .taskListener(listener)
-                  .run(run)
                   .build();
-          KubectlWrapper kubectl = new KubectlWrapper(context, kubeConfig);
-          kubectl.runKubectlCommand(
-              "delete",
-              ImmutableList.<String>of(
-                  "daemonsets,replicasets,services,deployments,pods,rc", "--all"));
+          Set<String> objectKinds = new HashSet<>();
+          Manifests manifests =
+              Manifests.fromFile(workspace.child(gkeBuilder.getManifestPattern()));
+          manifests.getObjectManifests().stream().forEach(mo -> objectKinds.add(mo.getKind()));
+          for (String kind : objectKinds) {
+            kubectl.runKubectlCommand(
+                "delete",
+                new ImmutableList.Builder<String>()
+                    .add(kind.toLowerCase())
+                    .addAll(
+                        manifests.getObjectManifests().stream()
+                            .filter(mo -> mo.getName().isPresent())
+                            .map(mo -> mo.getName().get())
+                            .collect(Collectors.toList()))
+                    .build());
+          }
         });
     return gkeBuilder;
   }

@@ -92,6 +92,19 @@ click **EDIT** and change the **Legacy Authorization** dropdown to "Enabled".
 Each GKE Build Step configuration can point to a different GKE cluster. Follow the steps below to
 create one.
 
+#### GKE Build Step Parameters
+
+The GKE Build Step has the following parameters:
+
+1. credentialsId(string): The ID of the credentials that you uploaded earlier.
+1. projectId(string): The Project ID housing the GKE cluster to be published to.
+1. zone(string): The Zone housing the GKE cluster to be published to.
+1. clusterName(string): The name of the Cluster to be published to.
+1. manifestPattern(string): The file pattern of the Kubernetes manifest to be deployed.
+1. verifyDeployments(boolean): [Optional] Whether the plugin will verify deployments.
+
+#### Jenkins Web UI
+
 1. Go to Jenkins home, and select the project to be published to GKE.
 1. Click the "Configure" button on the left nav-bar.
 1. At the bottom of the page there will be a button labeled "Add build step", click the button then
@@ -101,6 +114,31 @@ click Google Kubernetes Engine.
 1. Select the Zone housing the GKE cluster to be published to.
 1. Select the Cluster to be published to.
 1. Enter the file path of the Kubernetes [manifest](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/) within your project to be used for deployment.
+
+#### Jenkins Declarative Pipeline
+
+1. Create a file named "Jenkinsfile" in the root of your project.
+1. Within your Jenkinsfile add a step which invokes the GKE plugin's build step class:
+"KubernetesEngineBuilder". See the example code below:
+
+```groovy
+pipeline {
+    agent any
+    environment {
+        PROJECT_ID = '<YOUR_PROJECT_ID>'
+        CLUSTER_NAME = '<YOUR_CLUSTER_NAME>'
+        ZONE = '<YOUR_CLUSTER_ZONE>'
+        CREDENTIALS_ID = '<YOUR_CREDENTIAS_ID>'
+    }
+    stages {
+        stage('Deploy to GKE') {
+            steps{
+                step([$class: 'KubernetesEngineBuilder', projectId: env.PROJECT_ID, clusterName: env.CLUSTER_NAME, zone: env.ZONE, manifestPattern: 'manifest.yaml', credentialsId: env.CREDENTIALS_ID, verifyDeployments: true])
+            }
+        }
+    }
+}
+```
 
 ### Jenkins Environment Configuration
 

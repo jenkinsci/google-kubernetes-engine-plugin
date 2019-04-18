@@ -191,40 +191,32 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
         Level.INFO,
         String.format(
             "GKE Deploying, projectId: %s cluster: %s zone: %s", projectId, clusterName, zone));
-
-    // create a connection to the GKE API client
     ContainerClient client = getContainerClient(credentialsId);
-
-    // retrieve the cluster
     Cluster cluster = client.getCluster(projectId, zone, clusterName);
-
-    // generate a kubeconfig for the cluster
     KubeConfig kubeConfig = KubeConfig.fromCluster(projectId, cluster);
 
-    JenkinsRunContext context =
-        new JenkinsRunContext.Builder()
+    KubectlWrapper kubectl =
+        new KubectlWrapper.Builder()
             .workspace(workspace)
             .launcher(launcher)
-            .taskListener(listener)
-            .run(run)
+            .kubeConfig(kubeConfig)
             .build();
 
     FilePath manifestFile = workspace.child(manifestPattern);
     addMetricsLabel(manifestFile);
-
-    KubectlWrapper kubectl = new KubectlWrapper(context, kubeConfig);
     kubectl.runKubectlCommand("apply", ImmutableList.<String>of("-f", manifestFile.getRemote()));
-
-    if (verifyDeployments && !verify(kubectl, manifestPattern, workspace, listener.getLogger())) {
-      throw new AbortException(Messages.KubernetesEngineBuilder_KubernetesObjectsNotVerified());
-    }
-
-    // run the after build step if it exists
-    // NOTE(craigatgoogle): Due to the reflective way this class is created, initializers aren't
-    // run, so we still have to check for null.
-    if (afterBuildStepStack != null) {
-      while (!afterBuildStepStack.isEmpty()) {
-        afterBuildStepStack.pop().perform(kubeConfig, run, workspace, launcher, listener);
+    try {
+      if (verifyDeployments && !verify(kubectl, manifestPattern, workspace, listener.getLogger())) {
+        throw new AbortException(Messages.KubernetesEngineBuilder_KubernetesObjectsNotVerified());
+      }
+    } finally {
+      // run the after build step if it exists
+      // NOTE(craigatgoogle): Due to the reflective way this class is created, initializers aren't
+      // run, so we still have to check for null.
+      if (afterBuildStepStack != null) {
+        while (!afterBuildStepStack.isEmpty()) {
+          afterBuildStepStack.pop().perform(kubeConfig, run, workspace, launcher, listener);
+        }
       }
     }
   }
