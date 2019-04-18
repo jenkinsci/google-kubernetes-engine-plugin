@@ -14,10 +14,10 @@
 
 package com.google.jenkins.plugins.k8sengine;
 
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.jayway.jsonpath.Configuration;
 import com.jayway.jsonpath.InvalidJsonException;
-import hudson.EnvVars;
 import hudson.FilePath;
 import hudson.Launcher;
 import hudson.util.ArgumentListBuilder;
@@ -40,21 +40,36 @@ public class KubectlWrapper {
   private static final Logger LOGGER = Logger.getLogger(KubectlWrapper.class.getName());
   private static final String CHARSET = "UTF-8";
 
-  private JenkinsRunContext context;
   private KubeConfig kubeConfig;
+  private Launcher launcher;
+  private FilePath workspace;
 
-  /**
-   * Kubectl wrapper that encapsulate the JenkinsRunContext and KubeConfig.
-   *
-   * @param context The {@link JenkinsRunContext} the jenkins context environment the command will
-   *     execute in.
-   * @param kubeConfig The {@link KubeConfig} containing the credentials for the cluster being
-   *     executed against.
-   */
-  public KubectlWrapper(JenkinsRunContext context, KubeConfig kubeConfig) {
-    this.context = context;
+  private KubectlWrapper() {}
+
+  private KubeConfig getKubeConfig() {
+    return kubeConfig;
+  }
+
+  private void setKubeConfig(KubeConfig kubeConfig) {
     this.kubeConfig = kubeConfig;
   }
+
+  private void setLauncher(Launcher launcher) {
+    this.launcher = launcher;
+  }
+
+  private Launcher getLauncher() {
+    return launcher;
+  }
+
+  private void setWorkspace(FilePath workspace) {
+    this.workspace = workspace;
+  }
+
+  private FilePath getWorkspace() {
+    return workspace;
+  }
+
   /**
    * Runs the specified kubectl command within the specified {@link JenkinsRunContext}'s
    * environment.
@@ -71,16 +86,14 @@ public class KubectlWrapper {
     Set<String> tempFiles = new HashSet<>();
     try {
       // Set up the kubeconfig file for authentication
-      FilePath kubeConfigFile = context.getWorkspace().createTempFile(".kube", "config");
+      FilePath kubeConfigFile = workspace.createTempFile(".kube", "config");
       tempFiles.add(kubeConfigFile.getRemote());
-      String config = kubeConfig.toYaml();
+      String config = getKubeConfig().toYaml();
 
       // Setup the kubeconfig
       kubeConfigFile.write(config, /* encoding */ null);
-      EnvVars envVars = context.getRun().getEnvironment(context.getTaskListener());
-      envVars.put("KUBECONFIG", kubeConfigFile.getRemote());
       launchAndJoinCommand(
-          context.getLauncher(),
+          getLauncher(),
           new ArgumentListBuilder()
               .add("kubectl")
               .add("--kubeconfig")
@@ -98,7 +111,7 @@ public class KubectlWrapper {
               .add(kubeConfigFile.getRemote())
               .add(command);
       args.forEach(kubectlCmdBuilder::add);
-      output = launchAndJoinCommand(context.getLauncher(), kubectlCmdBuilder.toList());
+      output = launchAndJoinCommand(getLauncher(), kubectlCmdBuilder.toList());
     } catch (IOException | InterruptedException e) {
       LOGGER.log(
           Level.SEVERE,
@@ -107,7 +120,7 @@ public class KubectlWrapper {
       throw e;
     } finally {
       for (String tempFile : tempFiles) {
-        context.getWorkspace().child(tempFile).delete();
+        getWorkspace().child(tempFile).delete();
       }
     }
 
@@ -166,5 +179,36 @@ public class KubectlWrapper {
         (Map<String, Object>) Configuration.defaultConfiguration().jsonProvider().parse(json);
     List<Object> items = (List<Object>) result.get("items");
     return ImmutableList.copyOf(items);
+  }
+
+  /** Builder for {@link KubectlWrapper}. */
+  public static class Builder {
+    private KubectlWrapper wrapper = new KubectlWrapper();
+
+    /** Sets the {@link Launcher} to be used by the wrapper. */
+    public Builder launcher(Launcher launcher) {
+      wrapper.setLauncher(launcher);
+      return this;
+    }
+
+    /** Sets the {@link KubeConfig} to be used by the wrapper. */
+    public Builder kubeConfig(KubeConfig kubeConfig) {
+      wrapper.setKubeConfig(kubeConfig);
+      return this;
+    }
+
+    /** Sets the workspace to be used by the wrapper. */
+    public Builder workspace(FilePath workspace) {
+      wrapper.setWorkspace(workspace);
+      return this;
+    }
+
+    /** @return A new {@link KubectlWrapper}. */
+    public KubectlWrapper build() {
+      Preconditions.checkNotNull(wrapper.getLauncher());
+      Preconditions.checkNotNull(wrapper.getKubeConfig());
+      Preconditions.checkNotNull(wrapper.getWorkspace());
+      return wrapper;
+    }
   }
 }
