@@ -238,7 +238,9 @@ public class KubernetesEngineBuilderPipelineIT {
       String namespace)
       throws Exception {
     Cluster cluster = client.getCluster(projectId, testZone, clusterName);
-    KubeConfig kubeConfig = KubeConfig.fromCluster(projectId, cluster);
+    KubeConfig kubeConfig =
+        KubeConfig.fromCluster(
+            projectId, cluster, KubernetesEngineBuilder.getAccessToken(credentialsId));
     KubectlWrapper kubectl =
         new KubectlWrapper.Builder()
             .workspace(workspace)
