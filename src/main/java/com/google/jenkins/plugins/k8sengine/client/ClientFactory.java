@@ -30,7 +30,6 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.jenkins.plugins.credentials.oauth.GoogleRobotCredentials;
-import com.google.jenkins.plugins.credentials.oauth.GoogleRobotPrivateKeyCredentials;
 import hudson.AbortException;
 import hudson.model.ItemGroup;
 import hudson.security.ACL;
@@ -175,11 +174,12 @@ public class ClientFactory {
 
   /**
    * Get access token for service account with this credentialsId.
+   *
    * @return Access token from OAuth to allow kubectl to interact with the cluster.
    * @throws IOException If an error occurred fetching the access token.
    */
   public String getAccessToken() throws IOException {
     this.credential.refreshToken();
-    this.credential.getAccessToken();
+    return this.credential.getAccessToken();
   }
 }
