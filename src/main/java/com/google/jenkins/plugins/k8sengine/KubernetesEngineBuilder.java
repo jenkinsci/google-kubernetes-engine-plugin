@@ -299,42 +299,22 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
   }
 
   /**
+   * Get access token for service account with this credentialsId.
    * @param credentialsId The service account credential's id.
    * @return Access token from OAuth to allow kubectl to interact with the cluster.
    * @throws IOException If an error occurred fetching the access token.
    */
   public static String getAccessToken(String credentialsId) throws IOException {
     Preconditions.checkArgument(!Strings.isNullOrEmpty(credentialsId));
-    HttpTransport HTTP_TRANSPORT = new NetHttpTransport();
-    JsonFactory JSON_FACTORY = new JacksonFactory();
 
     ClientFactory clientFactory =
         new ClientFactory(
             Jenkins.get(),
             ImmutableList.<DomainRequirement>of(),
             credentialsId,
-            Optional.of(HTTP_TRANSPORT));
+            Optional.of(new NetHttpTransport()));
 
-    GoogleRobotPrivateKeyCredentials cred = clientFactory.getRobotCredentials();
-
-    if (cred != null) {
-      ServiceAccountConfig sac = cred.getServiceAccountConfig();
-
-      GoogleCredential credential =
-          new GoogleCredential.Builder()
-              .setTransport(HTTP_TRANSPORT)
-              .setJsonFactory(JSON_FACTORY)
-              .setServiceAccountId(sac.getAccountId())
-              .setServiceAccountScopes(
-                  ImmutableList.<String>of("https://www.googleapis.com/auth/cloud-platform"))
-              .setServiceAccountPrivateKey(sac.getPrivateKey())
-              .build();
-
-      credential.refreshToken();
-      return credential.getAccessToken();
-    }
-
-    return "";
+    return clientFactory.getAccessToken();
   }
 
   @Override

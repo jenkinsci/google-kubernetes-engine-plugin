@@ -42,15 +42,10 @@ import java.util.Optional;
 public class ClientFactory {
   public static final String APPLICATION_NAME = "jenkins-google-gke-plugin";
 
-  public Credential getCredential() {
-    return credential;
-  }
-
   private final Credential credential;
   private final HttpTransport transport;
   private final JsonFactory jsonFactory;
   private final String credentialsId;
-  private final GoogleRobotPrivateKeyCredentials robotCredentials;
   private final String defaultProjectId;
 
   /**
@@ -83,7 +78,6 @@ public class ClientFactory {
       throw new AbortException(Messages.ClientFactory_FailedToRetrieveCredentials(credentialsId));
     }
 
-    this.robotCredentials = (GoogleRobotPrivateKeyCredentials) robotCreds;
     try {
       this.credential = robotCreds.getGoogleCredential(new ContainerScopeRequirement());
     } catch (GeneralSecurityException gse) {
@@ -179,8 +173,13 @@ public class ClientFactory {
     return this.credentialsId;
   }
 
-  /** @return The GoogleRobotPrivateKeyCredentials corresponding to credentialsId */
-  public GoogleRobotPrivateKeyCredentials getRobotCredentials() {
-    return robotCredentials;
+  /**
+   * Get access token for service account with this credentialsId.
+   * @return Access token from OAuth to allow kubectl to interact with the cluster.
+   * @throws IOException If an error occurred fetching the access token.
+   */
+  public String getAccessToken() throws IOException {
+    this.credential.refreshToken();
+    this.credential.getAccessToken();
   }
 }
