@@ -30,6 +30,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.jenkins.plugins.credentials.oauth.GoogleRobotCredentials;
+import com.google.jenkins.plugins.credentials.oauth.GoogleRobotPrivateKeyCredentials;
 import hudson.AbortException;
 import hudson.model.ItemGroup;
 import hudson.security.ACL;
@@ -41,10 +42,15 @@ import java.util.Optional;
 public class ClientFactory {
   public static final String APPLICATION_NAME = "jenkins-google-gke-plugin";
 
+  public Credential getCredential() {
+    return credential;
+  }
+
   private final Credential credential;
   private final HttpTransport transport;
   private final JsonFactory jsonFactory;
   private final String credentialsId;
+  private final GoogleRobotPrivateKeyCredentials robotCredentials;
   private final String defaultProjectId;
 
   /**
@@ -77,6 +83,7 @@ public class ClientFactory {
       throw new AbortException(Messages.ClientFactory_FailedToRetrieveCredentials(credentialsId));
     }
 
+    this.robotCredentials = (GoogleRobotPrivateKeyCredentials) robotCreds;
     try {
       this.credential = robotCreds.getGoogleCredential(new ContainerScopeRequirement());
     } catch (GeneralSecurityException gse) {
@@ -170,5 +177,10 @@ public class ClientFactory {
   /** @return The Credentials ID for this ClientFactory. */
   public String getCredentialsId() {
     return this.credentialsId;
+  }
+
+  /** @return The GoogleRobotPrivateKeyCredentials corresponding to credentialsId */
+  public GoogleRobotPrivateKeyCredentials getRobotCredentials() {
+    return robotCredentials;
   }
 }

@@ -17,7 +17,6 @@
 package com.google.jenkins.plugins.k8sengine;
 
 import com.cloudbees.plugins.credentials.CredentialsMatchers;
-import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.common.StandardCredentials;
 import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
 import com.cloudbees.plugins.credentials.domains.DomainRequirement;
@@ -59,7 +58,6 @@ import hudson.util.ListBoxModel.Option;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -310,17 +308,14 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
     HttpTransport HTTP_TRANSPORT = new NetHttpTransport();
     JsonFactory JSON_FACTORY = new JacksonFactory();
 
-    // get the credential from jenkins
-    List<DomainRequirement> domainRequirements = new ArrayList<>();
+    ClientFactory clientFactory =
+        new ClientFactory(
+            Jenkins.get(),
+            ImmutableList.<DomainRequirement>of(),
+            credentialsId,
+            Optional.of(HTTP_TRANSPORT));
 
-    GoogleRobotPrivateKeyCredentials cred =
-        CredentialsMatchers.firstOrNull(
-            CredentialsProvider.lookupCredentials(
-                GoogleRobotPrivateKeyCredentials.class,
-                Jenkins.get(),
-                ACL.SYSTEM,
-                domainRequirements),
-            CredentialsMatchers.withId(credentialsId));
+    GoogleRobotPrivateKeyCredentials cred = clientFactory.getRobotCredentials();
 
     if (cred != null) {
       ServiceAccountConfig sac = cred.getServiceAccountConfig();
