@@ -21,7 +21,6 @@ import com.cloudbees.plugins.credentials.common.StandardCredentials;
 import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
 import com.cloudbees.plugins.credentials.domains.DomainRequirement;
 import com.google.api.client.http.HttpTransport;
-import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.services.cloudresourcemanager.model.Project;
 import com.google.api.services.compute.model.Zone;
 import com.google.api.services.container.model.Cluster;
@@ -207,7 +206,7 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
 
     // generate a kubeconfig for the cluster
     KubeConfig kubeConfig =
-        KubeConfig.fromCluster(projectId, cluster, getAccessToken(credentialsId));
+        KubeConfig.fromCluster(projectId, cluster, CredentialsUtil.getAccessToken(credentialsId));
 
     KubectlWrapper kubectl =
         new KubectlWrapper.Builder()
@@ -293,25 +292,26 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
         kubectl, manifestObjects, consoleLogger, verifyTimeoutInMinutes);
   }
 
-  /**
-   * Get access token for service account with this credentialsId.
-   *
-   * @param credentialsId The service account credential's id.
-   * @return Access token from OAuth to allow kubectl to interact with the cluster.
-   * @throws IOException If an error occurred fetching the access token.
-   */
-  public static String getAccessToken(String credentialsId) throws IOException {
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(credentialsId));
-
-    ClientFactory clientFactory =
-        new ClientFactory(
-            Jenkins.get(),
-            ImmutableList.<DomainRequirement>of(),
-            credentialsId,
-            Optional.of(new NetHttpTransport()));
-
-    return clientFactory.getAccessToken();
-  }
+  //  /**
+  //   * Get access token for service account with this credentialsId.
+  //   *
+  //   * @param credentialsId The service account credential's id.
+  //   * @return Access token from OAuth to allow kubectl to interact with the cluster.
+  //   * @throws IOException If an error occurred fetching the access token.
+  //   */
+  //  public static String getAccessToken(String credentialsId) throws IOException {
+  ////    Preconditions.checkArgument(!Strings.isNullOrEmpty(credentialsId));
+  ////
+  ////    ClientFactory clientFactory =
+  ////        new ClientFactory(
+  ////            Jenkins.get(),
+  ////            ImmutableList.<DomainRequirement>of(),
+  ////            credentialsId,
+  ////            Optional.of(new NetHttpTransport()));
+  ////
+  ////    return clientFactory.getAccessToken();
+  //    return CredentialsUtil.getAccessToken(credentialsId);
+  //  }
 
   @Override
   public BuildStepMonitor getRequiredMonitorService() {

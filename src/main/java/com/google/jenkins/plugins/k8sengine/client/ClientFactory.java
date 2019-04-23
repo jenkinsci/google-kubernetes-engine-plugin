@@ -14,8 +14,9 @@
 
 package com.google.jenkins.plugins.k8sengine.client;
 
-import com.cloudbees.plugins.credentials.CredentialsMatchers;
-import com.cloudbees.plugins.credentials.CredentialsProvider;
+import static com.google.jenkins.plugins.k8sengine.CredentialsUtil.getGoogleCredential;
+import static com.google.jenkins.plugins.k8sengine.CredentialsUtil.getRobotCredentials;
+
 import com.cloudbees.plugins.credentials.domains.DomainRequirement;
 import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
@@ -26,13 +27,11 @@ import com.google.api.services.cloudresourcemanager.CloudResourceManager;
 import com.google.api.services.cloudresourcemanager.CloudResourceManagerRequestInitializer;
 import com.google.api.services.compute.Compute;
 import com.google.api.services.container.Container;
-import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.jenkins.plugins.credentials.oauth.GoogleRobotCredentials;
 import hudson.AbortException;
 import hudson.model.ItemGroup;
-import hudson.security.ACL;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.util.Optional;
@@ -64,25 +63,29 @@ public class ClientFactory {
       String credentialsId,
       Optional<HttpTransport> httpTransport)
       throws AbortException {
-    Preconditions.checkNotNull(itemGroup);
-    Preconditions.checkNotNull(domainRequirements);
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(credentialsId));
-
+    //    Preconditions.checkNotNull(itemGroup);
+    //    Preconditions.checkNotNull(domainRequirements);
+    //    Preconditions.checkArgument(!Strings.isNullOrEmpty(credentialsId));
+    //
+    //    GoogleRobotCredentials robotCreds =
+    //        CredentialsMatchers.firstOrNull(
+    //            CredentialsProvider.lookupCredentials(
+    //                GoogleRobotCredentials.class, itemGroup, ACL.SYSTEM, domainRequirements),
+    //            CredentialsMatchers.withId(credentialsId));
+    //    if (robotCreds == null) {
+    //      throw new
+    // AbortException(Messages.ClientFactory_FailedToRetrieveCredentials(credentialsId));
+    //    }
+    //
+    //    try {
+    //      this.credential = robotCreds.getGoogleCredential(new ContainerScopeRequirement());
+    //    } catch (GeneralSecurityException gse) {
+    //      throw new AbortException(
+    //          Messages.ClientFactory_FailedToInitializeHTTPTransport(gse.getMessage()));
+    //    }
     GoogleRobotCredentials robotCreds =
-        CredentialsMatchers.firstOrNull(
-            CredentialsProvider.lookupCredentials(
-                GoogleRobotCredentials.class, itemGroup, ACL.SYSTEM, domainRequirements),
-            CredentialsMatchers.withId(credentialsId));
-    if (robotCreds == null) {
-      throw new AbortException(Messages.ClientFactory_FailedToRetrieveCredentials(credentialsId));
-    }
-
-    try {
-      this.credential = robotCreds.getGoogleCredential(new ContainerScopeRequirement());
-    } catch (GeneralSecurityException gse) {
-      throw new AbortException(
-          Messages.ClientFactory_FailedToInitializeHTTPTransport(gse.getMessage()));
-    }
+        getRobotCredentials(itemGroup, domainRequirements, credentialsId);
+    this.credential = getGoogleCredential(robotCreds);
     this.defaultProjectId =
         Strings.isNullOrEmpty(robotCreds.getProjectId()) ? "" : robotCreds.getProjectId();
     this.credentialsId = credentialsId;
@@ -172,14 +175,14 @@ public class ClientFactory {
     return this.credentialsId;
   }
 
-  /**
-   * Get access token for service account with this credentialsId.
-   *
-   * @return Access token from OAuth to allow kubectl to interact with the cluster.
-   * @throws IOException If an error occurred fetching the access token.
-   */
-  public String getAccessToken() throws IOException {
-    this.credential.refreshToken();
-    return this.credential.getAccessToken();
-  }
+  //  /**
+  //   * Get access token for service account with this credentialsId.
+  //   *
+  //   * @return Access token from OAuth to allow kubectl to interact with the cluster.
+  //   * @throws IOException If an error occurred fetching the access token.
+  //   */
+  //  public String getAccessToken() throws IOException {
+  //    this.credential.refreshToken();
+  //    return this.credential.getAccessToken();
+  //  }
 }
