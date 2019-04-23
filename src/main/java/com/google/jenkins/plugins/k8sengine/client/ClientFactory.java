@@ -63,26 +63,6 @@ public class ClientFactory {
       String credentialsId,
       Optional<HttpTransport> httpTransport)
       throws AbortException {
-    //    Preconditions.checkNotNull(itemGroup);
-    //    Preconditions.checkNotNull(domainRequirements);
-    //    Preconditions.checkArgument(!Strings.isNullOrEmpty(credentialsId));
-    //
-    //    GoogleRobotCredentials robotCreds =
-    //        CredentialsMatchers.firstOrNull(
-    //            CredentialsProvider.lookupCredentials(
-    //                GoogleRobotCredentials.class, itemGroup, ACL.SYSTEM, domainRequirements),
-    //            CredentialsMatchers.withId(credentialsId));
-    //    if (robotCreds == null) {
-    //      throw new
-    // AbortException(Messages.ClientFactory_FailedToRetrieveCredentials(credentialsId));
-    //    }
-    //
-    //    try {
-    //      this.credential = robotCreds.getGoogleCredential(new ContainerScopeRequirement());
-    //    } catch (GeneralSecurityException gse) {
-    //      throw new AbortException(
-    //          Messages.ClientFactory_FailedToInitializeHTTPTransport(gse.getMessage()));
-    //    }
     GoogleRobotCredentials robotCreds =
         getRobotCredentials(itemGroup, domainRequirements, credentialsId);
     this.credential = getGoogleCredential(robotCreds);
@@ -174,15 +154,4 @@ public class ClientFactory {
   public String getCredentialsId() {
     return this.credentialsId;
   }
-
-  //  /**
-  //   * Get access token for service account with this credentialsId.
-  //   *
-  //   * @return Access token from OAuth to allow kubectl to interact with the cluster.
-  //   * @throws IOException If an error occurred fetching the access token.
-  //   */
-  //  public String getAccessToken() throws IOException {
-  //    this.credential.refreshToken();
-  //    return this.credential.getAccessToken();
-  //  }
 }

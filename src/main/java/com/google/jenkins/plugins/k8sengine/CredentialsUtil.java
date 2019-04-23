@@ -62,7 +62,6 @@ public class CredentialsUtil {
             CredentialsMatchers.withId(credentialsId));
 
     if (robotCreds == null) {
-      // TODO: Change the  message names since not in clientfactory anymore
       throw new AbortException(
           com.google.jenkins.plugins.k8sengine.client.Messages
               .ClientFactory_FailedToRetrieveCredentials(credentialsId));
