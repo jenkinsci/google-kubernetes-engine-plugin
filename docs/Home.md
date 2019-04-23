@@ -57,7 +57,6 @@ to publish deployments built within Jenkins to your Kubernetes clusters running 
     ```bash
     export SA_EMAIL=$SA@$PROJECT.iam.gserviceaccount.com
     gcloud projects add-iam-policy-binding --member serviceAccount:$SA_EMAIL --role roles/iam.serviceAccountUser $PROJECT
-    gcloud projects add-iam-policy-binding --member serviceAccount:$SA_EMAIL --role roles/container.clusterAdmin $PROJECT
     gcloud projects add-iam-policy-binding --member serviceAccount:$SA_EMAIL --role roles/container.developer $PROJECT
 	gcloud projects add-iam-policy-binding --member serviceAccount:$SA_EMAIL --role roles/container.viewer $PROJECT
     gcloud projects add-iam-policy-binding --member serviceAccount:$SA_EMAIL --role roles/compute.networkViewer $PROJECT
