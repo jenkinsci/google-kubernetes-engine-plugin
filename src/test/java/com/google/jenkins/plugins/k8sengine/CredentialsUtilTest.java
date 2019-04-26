@@ -64,15 +64,9 @@ public class CredentialsUtilTest {
             r.jenkins.get(), ImmutableList.<DomainRequirement>of(), TEST_CREDENTIALS_ID));
     store.removeCredentials(Domain.global(), credentials);
   }
-  // test with making sure their behavior returns expected results
-  // like if they change any of their code, we have to make sure it works
-  // should get the first thing
-  // mock null, then get the right message
-  // have tests that test the exceptiosn possible in the util functions
+
   @Test
   public void testGetRobotCredentialsErrorMessageWithAbortException() {
-    // mockito needed
-    // or can I just use a dummy credentialsId
     try {
       CredentialsUtil.getRobotCredentials(
           jenkins.get(), ImmutableList.<DomainRequirement>of(), TEST_CREDENTIALS_ID);
@@ -85,7 +79,6 @@ public class CredentialsUtilTest {
   @Test
   public void testGetGoogleCredentialThrowsAbortException() throws GeneralSecurityException {
     try {
-      // mock robotCreds, when it returns getGoogleCredential, throw a GeneralSecurityException
       GoogleRobotCredentials robotCreds = Mockito.mock(GoogleRobotCredentials.class);
       Mockito.when(robotCreds.getGoogleCredential(any(ContainerScopeRequirement.class)))
           .thenThrow(new GeneralSecurityException(TEST_EXCEPTION_MESSAGE));
@@ -109,9 +102,19 @@ public class CredentialsUtilTest {
 
   // TODO: how to test getAccesstoken
   // TODO: move the credentials out
+  @Test(expected = IOException.class)
+  public void testGetAccessTokenIOException() throws IOException {
+    GoogleCredential googleCredential = Mockito.mock(GoogleCredential.class);
+    Mockito.when(googleCredential.refreshToken()).thenThrow(IOException.class);
+    CredentialsUtil.getAccessToken(googleCredential);
+  }
+
   @Test
-  public void testGetAccessTokenIOException() {
-      GoogleCredential googleCredential = Mockito.mock(GoogleCredential.class);
+  public void testGetAccessTokenReturnToken() throws IOException {
+    GoogleCredential googleCredential = Mockito.mock(GoogleCredential.class);
+    Mockito.when(googleCredential.refreshToken()).thenReturn(true);
+    Mockito.when(googleCredential.getAccessToken()).thenReturn("access token");
+    assertNotNull(CredentialsUtil.getAccessToken(googleCredential));
   }
 
   // TODO: do I need these tests testing preconditions

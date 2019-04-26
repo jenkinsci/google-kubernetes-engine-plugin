@@ -88,7 +88,7 @@ public class CredentialsUtil {
     return credential;
   }
 
-  //TODO: only enter Google Robot Credentials
+  // TODO: only enter Google Robot Credentials
   /**
    * Wrapper to get access token for service account with this credentialsId.
    *
@@ -105,13 +105,13 @@ public class CredentialsUtil {
     return getAccessToken(googleCredential);
   }
 
-    /**
-     * Given the Google Credential, retrieve the access token.
-     *
-     * @param googleCredential Google Credential to get an access token.
-     * @return Access token from OAuth to allow kubectl to interact with the cluster.
-     * @throws IOException If an error occured fetching the access token.
-     */
+  /**
+   * Given the Google Credential, retrieve the access token.
+   *
+   * @param googleCredential Google Credential to get an access token.
+   * @return Access token from OAuth to allow kubectl to interact with the cluster.
+   * @throws IOException If an error occured fetching the access token.
+   */
   static String getAccessToken(GoogleCredential googleCredential) throws IOException {
     Preconditions.checkNotNull(googleCredential);
 
