@@ -39,10 +39,10 @@ public class CredentialsUtil {
   /**
    * Get the Google Robot Credentials for the given credentialsId.
    *
-   * @param itemGroup A handle to the Jenkins instance.
-   * @param domainRequirements A list of domain requirements.
+   * @param itemGroup A handle to the Jenkins instance. Must be non-null.
+   * @param domainRequirements A list of domain requirements. Must be non-null.
    * @param credentialsId The ID of the GoogleRobotCredentials to be retrieved from Jenkins and
-   *     utilized for authorization.
+   *     utilized for authorization. Must be non-empty or non-null and exist in credentials store.
    * @return Google Robot Credential for the given credentialsId.
    * @throws AbortException If there was an issue retrieving the Google Robot Credentials.
    */
@@ -88,11 +88,10 @@ public class CredentialsUtil {
     return credential;
   }
 
-  // TODO: only enter Google Robot Credentials
   /**
    * Wrapper to get access token for service account with this credentialsId.
    *
-   * @param credentialsId The service account credential's id.
+   * @param credentialsId The service account credential's id. Must be non-null.
    * @return Access token from OAuth to allow kubectl to interact with the cluster.
    * @throws java.io.IOException If an error occurred fetching the access token.
    */
@@ -108,7 +107,7 @@ public class CredentialsUtil {
   /**
    * Given the Google Credential, retrieve the access token.
    *
-   * @param googleCredential Google Credential to get an access token.
+   * @param googleCredential Google Credential to get an access token. Must be non-null.
    * @return Access token from OAuth to allow kubectl to interact with the cluster.
    * @throws IOException If an error occured fetching the access token.
    */

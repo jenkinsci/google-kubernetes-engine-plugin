@@ -1,6 +1,5 @@
 package com.google.jenkins.plugins.k8sengine;
 
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.mockito.ArgumentMatchers.any;
@@ -14,7 +13,6 @@ import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
 import com.google.common.collect.ImmutableList;
 import com.google.jenkins.plugins.credentials.oauth.GoogleRobotCredentials;
 import com.google.jenkins.plugins.k8sengine.client.ContainerScopeRequirement;
-import com.google.jenkins.plugins.k8sengine.client.Messages;
 import hudson.AbortException;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
@@ -30,64 +28,52 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class CredentialsUtilTest {
   private static final String TEST_CREDENTIALS_ID = "test-credentials-id";
-  private static final String TEST_EXCEPTION_MESSAGE = "TEST EXCEPTION MESSAGE";
+  private static final String TEST_INVALID_CREDENTIALS_ID = "test-invalid-credentials-id";
 
   @ClassRule public static JenkinsRule r = new JenkinsRule();
 
   public static Jenkins jenkins;
 
   @BeforeClass
-  public static void init() {
+  public static void init() throws IOException {
     jenkins = r.jenkins;
+
+    CredentialsStore store = new SystemCredentialsProvider.ProviderImpl().getStore(jenkins);
+    GoogleRobotCredentials credentials = Mockito.mock(GoogleRobotCredentials.class);
+    credentials.getId();
+    Mockito.when(credentials.getId()).thenReturn(TEST_CREDENTIALS_ID);
+    store.addCredentials(Domain.global(), credentials);
   }
 
-  // todo: COMBINE error msg with null
   @Test(expected = AbortException.class)
   public void testGetRobotCredentialsReturnsNull() throws AbortException {
     GoogleRobotCredentials robotCreds =
         CredentialsUtil.getRobotCredentials(
-            jenkins.get(), ImmutableList.<DomainRequirement>of(), TEST_CREDENTIALS_ID);
+            jenkins.get(), ImmutableList.<DomainRequirement>of(), TEST_INVALID_CREDENTIALS_ID);
     assertNull(robotCreds);
   }
 
   @Test
   public void testGetRobotCredentialsReturnsFirstCredential() throws IOException {
-    // can I just create a credential and then look for it? but then ill have to remove it
-    CredentialsStore store = new SystemCredentialsProvider.ProviderImpl().getStore(r.jenkins);
-    GoogleRobotCredentials credentials = Mockito.mock(GoogleRobotCredentials.class);
-    credentials.getId();
-    Mockito.when(credentials.getId()).thenReturn(TEST_CREDENTIALS_ID);
-    store.addCredentials(Domain.global(), credentials);
-
     assertNotNull(
         CredentialsUtil.getRobotCredentials(
-            r.jenkins.get(), ImmutableList.<DomainRequirement>of(), TEST_CREDENTIALS_ID));
-    store.removeCredentials(Domain.global(), credentials);
+            jenkins.get(), ImmutableList.<DomainRequirement>of(), TEST_CREDENTIALS_ID));
   }
 
-  @Test
-  public void testGetRobotCredentialsErrorMessageWithAbortException() {
-    try {
-      CredentialsUtil.getRobotCredentials(
-          jenkins.get(), ImmutableList.<DomainRequirement>of(), TEST_CREDENTIALS_ID);
-    } catch (AbortException e) {
-      assertEquals(
-          Messages.ClientFactory_FailedToRetrieveCredentials(TEST_CREDENTIALS_ID), e.getMessage());
-    }
+  @Test(expected = AbortException.class)
+  public void testGetRobotCredentialsInvalidCredentialsIdAbortException() throws AbortException {
+    CredentialsUtil.getRobotCredentials(
+        jenkins.get(), ImmutableList.<DomainRequirement>of(), TEST_INVALID_CREDENTIALS_ID);
   }
 
-  @Test
-  public void testGetGoogleCredentialThrowsAbortException() throws GeneralSecurityException {
-    try {
-      GoogleRobotCredentials robotCreds = Mockito.mock(GoogleRobotCredentials.class);
-      Mockito.when(robotCreds.getGoogleCredential(any(ContainerScopeRequirement.class)))
-          .thenThrow(new GeneralSecurityException(TEST_EXCEPTION_MESSAGE));
-      CredentialsUtil.getGoogleCredential(robotCreds);
-    } catch (AbortException e) {
-      assertEquals(
-          Messages.ClientFactory_FailedToInitializeHTTPTransport(TEST_EXCEPTION_MESSAGE),
-          e.getMessage());
-    }
+  @Test(expected = AbortException.class)
+  public void testGetGoogleCredentialAbortException()
+      throws GeneralSecurityException, AbortException {
+
+    GoogleRobotCredentials robotCreds = Mockito.mock(GoogleRobotCredentials.class);
+    Mockito.when(robotCreds.getGoogleCredential(any(ContainerScopeRequirement.class)))
+        .thenThrow(new GeneralSecurityException());
+    CredentialsUtil.getGoogleCredential(robotCreds);
   }
 
   @Test
@@ -100,8 +86,6 @@ public class CredentialsUtilTest {
     assertNotNull(CredentialsUtil.getGoogleCredential(robotCreds));
   }
 
-  // TODO: how to test getAccesstoken
-  // TODO: move the credentials out
   @Test(expected = IOException.class)
   public void testGetAccessTokenIOException() throws IOException {
     GoogleCredential googleCredential = Mockito.mock(GoogleCredential.class);
@@ -110,14 +94,13 @@ public class CredentialsUtilTest {
   }
 
   @Test
-  public void testGetAccessTokenReturnToken() throws IOException {
+  public void testGetAccessTokenReturnsToken() throws IOException {
     GoogleCredential googleCredential = Mockito.mock(GoogleCredential.class);
     Mockito.when(googleCredential.refreshToken()).thenReturn(true);
     Mockito.when(googleCredential.getAccessToken()).thenReturn("access token");
     assertNotNull(CredentialsUtil.getAccessToken(googleCredential));
   }
 
-  // TODO: do I need these tests testing preconditions
   @Test(expected = NullPointerException.class)
   public void testGetRobotCredentialsWithEmptyItemGroup() throws AbortException {
     CredentialsUtil.getRobotCredentials(
@@ -142,5 +125,11 @@ public class CredentialsUtilTest {
   @Test(expected = IllegalArgumentException.class)
   public void testGetAccessTokenWithEmptyCredentialsId() throws IOException {
     CredentialsUtil.getAccessToken("");
+  }
+
+  @Test(expected = NullPointerException.class)
+  public void testGetAccessTokenWithNullGoogleCredential() throws IOException {
+    GoogleCredential googleCredential = null;
+    CredentialsUtil.getAccessToken(googleCredential);
   }
 }
