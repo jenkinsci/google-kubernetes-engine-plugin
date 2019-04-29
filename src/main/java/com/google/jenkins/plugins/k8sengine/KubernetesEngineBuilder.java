@@ -250,6 +250,8 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
    * @param workspace The {@link FilePath} to the build workspace directory.
    * @param consoleLogger The {@link PrintStream} for Jenkins console output.
    * @return If the verification succeeded.
+   * @throws InterruptedException If an error occurred during verification.
+   * @throws IOException If an error occurred during verification.
    */
   private boolean verify(
       KubectlWrapper kubectl, String manifestPattern, FilePath workspace, PrintStream consoleLogger)

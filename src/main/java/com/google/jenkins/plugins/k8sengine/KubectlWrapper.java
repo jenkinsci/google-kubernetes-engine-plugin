@@ -71,8 +71,7 @@ public class KubectlWrapper {
   }
 
   /**
-   * Runs the specified kubectl command within the specified {@link JenkinsRunContext}'s
-   * environment.
+   * Runs the specified kubectl command.
    *
    * @param command The kubectl command to be run.
    * @param args Arguments for the command.
@@ -185,25 +184,44 @@ public class KubectlWrapper {
   public static class Builder {
     private KubectlWrapper wrapper = new KubectlWrapper();
 
-    /** Sets the {@link Launcher} to be used by the wrapper. */
+    /**
+     * Sets the {@link Launcher} to be used by the wrapper.
+     *
+     * @param launcher The {@link Launcher} to be set.
+     * @return A reference to the {@link Builder}.
+     */
     public Builder launcher(Launcher launcher) {
       wrapper.setLauncher(launcher);
       return this;
     }
 
-    /** Sets the {@link KubeConfig} to be used by the wrapper. */
+    /**
+     * Sets the {@link KubeConfig} to be used by the wrapper.
+     *
+     * @param kubeConfig The {@link KubeConfig} to be set.
+     * @return A reference to the {@link Builder}.
+     */
     public Builder kubeConfig(KubeConfig kubeConfig) {
       wrapper.setKubeConfig(kubeConfig);
       return this;
     }
 
-    /** Sets the workspace to be used by the wrapper. */
+    /**
+     * Sets the workspace to be used by the wrapper.
+     *
+     * @param workspace The workspace to be set.
+     * @return A reference to the {@link Builder}.
+     */
     public Builder workspace(FilePath workspace) {
       wrapper.setWorkspace(workspace);
       return this;
     }
 
-    /** @return A new {@link KubectlWrapper}. */
+    /**
+     * Builds a new {@link KubectlWrapper}.
+     *
+     * @return A new {@link KubectlWrapper}.
+     */
     public KubectlWrapper build() {
       Preconditions.checkNotNull(wrapper.getLauncher());
       Preconditions.checkNotNull(wrapper.getKubeConfig());

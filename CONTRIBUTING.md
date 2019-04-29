@@ -40,3 +40,7 @@ All submissions, including submissions by project members, require review. We
 use GitHub pull requests for this purpose. Consult
 [GitHub Help](https://help.github.com/articles/about-pull-requests/) for more
 information on using pull requests.
+
+## Style Guide
+
+This project conforms to the [Google Java Style Guide](https://google.github.io/styleguide/javaguide.html). All submitted PRs will be required to conform to this style guide before being merged.

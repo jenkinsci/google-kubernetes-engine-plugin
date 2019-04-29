@@ -19,11 +19,11 @@
     <groupId>org.jenkins-ci.plugins</groupId>
     <artifactId>plugin</artifactId>
     <version>3.37</version>
-    <relativePath/>
+    <relativePath />
   </parent>
 
   <artifactId>google-kubernetes-engine</artifactId>
-  <version>0.3.1-SNAPSHOT</version>
+  <version>0.4.1-SNAPSHOT</version>
   <packaging>hpi</packaging>
 
   <name>Google Kubernetes Engine Plugin</name>
@@ -223,6 +223,23 @@
     <plugins>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-javadoc-plugin</artifactId>
+        <version>3.1.0</version>
+        <configuration>
+          <show>public</show>
+        </configuration>
+        <executions>
+          <execution>
+            <id>validate</id>
+            <phase>validate</phase>
+            <goals>
+              <goal>javadoc</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
         <version>3.8.0</version>
         <configuration>
@@ -329,7 +346,7 @@
         <version>2.7</version>
         <configuration>
           <instrumentation>
-            <excludes/>
+            <excludes />
           </instrumentation>
           <formats>
             <format>html</format>
