@@ -28,7 +28,23 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
  ### Removed
 				 
  ### Fixed
+
+## [0.4.0] - 2019-04-29
+
+ ### Security
  
+ ### Added
+  - Issue #42: Implemented logic to add usage metric label to deployments from plugin.
+  - Issue #24: Added support for declarative Pipeline DSL.
+  
+ ### Changed
+  - Updated to Jenkins LTS 2.164.2.
+  - Fixed dependency version conflicts.
+  				
+ ### Removed
+				 
+ ### Fixed
+
 ## [0.3.0] - 2019-04-04
 
  ### Security
