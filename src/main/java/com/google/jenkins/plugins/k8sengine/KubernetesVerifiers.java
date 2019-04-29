@@ -103,6 +103,7 @@ public class KubernetesVerifiers {
      * to the Kubernetes cluster.
      *
      * @param kubectl A {@link KubectlWrapper} object for querying the object type in the cluster.
+     * @param object The manifest to be verified.
      * @return true If the resource was verified, false otherwise.
      */
     VerificationResult verify(KubectlWrapper kubectl, Manifests.ManifestObject object);
