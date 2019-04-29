@@ -16,6 +16,23 @@
 The [Google Kubernetes Engine](https://cloud.google.com/kubernetes-engine/) (GKE) Plugin allows you
 to publish deployments built within Jenkins to your Kubernetes clusters running within GKE.
 
+## Prerequisites
+
+* Minimum Jenkins version: 2.164.2
+
+* Jenkins plugin dependencies:
+  
+  **NOTE**: Unless otherwise specified, pre-installation of these plugins aren't required. Just
+    note that if a conflicting version is present a class-loading error could occur.
+    
+  * google-oauth-plugin: 0.7 (pre-installation required)
+  * workflow-step-api: 2.19
+  * pipeline-model-definition: 1.3.8 (pre-installation required for Pipeline DSL support)
+  * git: 3.9.3
+  * junit: 1.3
+  * structs: 1.17
+  * credentials: 2.1.16
+
 ## Usage
 
 ### Enable Required APIs
