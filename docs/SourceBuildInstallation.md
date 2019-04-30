@@ -25,7 +25,7 @@
     ```
 1. Build the plugin into a .hpi plugin file:
     ```bash
-    mvn hpi:hpi
+    mvn compile hpi:hpi
     ```
 1. Go to **Manage Jenkins** then **Manage Plugins**.
 1. In the Plugin Manager, click the **Advanced** tab and then **Choose File** under the **Upload Plugin** section.
