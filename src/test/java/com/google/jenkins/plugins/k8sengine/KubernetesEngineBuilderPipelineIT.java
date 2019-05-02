@@ -99,6 +99,7 @@ public class KubernetesEngineBuilderPipelineIT {
     envVars.put("CLUSTER_NAME", clusterName);
     envVars.put("CREDENTIALS_ID", credentialsId);
     envVars.put("ZONE", testZone);
+    envVars.put("NAMESPACE", "*");
     jenkinsRule.jenkins.getGlobalNodeProperties().add(prop);
   }
 
@@ -179,6 +180,7 @@ public class KubernetesEngineBuilderPipelineIT {
             .workspace(workspace)
             .launcher(launcher)
             .kubeConfig(kubeConfig)
+            .namespace("default")
             .build();
     FilePath manifestFile = workspace.child(manifestPattern);
     kubectl.runKubectlCommand("delete", ImmutableList.<String>of(kind, name));

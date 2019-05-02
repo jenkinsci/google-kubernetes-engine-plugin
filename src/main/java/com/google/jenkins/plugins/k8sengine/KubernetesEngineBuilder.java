@@ -53,9 +53,11 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.io.Serializable;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.annotation.Nonnull;
@@ -82,6 +84,7 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
   private String projectId;
   private String zone;
   private String clusterName;
+  private String namespace;
   private String manifestPattern;
   private boolean verifyDeployments;
   private int verifyTimeoutInMinutes = DEFAULT_VERIFY_TIMEOUT_MINUTES;
@@ -131,6 +134,16 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
   public void setClusterName(String clusterName) {
     Preconditions.checkArgument(!Strings.isNullOrEmpty(clusterName));
     this.clusterName = clusterName;
+  }
+
+  public String getNamespace() {
+    return this.namespace;
+  }
+
+  @DataBoundSetter
+  public void setNamespace(String namespace) {
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(namespace));
+    this.namespace = namespace;
   }
 
   public String getManifestPattern() {
@@ -194,17 +207,20 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
     ContainerClient client = getContainerClient(credentialsId);
     Cluster cluster = client.getCluster(projectId, zone, clusterName);
     KubeConfig kubeConfig = KubeConfig.fromCluster(projectId, cluster);
+    FilePath manifestFile = workspace.child(manifestPattern);
+    String commandNamespace = addNamespace(manifestFile, namespace);
 
     KubectlWrapper kubectl =
         new KubectlWrapper.Builder()
             .workspace(workspace)
             .launcher(launcher)
             .kubeConfig(kubeConfig)
+            .namespace(commandNamespace)
             .build();
 
-    FilePath manifestFile = workspace.child(manifestPattern);
     addMetricsLabel(manifestFile);
     kubectl.runKubectlCommand("apply", ImmutableList.<String>of("-f", manifestFile.getRemote()));
+
     try {
       if (verifyDeployments && !verify(kubectl, manifestPattern, workspace, listener.getLogger())) {
         throw new AbortException(Messages.KubernetesEngineBuilder_KubernetesObjectsNotVerified());
@@ -228,7 +244,7 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
    *
    * @param manifestFile The manifest file to be modified.
    * @throws IOException If an error occurred while reading/writing the manifest file.
-   * @throws InterruptedException If an error occured while parsing/dumping YAML.
+   * @throws InterruptedException If an error occurred while parsing/dumping YAML.
    */
   @VisibleForTesting
   static void addMetricsLabel(FilePath manifestFile) throws InterruptedException, IOException {
@@ -239,6 +255,40 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
     }
 
     manifests.write();
+  }
+
+  /**
+   * Determines the namespace to use for the deployment, adds it to all of the provided manifests
+   * and returns the namespace that will be used. If namespace parameter is "*", then the namespace
+   * used will be the namespace provided in the manifest(s). If a manifest doesn't provide a
+   * namespace the namespace "default" is used.
+   *
+   * @param manifestFile The manifest file to be modified
+   * @param namespace The namespace that the user specified in configuration.
+   * @return The namespace to be used in the kubectl command.
+   * @throws InterruptedException If an error occurred while reading/writing the manifest file.
+   * @throws IOException If an error occurred while parsing/dumping YAML
+   * @throws IllegalArgumentException If the namespaces of the manifest(s) and the specified
+   *     namespace are inconsistent.
+   */
+  @VisibleForTesting
+  static String addNamespace(FilePath manifestFile, String namespace)
+      throws InterruptedException, IOException, IllegalArgumentException {
+    Manifests manifests = Manifests.fromFile(manifestFile);
+    Set<String> namespaces = new HashSet<>();
+    manifests
+        .getObjectManifests()
+        .forEach(
+            manifestObject -> {
+              manifestObject.setNamespace(namespace);
+              namespaces.add(manifestObject.getNamespace().get());
+            });
+    if (namespaces.size() > 1) {
+      throw new IllegalArgumentException(
+          "The specified manifests contain multiple namespaces. Only one namespace may be used.");
+    }
+    manifests.write();
+    return namespaces.iterator().next();
   }
 
   /**
@@ -601,6 +651,13 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
         }
       } catch (IOException ioe) {
         return FormValidation.error(Messages.KubernetesEngineBuilder_ClusterVerificationError());
+      }
+      return FormValidation.ok();
+    }
+
+    public FormValidation doCheckNamespace(@QueryParameter("namespace") final String namespace) {
+      if (Strings.isNullOrEmpty(namespace)) {
+        return FormValidation.error(Messages.KubernetesEngineBuilder_NamespaceRequired());
       }
       return FormValidation.ok();
     }

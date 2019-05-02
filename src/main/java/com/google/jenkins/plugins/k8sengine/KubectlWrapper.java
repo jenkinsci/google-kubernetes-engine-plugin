@@ -43,6 +43,7 @@ public class KubectlWrapper {
   private KubeConfig kubeConfig;
   private Launcher launcher;
   private FilePath workspace;
+  private String namespace;
 
   private KubectlWrapper() {}
 
@@ -68,6 +69,14 @@ public class KubectlWrapper {
 
   private FilePath getWorkspace() {
     return workspace;
+  }
+
+  private void setNamespace(String namespace) {
+    this.namespace = namespace;
+  }
+
+  private String getNamespace() {
+    return this.namespace;
   }
 
   /**
@@ -108,6 +117,8 @@ public class KubectlWrapper {
               .add("kubectl")
               .add("--kubeconfig")
               .add(kubeConfigFile.getRemote())
+              .add("--namespace")
+              .add(namespace)
               .add(command);
       args.forEach(kubectlCmdBuilder::add);
       output = launchAndJoinCommand(getLauncher(), kubectlCmdBuilder.toList());
@@ -131,10 +142,11 @@ public class KubectlWrapper {
     ByteArrayOutputStream cmdLogStream = new ByteArrayOutputStream();
     int status = launcher.launch().cmds(args).stderr(cmdLogStream).stdout(cmdLogStream).join();
     if (status != 0) {
-      LOGGER.log(
-          Level.SEVERE, String.format("kubectl command log: %s", cmdLogStream.toString(CHARSET)));
+      String logs = cmdLogStream.toString(CHARSET);
+      LOGGER.log(Level.SEVERE, String.format("kubectl command log: %s", logs));
       throw new IOException(
-          String.format("Failed to launch command args: %s, status: %s", args, status));
+          String.format(
+              "Failed to launch command args: %s, status: %s. Logs: %s", args, status, logs));
     }
 
     return cmdLogStream.toString(CHARSET);
@@ -218,6 +230,17 @@ public class KubectlWrapper {
     }
 
     /**
+     * Sets the namespace to be used by the wrapper.
+     *
+     * @param namespace The namespace to be set.
+     * @return A reference to the {@link Builder}.
+     */
+    public Builder namespace(String namespace) {
+      wrapper.setNamespace(namespace);
+      return this;
+    }
+
+    /**
      * Builds a new {@link KubectlWrapper}.
      *
      * @return A new {@link KubectlWrapper}.
@@ -226,6 +249,7 @@ public class KubectlWrapper {
       Preconditions.checkNotNull(wrapper.getLauncher());
       Preconditions.checkNotNull(wrapper.getKubeConfig());
       Preconditions.checkNotNull(wrapper.getWorkspace());
+      Preconditions.checkNotNull(wrapper.getNamespace());
       return wrapper;
     }
   }
