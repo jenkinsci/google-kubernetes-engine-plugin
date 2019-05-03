@@ -16,6 +16,7 @@ import org.junit.Test;
 import org.mockito.Mockito;
 import org.yaml.snakeyaml.Yaml;
 
+/** Tests for handling of namespaces in {@link KubernetesEngineBuilder}.*/
 public class KubernetesEngineBuilderNamespaceTest {
   @Test
   public void testAddBlankNamespaceWithNoManifestNamespace()

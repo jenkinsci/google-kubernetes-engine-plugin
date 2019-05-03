@@ -99,7 +99,7 @@ public class KubernetesEngineBuilderPipelineIT {
     envVars.put("CLUSTER_NAME", clusterName);
     envVars.put("CREDENTIALS_ID", credentialsId);
     envVars.put("ZONE", testZone);
-    envVars.put("NAMESPACE", "*");
+    envVars.put("NAMESPACE", "default");
     jenkinsRule.jenkins.getGlobalNodeProperties().add(prop);
   }
 

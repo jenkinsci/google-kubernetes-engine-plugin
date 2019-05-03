@@ -278,7 +278,7 @@ public class KubernetesEngineBuilderIT {
     gkeBuilder.setClusterName(clusterName);
     gkeBuilder.setCredentialsId(credentialsId);
     gkeBuilder.setZone(testZone);
-    gkeBuilder.setNamespace("*");
+    gkeBuilder.setNamespace("");
     gkeBuilder.setManifestPattern(TEST_DEPLOYMENT_MANIFEST);
     gkeBuilder.setVerifyDeployments(true);
     gkeBuilder.setVerifyTimeoutInMinutes(1);

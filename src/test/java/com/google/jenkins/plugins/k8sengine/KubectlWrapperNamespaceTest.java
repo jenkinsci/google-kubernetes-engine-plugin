@@ -13,6 +13,7 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
+/** Tests for namespace functionality in {@link KubectlWrapper}. */
 @RunWith(MockitoJUnitRunner.class)
 public class KubectlWrapperNamespaceTest {
 
