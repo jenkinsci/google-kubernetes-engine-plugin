@@ -6,7 +6,9 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.anyString;
 
 import com.google.common.base.Strings;
+import com.google.jenkins.plugins.k8sengine.KubernetesEngineBuilder.DescriptorImpl;
 import hudson.FilePath;
+import hudson.util.FormValidation;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.Optional;
@@ -16,17 +18,18 @@ import org.yaml.snakeyaml.Yaml;
 
 public class KubernetesEngineBuilderNamespaceTest {
   @Test
-  public void testAddStarNamespaceWithNoManifestNamespace()
+  public void testAddBlankNamespaceWithNoManifestNamespace()
       throws IOException, InterruptedException {
     FilePath manifestFile = setupManifest("", "default");
-    String commandNameSpace = KubernetesEngineBuilder.addNamespace(manifestFile, "*");
+    String commandNameSpace = KubernetesEngineBuilder.addNamespace(manifestFile, "");
     assertEquals("default", commandNameSpace);
   }
 
   @Test
-  public void testAddStarNamespaceWithManifestNamespace() throws IOException, InterruptedException {
+  public void testAddBlankNamespaceWithManifestNamespace()
+      throws IOException, InterruptedException {
     FilePath manifestFile = setupManifest("test", "test");
-    String commandNameSpace = KubernetesEngineBuilder.addNamespace(manifestFile, "*");
+    String commandNameSpace = KubernetesEngineBuilder.addNamespace(manifestFile, "");
     assertEquals("test", commandNameSpace);
   }
 
@@ -47,7 +50,7 @@ public class KubernetesEngineBuilderNamespaceTest {
   }
 
   @Test
-  public void testAddStarNamespaceWithMultipleManifestNamespaces()
+  public void testAddBlankNamespaceWithMultipleManifestNamespaces()
       throws IOException, InterruptedException {
     FilePath manifestPath = Mockito.mock(FilePath.class);
     FilePath testManifest = setupManifest("test", "test");
@@ -55,7 +58,7 @@ public class KubernetesEngineBuilderNamespaceTest {
     Mockito.when(manifestPath.isDirectory()).thenReturn(true);
     FilePath[] manifests = {testManifest, defaultManifest};
     Mockito.when(manifestPath.list(anyString())).thenReturn(manifests);
-    String commandNamespace = KubernetesEngineBuilder.addNamespace(manifestPath, "*");
+    String commandNamespace = KubernetesEngineBuilder.addNamespace(manifestPath, "");
     assertEquals("", commandNamespace);
   }
 
@@ -70,6 +73,44 @@ public class KubernetesEngineBuilderNamespaceTest {
     Mockito.when(manifestPath.list(anyString())).thenReturn(manifests);
     String commandNamespace = KubernetesEngineBuilder.addNamespace(manifestPath, "custom");
     assertEquals("custom", commandNamespace);
+  }
+
+  @Test(expected = NullPointerException.class)
+  public void testDoCheckNamespaceNPEWithNull() {
+    DescriptorImpl descriptor = new DescriptorImpl();
+    descriptor.doCheckNamespace(null);
+  }
+
+  @Test
+  public void testDoCheckNamespaceOKWithEmptyString() {
+    DescriptorImpl descriptor = new DescriptorImpl();
+    FormValidation result = descriptor.doCheckNamespace("");
+    assertNotNull(result);
+    assertEquals(FormValidation.ok().getMessage(), result.getMessage());
+  }
+
+  @Test
+  public void testDoCheckNamespaceWithOKProperlyFormedString() {
+    DescriptorImpl descriptor = new DescriptorImpl();
+    FormValidation result = descriptor.doCheckNamespace("test-a-23-b");
+    assertNotNull(result);
+    assertEquals(FormValidation.ok().getMessage(), result.getMessage());
+  }
+
+  @Test
+  public void testDoCheckNamespaceErrorWithValidCharactersMalformedString() {
+    DescriptorImpl descriptor = new DescriptorImpl();
+    FormValidation result = descriptor.doCheckNamespace("-test");
+    assertNotNull(result);
+    assertEquals(Messages.KubernetesEngineBuilder_NamespaceInvalid(), result.getMessage());
+  }
+
+  @Test
+  public void testDoCheckNamespaceErrorWithInvalidCharacters() {
+    DescriptorImpl descriptor = new DescriptorImpl();
+    FormValidation result = descriptor.doCheckNamespace("*");
+    assertNotNull(result);
+    assertEquals(Messages.KubernetesEngineBuilder_NamespaceInvalid(), result.getMessage());
   }
 
   /**

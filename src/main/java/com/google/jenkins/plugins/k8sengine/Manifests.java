@@ -90,8 +90,8 @@ public class Manifests {
     }
 
     /**
-     * Set the namespace. If namespace is "*" and this {@link ManifestObject} has a namespace, it
-     * will not be changed. If namespace is "*" and no namespace currently exists, the namespace
+     * Set the namespace. If namespace is empty and this {@link ManifestObject} has a namespace, it
+     * will not be changed. If namespace is empty and no namespace currently exists, the namespace
      * will be set to "default".
      *
      * @param namespace The namespace to set on the {@link ManifestObject}'s metadata
@@ -100,7 +100,7 @@ public class Manifests {
       Map<String, Object> metadata = getOrCreateMetadata();
 
       String currentNamespace = (String) metadata.getOrDefault("namespace", "default");
-      if (namespace.equals("*")) {
+      if (namespace.isEmpty()) {
         namespace = currentNamespace;
       }
       metadata.put("namespace", namespace);

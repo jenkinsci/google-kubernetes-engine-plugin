@@ -142,7 +142,7 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
 
   @DataBoundSetter
   public void setNamespace(String namespace) {
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(namespace));
+    Preconditions.checkArgument(namespace != null);
     this.namespace = namespace;
   }
 
@@ -260,9 +260,9 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
 
   /**
    * Determines the namespace to use for the deployment, adds it to all of the provided manifests
-   * and returns the namespace that will be used. If namespace parameter is "*", then the namespace
-   * used will be the namespace provided in the manifest(s), or the empty string if multiple
-   * namespaces are provided. If a manifest doesn't provide a namespace then "default" is used.
+   * and returns the namespace that will be used. If namespace is "", then the namespace used will
+   * be the namespace provided in the manifest(s), or the empty string if multiple namespaces are
+   * provided. If a manifest doesn't provide a namespace then "default" is used.
    *
    * @param manifestFile The manifest file to be modified
    * @param namespace The namespace that the user specified in configuration.
@@ -654,8 +654,10 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
     }
 
     public FormValidation doCheckNamespace(@QueryParameter("namespace") final String namespace) {
-      if (Strings.isNullOrEmpty(namespace)) {
-        return FormValidation.error(Messages.KubernetesEngineBuilder_NamespaceRequired());
+      // Regex from
+      // https://github.com/kubernetes/apimachinery/blob/7d08eb7a76fdbc79f7bc1b5fb061ae44f3324bfa/pkg/util/validation/validation.go#L110
+      if (!namespace.isEmpty() && !namespace.matches("[a-z0-9]([-a-z0-9]*[a-z0-9])?")) {
+        return FormValidation.error(Messages.KubernetesEngineBuilder_NamespaceInvalid());
       }
       return FormValidation.ok();
     }
