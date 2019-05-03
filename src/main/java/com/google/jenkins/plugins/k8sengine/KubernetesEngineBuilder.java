@@ -260,20 +260,18 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
   /**
    * Determines the namespace to use for the deployment, adds it to all of the provided manifests
    * and returns the namespace that will be used. If namespace parameter is "*", then the namespace
-   * used will be the namespace provided in the manifest(s). If a manifest doesn't provide a
-   * namespace the namespace "default" is used.
+   * used will be the namespace provided in the manifest(s), or the empty string if multiple
+   * namespaces are provided. If a manifest doesn't provide a namespace then "default" is used.
    *
    * @param manifestFile The manifest file to be modified
    * @param namespace The namespace that the user specified in configuration.
    * @return The namespace to be used in the kubectl command.
    * @throws InterruptedException If an error occurred while reading/writing the manifest file.
    * @throws IOException If an error occurred while parsing/dumping YAML
-   * @throws IllegalArgumentException If the namespaces of the manifest(s) and the specified
-   *     namespace are inconsistent.
    */
   @VisibleForTesting
   static String addNamespace(FilePath manifestFile, String namespace)
-      throws InterruptedException, IOException, IllegalArgumentException {
+      throws InterruptedException, IOException {
     Manifests manifests = Manifests.fromFile(manifestFile);
     Set<String> namespaces = new HashSet<>();
     manifests
@@ -284,8 +282,7 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
               namespaces.add(manifestObject.getNamespace().get());
             });
     if (namespaces.size() > 1) {
-      throw new IllegalArgumentException(
-          "The specified manifests contain multiple namespaces. Only one namespace may be used.");
+      return "";
     }
     manifests.write();
     return namespaces.iterator().next();

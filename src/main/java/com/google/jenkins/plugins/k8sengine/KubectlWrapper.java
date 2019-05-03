@@ -117,9 +117,10 @@ public class KubectlWrapper {
               .add("kubectl")
               .add("--kubeconfig")
               .add(kubeConfigFile.getRemote())
-              .add("--namespace")
-              .add(namespace)
               .add(command);
+      if (!namespace.equals("")) {
+        kubectlCmdBuilder.add("--namespace").add(namespace);
+      }
       args.forEach(kubectlCmdBuilder::add);
       output = launchAndJoinCommand(getLauncher(), kubectlCmdBuilder.toList());
     } catch (IOException | InterruptedException e) {
