@@ -61,10 +61,10 @@ public class KubernetesEngineBuilderNamespaceTest {
 
   @Test
   public void testAddCustomNamespaceWithMultipleManifestNamespaces()
-      throws IOException, InterruptedException{
+      throws IOException, InterruptedException {
     FilePath manifestPath = Mockito.mock(FilePath.class);
     FilePath testManifest = setupManifest("test", "custom");
-    FilePath defaultManifest= setupManifest("default", "custom");
+    FilePath defaultManifest = setupManifest("default", "custom");
     Mockito.when(manifestPath.isDirectory()).thenReturn(true);
     FilePath[] manifests = {testManifest, defaultManifest};
     Mockito.when(manifestPath.list(anyString())).thenReturn(manifests);

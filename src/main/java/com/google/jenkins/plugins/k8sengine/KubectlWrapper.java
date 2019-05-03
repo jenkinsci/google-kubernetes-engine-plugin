@@ -14,6 +14,7 @@
 
 package com.google.jenkins.plugins.k8sengine;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.jayway.jsonpath.Configuration;
@@ -138,7 +139,8 @@ public class KubectlWrapper {
     return output;
   }
 
-  private static String launchAndJoinCommand(Launcher launcher, List<String> args)
+  @VisibleForTesting
+  static String launchAndJoinCommand(Launcher launcher, List<String> args)
       throws IOException, InterruptedException {
     ByteArrayOutputStream cmdLogStream = new ByteArrayOutputStream();
     int status = launcher.launch().cmds(args).stderr(cmdLogStream).stdout(cmdLogStream).join();
@@ -191,6 +193,24 @@ public class KubectlWrapper {
         (Map<String, Object>) Configuration.defaultConfiguration().jsonProvider().parse(json);
     List<Object> items = (List<Object>) result.get("items");
     return ImmutableList.copyOf(items);
+  }
+
+  /**
+   * If the namespace of this KubectlWrapper does not exist in the kubernetes cluster, attempts to
+   * create it.
+   *
+   * @return true if the namespace needed to be created, false if it already existed
+   * @throws IOException If an error occurred while executing the create command
+   * @throws InterruptedException If an error occurred while executing the create command
+   */
+  public boolean createNamespaceIfMissing() throws IOException, InterruptedException {
+    try {
+      getObject("namespace", namespace);
+    } catch (IOException | InterruptedException ignored) {
+      runKubectlCommand("create", ImmutableList.of("namespace", namespace));
+      return true;
+    }
+    return false;
   }
 
   /** Builder for {@link KubectlWrapper}. */

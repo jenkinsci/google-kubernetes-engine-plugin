@@ -219,6 +219,7 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
             .build();
 
     addMetricsLabel(manifestFile);
+    kubectl.createNamespaceIfMissing();
     kubectl.runKubectlCommand("apply", ImmutableList.<String>of("-f", manifestFile.getRemote()));
 
     try {
