@@ -27,7 +27,7 @@
         <f:select/>
     </f:entry>
     <f:entry field="namespace" title="${%Namespace}">
-        <f:textbox default="default"/>
+        <f:textbox/>
     </f:entry>
     <f:entry field="manifestPattern" title="${%Kubernetes Manifests}">
         <f:textbox/>
