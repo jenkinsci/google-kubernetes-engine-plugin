@@ -170,6 +170,32 @@ public class KubernetesEngineBuilderPipelineIT {
     dumpLog(LOGGER, run);
   }
 
+  @Test
+  public void testNoNamespaceDeclarativePipelineDeploysProperly() throws Exception {
+    envVars.put("MANIFEST_PATTERN", TEST_DEPLOYMENT_MANIFEST);
+    WorkflowJob testProject =
+        jenkinsRule.createProject(WorkflowJob.class, formatRandomName("test"));
+    testProject.setDefinition(
+        new CpsFlowDefinition(
+            loadResource(getClass(), "noNamespaceDeclarativePipeline.groovy"), true));
+    copyTestFileToDir(
+        getClass(),
+        jenkinsRule.jenkins.getWorkspaceFor(testProject).getRemote(),
+        TEST_DEPLOYMENT_MANIFEST);
+
+    WorkflowRun run = testProject.scheduleBuild2(0).waitForStart();
+    assertNotNull(run);
+    jenkinsRule.assertBuildStatus(Result.SUCCESS, jenkinsRule.waitForCompletion(run));
+    dumpLog(LOGGER, run);
+
+    kubectlDelete(
+        jenkinsRule.createLocalLauncher(),
+        jenkinsRule.jenkins.getWorkspaceFor(testProject),
+        TEST_DEPLOYMENT_MANIFEST,
+        "deployment",
+        "nginx-deployment");
+  }
+
   private static void kubectlDelete(
       Launcher launcher, FilePath workspace, String manifestPattern, String kind, String name)
       throws Exception {

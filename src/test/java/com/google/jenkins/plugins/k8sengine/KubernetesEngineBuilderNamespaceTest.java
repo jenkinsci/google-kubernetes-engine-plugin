@@ -26,11 +26,11 @@ import org.junit.Test;
 public class KubernetesEngineBuilderNamespaceTest {
 
   @Test
-  public void testDoCheckNamespaceErrorWithNull() {
+  public void testDoCheckNamespaceOKWithNull() {
     DescriptorImpl descriptor = new DescriptorImpl();
     FormValidation result = descriptor.doCheckNamespace(null);
     assertNotNull(result);
-    assertEquals(Messages.KubernetesEngineBuilder_NamespaceRequired(), result.getMessage());
+    assertEquals(FormValidation.ok().getMessage(), result.getMessage());
   }
 
   @Test

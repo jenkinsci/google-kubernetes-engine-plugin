@@ -15,7 +15,6 @@
 package com.google.jenkins.plugins.k8sengine;
 
 import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.jayway.jsonpath.Configuration;
 import com.jayway.jsonpath.InvalidJsonException;
@@ -238,7 +237,7 @@ public class KubectlWrapper {
      * @return A reference to the {@link Builder}.
      */
     public Builder namespace(String namespace) {
-      wrapper.setNamespace(namespace);
+      wrapper.setNamespace(namespace == null ? "" : namespace);
       return this;
     }
 

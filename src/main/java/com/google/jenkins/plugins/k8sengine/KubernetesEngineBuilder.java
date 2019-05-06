@@ -140,8 +140,7 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
 
   @DataBoundSetter
   public void setNamespace(String namespace) {
-    Preconditions.checkArgument(namespace != null);
-    this.namespace = namespace;
+    this.namespace = namespace == null ? "" : namespace;
   }
 
   public String getManifestPattern() {
@@ -624,8 +623,6 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
       if (!Strings.isNullOrEmpty(namespace)
           && !namespace.matches("[a-z0-9]([-a-z0-9]*[a-z0-9])?")) {
         return FormValidation.error(Messages.KubernetesEngineBuilder_NamespaceInvalid());
-      } else if (namespace == null) {
-        return FormValidation.error(Messages.KubernetesEngineBuilder_NamespaceRequired());
       }
       return FormValidation.ok();
     }
