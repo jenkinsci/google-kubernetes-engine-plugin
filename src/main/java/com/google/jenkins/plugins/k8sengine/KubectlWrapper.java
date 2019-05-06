@@ -119,7 +119,7 @@ public class KubectlWrapper {
               .add("--kubeconfig")
               .add(kubeConfigFile.getRemote())
               .add(command);
-      if (!Strings.isNullOrEmpty(namespace)) {
+      if (!namespace.isEmpty()) {
         kubectlCmdBuilder.add("--namespace").add(namespace);
       }
       args.forEach(kubectlCmdBuilder::add);
