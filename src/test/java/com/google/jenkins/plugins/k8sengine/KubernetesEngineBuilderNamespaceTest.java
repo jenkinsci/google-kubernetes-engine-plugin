@@ -25,10 +25,12 @@ import org.junit.Test;
 /** Tests for handling of namespaces in {@link KubernetesEngineBuilder}. */
 public class KubernetesEngineBuilderNamespaceTest {
 
-  @Test(expected = NullPointerException.class)
-  public void testDoCheckNamespaceNPEWithNull() {
+  @Test
+  public void testDoCheckNamespaceErrorWithNull() {
     DescriptorImpl descriptor = new DescriptorImpl();
-    descriptor.doCheckNamespace(null);
+    FormValidation result = descriptor.doCheckNamespace(null);
+    assertNotNull(result);
+    assertEquals(Messages.KubernetesEngineBuilder_NamespaceRequired(), result.getMessage());
   }
 
   @Test
