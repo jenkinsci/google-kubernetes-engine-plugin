@@ -72,7 +72,7 @@ public class KubectlWrapper {
   }
 
   private void setNamespace(String namespace) {
-    this.namespace = namespace;
+    this.namespace = namespace == null ? "" : namespace;
   }
 
   private String getNamespace() {
@@ -237,7 +237,7 @@ public class KubectlWrapper {
      * @return A reference to the {@link Builder}.
      */
     public Builder namespace(String namespace) {
-      wrapper.setNamespace(namespace == null ? "" : namespace);
+      wrapper.setNamespace(namespace);
       return this;
     }
 
