@@ -621,7 +621,7 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
       /* Regex from
        * https://github.com/kubernetes/apimachinery/blob/7d08eb7a76fdbc79f7bc1b5fb061ae44f3324bfa/pkg/util/validation/validation.go#L110
        */
-      if (!namespace.isEmpty() && !namespace.matches("[a-z0-9]([-a-z0-9]*[a-z0-9])?")) {
+      if (!Strings.isNullOrEmpty(namespace) && !namespace.matches("[a-z0-9]([-a-z0-9]*[a-z0-9])?")) {
         return FormValidation.error(Messages.KubernetesEngineBuilder_NamespaceInvalid());
       }
       return FormValidation.ok();

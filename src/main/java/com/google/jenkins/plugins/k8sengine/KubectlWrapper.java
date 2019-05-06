@@ -15,6 +15,7 @@
 package com.google.jenkins.plugins.k8sengine;
 
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.jayway.jsonpath.Configuration;
 import com.jayway.jsonpath.InvalidJsonException;
@@ -118,7 +119,7 @@ public class KubectlWrapper {
               .add("--kubeconfig")
               .add(kubeConfigFile.getRemote())
               .add(command);
-      if (!namespace.equals("")) {
+      if (!Strings.isNullOrEmpty(namespace)) {
         kubectlCmdBuilder.add("--namespace").add(namespace);
       }
       args.forEach(kubectlCmdBuilder::add);
