@@ -53,11 +53,9 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.io.Serializable;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.annotation.Nonnull;
@@ -207,20 +205,18 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
     ContainerClient client = getContainerClient(credentialsId);
     Cluster cluster = client.getCluster(projectId, zone, clusterName);
     KubeConfig kubeConfig = KubeConfig.fromCluster(projectId, cluster);
-    FilePath manifestFile = workspace.child(manifestPattern);
-    String commandNamespace = addNamespace(manifestFile, namespace);
-
     KubectlWrapper kubectl =
         new KubectlWrapper.Builder()
             .workspace(workspace)
             .launcher(launcher)
             .kubeConfig(kubeConfig)
-            .namespace(commandNamespace)
+            .namespace(namespace)
             .build();
 
+    FilePath manifestFile = workspace.child(manifestPattern);
     addMetricsLabel(manifestFile);
     kubectl.createNamespaceIfMissing();
-    kubectl.runKubectlCommand("apply", ImmutableList.<String>of("-f", manifestFile.getRemote()));
+    kubectl.runKubectlCommand("apply", ImmutableList.of("-f", manifestFile.getRemote()));
 
     try {
       if (verifyDeployments && !verify(kubectl, manifestPattern, workspace, listener.getLogger())) {
@@ -256,37 +252,6 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
     }
 
     manifests.write();
-  }
-
-  /**
-   * Determines the namespace to use for the deployment, adds it to all of the provided manifests
-   * and returns the namespace that will be used. If namespace is "", then the namespace used will
-   * be the namespace provided in the manifest(s), or the empty string if multiple namespaces are
-   * provided. If a manifest doesn't provide a namespace then "default" is used.
-   *
-   * @param manifestFile The manifest file to be modified
-   * @param namespace The namespace that the user specified in configuration.
-   * @return The namespace to be used in the kubectl command.
-   * @throws InterruptedException If an error occurred while reading/writing the manifest file.
-   * @throws IOException If an error occurred while parsing/dumping YAML
-   */
-  @VisibleForTesting
-  static String addNamespace(FilePath manifestFile, String namespace)
-      throws InterruptedException, IOException {
-    Manifests manifests = Manifests.fromFile(manifestFile);
-    Set<String> namespaces = new HashSet<>();
-    manifests
-        .getObjectManifests()
-        .forEach(
-            manifestObject -> {
-              manifestObject.setNamespace(namespace);
-              namespaces.add(manifestObject.getNamespace().get());
-            });
-    if (namespaces.size() > 1) {
-      return "";
-    }
-    manifests.write();
-    return namespaces.iterator().next();
   }
 
   /**

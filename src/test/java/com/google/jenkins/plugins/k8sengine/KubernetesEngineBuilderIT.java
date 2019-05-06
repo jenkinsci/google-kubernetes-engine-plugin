@@ -289,7 +289,7 @@ public class KubernetesEngineBuilderIT {
                   .workspace(workspace)
                   .kubeConfig(kubeConfig)
                   .launcher(launcher)
-                  .namespace("default")
+                  .namespace("")
                   .build();
           Set<String> objectKinds = new HashSet<>();
           Manifests manifests =

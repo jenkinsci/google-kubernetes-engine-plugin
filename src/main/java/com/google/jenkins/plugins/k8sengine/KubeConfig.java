@@ -178,6 +178,7 @@ public class KubeConfig {
             new ImmutableMap.Builder<String, Object>()
                 .put("cluster", currentContext)
                 .put("user", currentContext)
+                .put("namespace", "default")
                 .build())
         .build();
   }

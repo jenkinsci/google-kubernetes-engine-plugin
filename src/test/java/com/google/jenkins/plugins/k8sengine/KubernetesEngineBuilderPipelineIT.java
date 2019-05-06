@@ -180,7 +180,7 @@ public class KubernetesEngineBuilderPipelineIT {
             .workspace(workspace)
             .launcher(launcher)
             .kubeConfig(kubeConfig)
-            .namespace("default")
+            .namespace("")
             .build();
     FilePath manifestFile = workspace.child(manifestPattern);
     kubectl.runKubectlCommand("delete", ImmutableList.<String>of(kind, name));

@@ -199,11 +199,15 @@ public class KubectlWrapper {
    * If the namespace of this KubectlWrapper does not exist in the kubernetes cluster, attempts to
    * create it.
    *
-   * @return true if the namespace needed to be created, false if it already existed
+   * @return true if the namespace needed to be created, false if it already existed or is empty
    * @throws IOException If an error occurred while executing the create command
    * @throws InterruptedException If an error occurred while executing the create command
    */
   public boolean createNamespaceIfMissing() throws IOException, InterruptedException {
+    if (namespace.isEmpty()) {
+      return false;
+    }
+
     try {
       getObject("namespace", namespace);
     } catch (IOException | InterruptedException ignored) {

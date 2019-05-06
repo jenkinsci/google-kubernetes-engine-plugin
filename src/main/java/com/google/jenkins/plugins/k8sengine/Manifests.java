@@ -82,30 +82,6 @@ public class Manifests {
           : Optional.empty();
     }
 
-    /** @return The namespace. */
-    public Optional<String> getNamespace() {
-      return getMetadata().isPresent()
-          ? Optional.of((String) getMetadata().get().get("namespace"))
-          : Optional.empty();
-    }
-
-    /**
-     * Set the namespace. If namespace is empty and this {@link ManifestObject} has a namespace, it
-     * will not be changed. If namespace is empty and no namespace currently exists, the namespace
-     * will be set to "default".
-     *
-     * @param namespace The namespace to set on the {@link ManifestObject}'s metadata
-     */
-    public void setNamespace(String namespace) {
-      Map<String, Object> metadata = getOrCreateMetadata();
-
-      String currentNamespace = (String) metadata.getOrDefault("namespace", "default");
-      if (namespace.isEmpty()) {
-        namespace = currentNamespace;
-      }
-      metadata.put("namespace", namespace);
-    }
-
     /**
      * Ensures this {@link ManifestObject} has labels, modifying in-place as needed, finally
      * returning the labels.

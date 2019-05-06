@@ -54,6 +54,19 @@ public class KubectlWrapperNamespaceTest {
     assertTrue(kubectl.createNamespaceIfMissing());
   }
 
+  @Test
+  public void testCreateNamespaceWithBlankNamespace() throws IOException, InterruptedException {
+    KubectlWrapper kubectl =
+        Mockito.spy(
+            new KubectlWrapper.Builder()
+                .kubeConfig(kubeConfig)
+                .launcher(launcher)
+                .namespace("")
+                .workspace(workspace)
+                .build());
+    assertFalse(kubectl.createNamespaceIfMissing());
+  }
+
   @Test(expected = IOException.class)
   public void testCreateNameNamespaceWithMissingNamespaceExceptionWhenCreateFails()
       throws IOException, InterruptedException {
