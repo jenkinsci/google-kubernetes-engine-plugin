@@ -141,7 +141,8 @@ public class KubectlWrapper {
   private static String launchAndJoinCommand(Launcher launcher, List<String> args)
       throws IOException, InterruptedException {
     ByteArrayOutputStream cmdLogStream = new ByteArrayOutputStream();
-    int status = launcher.launch().cmds(args).stderr(cmdLogStream).stdout(cmdLogStream).join();
+    int status =
+        launcher.launch().cmds(args).stderr(cmdLogStream).stdout(cmdLogStream).quiet(true).join();
     if (status != 0) {
       String logs = cmdLogStream.toString(CHARSET);
       LOGGER.log(Level.SEVERE, String.format("kubectl command log: %s", logs));
