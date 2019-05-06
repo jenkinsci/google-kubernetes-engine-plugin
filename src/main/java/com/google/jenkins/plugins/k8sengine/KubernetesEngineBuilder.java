@@ -216,7 +216,6 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
 
     FilePath manifestFile = workspace.child(manifestPattern);
     addMetricsLabel(manifestFile);
-    kubectl.createNamespaceIfMissing();
     kubectl.runKubectlCommand("apply", ImmutableList.of("-f", manifestFile.getRemote()));
     try {
       if (verifyDeployments && !verify(kubectl, manifestPattern, workspace, listener.getLogger())) {
