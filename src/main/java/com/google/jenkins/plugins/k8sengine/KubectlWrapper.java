@@ -14,7 +14,6 @@
 
 package com.google.jenkins.plugins.k8sengine;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.jayway.jsonpath.Configuration;
@@ -139,8 +138,7 @@ public class KubectlWrapper {
     return output;
   }
 
-  @VisibleForTesting
-  static String launchAndJoinCommand(Launcher launcher, List<String> args)
+  private static String launchAndJoinCommand(Launcher launcher, List<String> args)
       throws IOException, InterruptedException {
     ByteArrayOutputStream cmdLogStream = new ByteArrayOutputStream();
     int status = launcher.launch().cmds(args).stderr(cmdLogStream).stdout(cmdLogStream).join();

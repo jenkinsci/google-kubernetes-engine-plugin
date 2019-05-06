@@ -205,6 +205,7 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
     ContainerClient client = getContainerClient(credentialsId);
     Cluster cluster = client.getCluster(projectId, zone, clusterName);
     KubeConfig kubeConfig = KubeConfig.fromCluster(projectId, cluster);
+
     KubectlWrapper kubectl =
         new KubectlWrapper.Builder()
             .workspace(workspace)
@@ -217,7 +218,6 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
     addMetricsLabel(manifestFile);
     kubectl.createNamespaceIfMissing();
     kubectl.runKubectlCommand("apply", ImmutableList.of("-f", manifestFile.getRemote()));
-
     try {
       if (verifyDeployments && !verify(kubectl, manifestPattern, workspace, listener.getLogger())) {
         throw new AbortException(Messages.KubernetesEngineBuilder_KubernetesObjectsNotVerified());
@@ -619,8 +619,9 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
     }
 
     public FormValidation doCheckNamespace(@QueryParameter("namespace") final String namespace) {
-      // Regex from
-      // https://github.com/kubernetes/apimachinery/blob/7d08eb7a76fdbc79f7bc1b5fb061ae44f3324bfa/pkg/util/validation/validation.go#L110
+      /* Regex from
+       * https://github.com/kubernetes/apimachinery/blob/7d08eb7a76fdbc79f7bc1b5fb061ae44f3324bfa/pkg/util/validation/validation.go#L110
+       */
       if (!namespace.isEmpty() && !namespace.matches("[a-z0-9]([-a-z0-9]*[a-z0-9])?")) {
         return FormValidation.error(Messages.KubernetesEngineBuilder_NamespaceInvalid());
       }
