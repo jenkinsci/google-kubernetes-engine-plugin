@@ -1,6 +1,5 @@
 #
 # A role for granting the permissions deemed necessary for deploying to kubernetes
-# TODO: apiGroups like he said?
 apiVersion: rbac.authorization.k8s.io/v1beta1
 kind: ClusterRole
 metadata:
@@ -21,4 +20,3 @@ rules:
   - patch
   - update
   - watch
-# and so on for other sets of apiGroups, resources, and verbs
