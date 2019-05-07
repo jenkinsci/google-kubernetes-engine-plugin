@@ -198,7 +198,7 @@ public class KubernetesEngineBuilderPipelineIT {
         TEST_DEPLOYMENT_MANIFEST,
         "deployment",
         "nginx-deployment",
-        null);
+        "");
   }
 
   @Test
