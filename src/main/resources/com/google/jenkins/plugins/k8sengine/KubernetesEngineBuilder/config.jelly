@@ -23,7 +23,7 @@
     <f:entry field="zone" title="${%Zone}">
         <f:select/>
     </f:entry>
-    <f:entry field="clusterName" title="${%Cluster}">
+    <f:entry field="cluster" title="${%Cluster}">
         <f:select/>
     </f:entry>
     <f:entry field="namespace" title="${%Namespace}">

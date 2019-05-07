@@ -96,10 +96,13 @@ public class ContainerClientTest {
     containerClient.listClusters(null, TEST_ZONE);
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test
   public void testListClustersErrorWithNullZone() throws IOException {
-    ContainerClient containerClient = setUpListClient(null, null);
-    containerClient.listClusters(TEST_PROJECT_ID, null);
+    ContainerClient containerClient = setUpListClient(ImmutableList.of(TEST_CLUSTER), null);
+    List<Cluster> expected = initClusterList(ImmutableList.of(TEST_CLUSTER));
+    List<Cluster> response = containerClient.listClusters(TEST_PROJECT_ID, null);
+    assertNotNull(response);
+    assertEquals(expected, response);
   }
 
   @Test(expected = IllegalArgumentException.class)
@@ -108,10 +111,13 @@ public class ContainerClientTest {
     containerClient.listClusters("", TEST_ZONE);
   }
 
-  @Test(expected = IllegalArgumentException.class)
-  public void testListClustersErrorWithEmptyZone() throws IOException {
-    ContainerClient containerClient = setUpListClient(null, null);
-    containerClient.listClusters(TEST_PROJECT_ID, "");
+  @Test
+  public void testListClustersWithEmptyZoneClustersExist() throws IOException {
+    ContainerClient containerClient = setUpListClient(ImmutableList.of(TEST_CLUSTER), null);
+    List<Cluster> expected = initClusterList(ImmutableList.of(TEST_CLUSTER));
+    List<Cluster> response = containerClient.listClusters(TEST_PROJECT_ID, "");
+    assertNotNull(response);
+    assertEquals(expected, response);
   }
 
   @Test
