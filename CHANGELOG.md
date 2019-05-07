@@ -28,6 +28,27 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
  ### Removed
 				 
  ### Fixed
+ 
+
+## [0.5.0] - 2019-05-07
+
+ ### Security
+
+ ### Added
+  - Issue #65: Allow user to specify namespace for deployment. This is available in the UI and
+    through the `namespace` field for this build step on the build pipeline.
+
+ ### Changed
+  - Issue #62: Update help text for verify deployments flag to include information about process.
+  - When the namespace for deployment is not specified in the manifest or as a user entered value
+    then it will always be `default` rather than picking up residual namespaces from the user's
+    host machine.
+
+ ### Removed
+
+ ### Fixed
+  - Issue #56: The build from source instructions now include the `compile` step explicitly because
+    compilation is not performed by default for building the hpi file.
 
 ## [0.4.0] - 2019-04-29
 
