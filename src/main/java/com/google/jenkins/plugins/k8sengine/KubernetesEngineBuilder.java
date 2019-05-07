@@ -82,6 +82,7 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
   private String projectId;
   private String zone;
   private String clusterName;
+  private String namespace;
   private String manifestPattern;
   private boolean verifyDeployments;
   private int verifyTimeoutInMinutes = DEFAULT_VERIFY_TIMEOUT_MINUTES;
@@ -131,6 +132,15 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
   public void setClusterName(String clusterName) {
     Preconditions.checkArgument(!Strings.isNullOrEmpty(clusterName));
     this.clusterName = clusterName;
+  }
+
+  public String getNamespace() {
+    return this.namespace;
+  }
+
+  @DataBoundSetter
+  public void setNamespace(String namespace) {
+    this.namespace = namespace == null ? "" : namespace;
   }
 
   public String getManifestPattern() {
@@ -200,11 +210,12 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
             .workspace(workspace)
             .launcher(launcher)
             .kubeConfig(kubeConfig)
+            .namespace(namespace)
             .build();
 
     FilePath manifestFile = workspace.child(manifestPattern);
     addMetricsLabel(manifestFile);
-    kubectl.runKubectlCommand("apply", ImmutableList.<String>of("-f", manifestFile.getRemote()));
+    kubectl.runKubectlCommand("apply", ImmutableList.of("-f", manifestFile.getRemote()));
     try {
       if (verifyDeployments && !verify(kubectl, manifestPattern, workspace, listener.getLogger())) {
         throw new AbortException(Messages.KubernetesEngineBuilder_KubernetesObjectsNotVerified());
@@ -228,7 +239,7 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
    *
    * @param manifestFile The manifest file to be modified.
    * @throws IOException If an error occurred while reading/writing the manifest file.
-   * @throws InterruptedException If an error occured while parsing/dumping YAML.
+   * @throws InterruptedException If an error occurred while parsing/dumping YAML.
    */
   @VisibleForTesting
   static void addMetricsLabel(FilePath manifestFile) throws InterruptedException, IOException {
@@ -601,6 +612,17 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
         }
       } catch (IOException ioe) {
         return FormValidation.error(Messages.KubernetesEngineBuilder_ClusterVerificationError());
+      }
+      return FormValidation.ok();
+    }
+
+    public FormValidation doCheckNamespace(@QueryParameter("namespace") final String namespace) {
+      /* Regex from
+       * https://github.com/kubernetes/apimachinery/blob/7d08eb7a76fdbc79f7bc1b5fb061ae44f3324bfa/pkg/util/validation/validation.go#L110
+       */
+      if (!Strings.isNullOrEmpty(namespace)
+          && !namespace.matches("[a-z0-9]([-a-z0-9]*[a-z0-9])?")) {
+        return FormValidation.error(Messages.KubernetesEngineBuilder_NamespaceInvalid());
       }
       return FormValidation.ok();
     }

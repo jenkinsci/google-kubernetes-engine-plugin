@@ -117,6 +117,7 @@ public class KubernetesEngineBuilderIT {
                     .workspace(workspace)
                     .launcher(launcher)
                     .kubeConfig(kubeConfig)
+                    .namespace("default")
                     .build();
             Object json = kubectl.getObject("deployment", "nginx-deployment");
             Map<String, Object> labels = JsonPath.read(json, "metadata.labels");
@@ -277,6 +278,7 @@ public class KubernetesEngineBuilderIT {
     gkeBuilder.setClusterName(clusterName);
     gkeBuilder.setCredentialsId(credentialsId);
     gkeBuilder.setZone(testZone);
+    gkeBuilder.setNamespace("");
     gkeBuilder.setManifestPattern(TEST_DEPLOYMENT_MANIFEST);
     gkeBuilder.setVerifyDeployments(true);
     gkeBuilder.setVerifyTimeoutInMinutes(1);
@@ -287,6 +289,7 @@ public class KubernetesEngineBuilderIT {
                   .workspace(workspace)
                   .kubeConfig(kubeConfig)
                   .launcher(launcher)
+                  .namespace("")
                   .build();
           Set<String> objectKinds = new HashSet<>();
           Manifests manifests =

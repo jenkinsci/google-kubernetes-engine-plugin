@@ -26,6 +26,9 @@
     <f:entry field="clusterName" title="${%Cluster}">
         <f:select/>
     </f:entry>
+    <f:entry field="namespace" title="${%Namespace}">
+        <f:textbox/>
+    </f:entry>
     <f:entry field="manifestPattern" title="${%Kubernetes Manifests}">
         <f:textbox/>
     </f:entry>
