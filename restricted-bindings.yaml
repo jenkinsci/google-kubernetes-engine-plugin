@@ -1,0 +1,14 @@
+# TODO: roleBinding or clusterroleBinding?
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: restricted-rolebinding
+  namespace: default
+subjects:
+- kind: User
+  name: jenkins-gke-3@graphite-test-jenkins-rach.iam.gserviceaccount.com
+  namespace: default
+roleRef:
+  kind: ClusterRole
+  name: robot-deployer
+  apiGroup: rbac.authorization.k8s.io
