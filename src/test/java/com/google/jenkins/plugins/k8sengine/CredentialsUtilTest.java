@@ -1,5 +1,6 @@
 package com.google.jenkins.plugins.k8sengine;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 
@@ -28,9 +29,8 @@ import org.mockito.junit.MockitoJUnitRunner;
 public class CredentialsUtilTest {
   private static final String TEST_CREDENTIALS_ID = "test-credentials-id";
   private static final String TEST_INVALID_CREDENTIALS_ID = "test-invalid-credentials-id";
-
+  private static final String TEST_ACCESS_TOKEN = "test-access-token";
   @ClassRule public static JenkinsRule r = new JenkinsRule();
-
   public static Jenkins jenkins;
 
   @BeforeClass
@@ -39,7 +39,6 @@ public class CredentialsUtilTest {
 
     CredentialsStore store = new SystemCredentialsProvider.ProviderImpl().getStore(jenkins);
     GoogleRobotCredentials credentials = Mockito.mock(GoogleRobotCredentials.class);
-    credentials.getId();
     Mockito.when(credentials.getId()).thenReturn(TEST_CREDENTIALS_ID);
     store.addCredentials(Domain.global(), credentials);
   }
@@ -60,7 +59,6 @@ public class CredentialsUtilTest {
   @Test(expected = AbortException.class)
   public void testGetGoogleCredentialAbortException()
       throws GeneralSecurityException, AbortException {
-
     GoogleRobotCredentials robotCreds = Mockito.mock(GoogleRobotCredentials.class);
     Mockito.when(robotCreds.getGoogleCredential(any(ContainerScopeRequirement.class)))
         .thenThrow(new GeneralSecurityException());
@@ -88,8 +86,10 @@ public class CredentialsUtilTest {
   public void testGetAccessTokenReturnsToken() throws IOException {
     GoogleCredential googleCredential = Mockito.mock(GoogleCredential.class);
     Mockito.when(googleCredential.refreshToken()).thenReturn(true);
-    Mockito.when(googleCredential.getAccessToken()).thenReturn("access token");
-    assertNotNull(CredentialsUtil.getAccessToken(googleCredential));
+    Mockito.when(googleCredential.getAccessToken()).thenReturn(TEST_ACCESS_TOKEN);
+    String accessToken = CredentialsUtil.getAccessToken(googleCredential);
+    assertNotNull(accessToken);
+    assertEquals(TEST_ACCESS_TOKEN, accessToken);
   }
 
   @Test(expected = NullPointerException.class)
