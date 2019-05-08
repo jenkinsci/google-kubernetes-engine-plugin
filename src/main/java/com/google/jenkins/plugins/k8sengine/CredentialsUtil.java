@@ -100,7 +100,7 @@ public class CredentialsUtil {
     Preconditions.checkArgument(!Strings.isNullOrEmpty(credentialsId));
     Preconditions.checkNotNull(itemGroup);
     GoogleRobotCredentials robotCreds =
-        getRobotCredentials(Jenkins.get(), ImmutableList.<DomainRequirement>of(), credentialsId);
+        getRobotCredentials(itemGroup, ImmutableList.<DomainRequirement>of(), credentialsId);
 
     GoogleCredential googleCredential = (GoogleCredential) getGoogleCredential(robotCreds);
     return getAccessToken(googleCredential);
