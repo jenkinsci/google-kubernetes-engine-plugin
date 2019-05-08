@@ -21,7 +21,7 @@ This depends on refactoring the Google Oauth Plugin.
 
 1. Repeat steps in the [IAM Credentials](Home.md#iam-credentials) section on this new Jenkins instance with a new GCP service account.
 
-1. Create the following [RoleBinding](pipeline_it_bindings.yaml) which allows testing the namespace "test" when running `mvn verify`.
+1. Create the following [RoleBinding](rbac/pipeline_it_bindings.yaml) which allows testing the namespace "test" when running `mvn verify`.
 
 ## Testing the plugin on Jenkins
 1. Follow the instructions at [Source Build Installation](SourceBuildInstallation.md) to upload the
