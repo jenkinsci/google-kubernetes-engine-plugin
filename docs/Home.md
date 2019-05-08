@@ -71,7 +71,7 @@ to publish deployments built within Jenkins to your Kubernetes clusters running 
 	```
 1. Grant the IAM role to your GCP service account:
 	```bash
-	gcloud projects add-iam-policy-binding --member serviceAccount:$SA_EMAIL --role projects/$PROJECT/roles/gke_deployer $PROJECT 
+	gcloud projects add-iam-policy-binding --member serviceAccount:$SA_EMAIL --role projects/$PROJECT/roles/gke_deployer $PROJECT
 	```
 1. Download a JSON Service Account key for your newly created service account. Take note of where
 the file was created, you will upload it to Jenkins in a subsequent step:
@@ -108,8 +108,8 @@ The following permissions will grant you full read and write permissions to your
 1. Add the cluster-admin role to the service account associated with your Kubernetes cluster:
     ```bash
 	kubectl create clusterrolebinding cluster-admin-binding \
-  	--clusterrole cluster-admin \
-  	--user jenkins-gke@YOUR-PROJECT.iam.gserviceaccount.com
+    --clusterrole cluster-admin \
+    --user jenkins-gke@YOUR-PROJECT.iam.gserviceaccount.com
     ```
 
 #### More Restrictive Permissions
@@ -125,23 +125,23 @@ The following permissions will grant you enough permissions to deploy to your cl
 	apiVersion: rbac.authorization.k8s.io/v1beta1
 	kind: ClusterRole
 	metadata:
- 	 name: robot-deployer
+     name: robot-deployer
 	rules:
 	- apiGroups:
-  	  - extensions
-  	  - apps
-  	  resources:
-  	  - containers
-  	  - endpoints
+      - extensions
+      - apps
+      resources:
+      - containers
+      - endpoints
 	  - services
       - pods
       verbs:
       - create
       - get
-  	  - list
-  	  - patch
-  	  - update
-  	  - watch
+      - list
+      - patch
+      - update
+      - watch
     ```
 1. Create the ClusterRole in kubernetes:
 	```bash
@@ -164,7 +164,7 @@ The following permissions will grant you enough permissions to deploy to your cl
       apiGroup: rbac.authorization.k8s.io
 	```
 1. Create the Role binding in kubernetes:
-	```bash	
+	```bash
 	kubectl create -f PATH_TO_YOUR_ROLE_BINDING_YAML
 	```
 

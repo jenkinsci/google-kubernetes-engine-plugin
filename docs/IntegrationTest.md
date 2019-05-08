@@ -13,7 +13,7 @@
 -->
 # Integration Tests
 ## Setup
-1. Make sure you have another cluster and service account set up for testing deployments as described in the GKE Plugin [usage documentation](Home.md#usage). 
+1. Make sure you have another cluster and service account set up for testing deployments as described in the GKE Plugin [usage documentation](Home.md#usage).
 
 1. Repeat steps in the [IAM Credentials](Home.md#iam-credentials) section on this new Jenkins instance with a new GCP service account.
 
@@ -40,7 +40,7 @@
 	  - update
 	  - watch
 	```
-	
+
 1. Create the following role binding which allows testing the namespace "test":
 	```
 	kind: RoleBinding
@@ -56,7 +56,6 @@
 	  kind: ClusterRole
 	  name: robot-deployer
 	  apiGroup: rbac.authorization.k8s.io
-	
 	````
 
 # Testing the plugin on Jenkins
