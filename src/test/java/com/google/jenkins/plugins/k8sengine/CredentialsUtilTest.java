@@ -1,7 +1,6 @@
 package com.google.jenkins.plugins.k8sengine;
 
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
 import static org.mockito.ArgumentMatchers.any;
 
 import com.cloudbees.plugins.credentials.CredentialsStore;
@@ -43,14 +42,6 @@ public class CredentialsUtilTest {
     credentials.getId();
     Mockito.when(credentials.getId()).thenReturn(TEST_CREDENTIALS_ID);
     store.addCredentials(Domain.global(), credentials);
-  }
-
-  @Test(expected = AbortException.class)
-  public void testGetRobotCredentialsReturnsNull() throws AbortException {
-    GoogleRobotCredentials robotCreds =
-        CredentialsUtil.getRobotCredentials(
-            jenkins.get(), ImmutableList.<DomainRequirement>of(), TEST_INVALID_CREDENTIALS_ID);
-    assertNull(robotCreds);
   }
 
   @Test
@@ -125,6 +116,11 @@ public class CredentialsUtilTest {
   @Test(expected = IllegalArgumentException.class)
   public void testGetAccessTokenWithEmptyCredentialsId() throws IOException {
     CredentialsUtil.getAccessToken("");
+  }
+
+  @Test(expected = NullPointerException.class)
+  public void testGetAccessTokenWithNullItemGroup() throws IOException {
+    CredentialsUtil.getAccessToken(null, TEST_CREDENTIALS_ID);
   }
 
   @Test(expected = NullPointerException.class)

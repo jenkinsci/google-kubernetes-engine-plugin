@@ -89,19 +89,32 @@ public class CredentialsUtil {
   }
 
   /**
-   * Wrapper to get access token for service account with this credentialsId.
+   * Given a credentialsId and Jenkins context, returns the access token.
    *
+   * @param itemGroup A handle to the Jenkins instance. Must be non-null.
    * @param credentialsId The service account credential's id. Must be non-null.
    * @return Access token from OAuth to allow kubectl to interact with the cluster.
-   * @throws java.io.IOException If an error occurred fetching the access token.
+   * @throws IOException If an error occurred fetching the access token.
    */
-  static String getAccessToken(String credentialsId) throws IOException {
+  static String getAccessToken(ItemGroup itemGroup, String credentialsId) throws IOException {
     Preconditions.checkArgument(!Strings.isNullOrEmpty(credentialsId));
+    Preconditions.checkNotNull(itemGroup);
     GoogleRobotCredentials robotCreds =
         getRobotCredentials(Jenkins.get(), ImmutableList.<DomainRequirement>of(), credentialsId);
 
     GoogleCredential googleCredential = (GoogleCredential) getGoogleCredential(robotCreds);
     return getAccessToken(googleCredential);
+  }
+  /**
+   * Wrapper to get access token for service account with this credentialsId. Uses Jenkins.get() as
+   * context.
+   *
+   * @param credentialsId The service account credential's id. Must be non-null.
+   * @return Access token from OAuth to allow kubectl to interact with the cluster.
+   * @throws IOException If an error occurred fetching the access token.
+   */
+  static String getAccessToken(String credentialsId) throws IOException {
+    return getAccessToken(Jenkins.get(), credentialsId);
   }
 
   /**

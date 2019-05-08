@@ -345,8 +345,8 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
       }
 
       try {
-        this.getClientFactory(context, credentialsId);
-      } catch (AbortException | RuntimeException ex) {
+        CredentialsUtil.getAccessToken(context, credentialsId);
+      } catch (IOException ex) {
         LOGGER.log(Level.SEVERE, Messages.KubernetesEngineBuilder_CredentialAuthFailed(), ex);
         return FormValidation.error(Messages.KubernetesEngineBuilder_CredentialAuthFailed());
       }
