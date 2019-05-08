@@ -53,26 +53,16 @@ to publish deployments built within Jenkins to your Kubernetes clusters running 
     export SA=jenkins-gke
     gcloud iam service-accounts create $SA
     ```
-1. Create the following yaml file for a custom IAM role:
-	```
-	title: "Jenkins GKE viewer"
-	description: "Minimal IAM role for the Jenkins GKE plugin."
-	stage: "GA"
-	includedPermissions:
-	- container.apiServices.get
-	- container.apiServices.list
-	- container.clusters.get
-	- container.clusters.getCredentials
-	```
+1. Create the following [yaml file](rbac/IAMrole.yaml) for a custom IAM role.
 1. Run the following command:
-	```bash
-	gcloud iam roles create gke_deployer --project $PROJECT --file \
-	 PATH_TO_YOUR_IAM_ROLE_YAML
+    ```bash
+    gcloud iam roles create gke_deployer --project $PROJECT --file \
+    PATH_TO_YOUR_IAM_ROLE_YAML
 	```
 1. Grant the IAM role to your GCP service account:
-	```bash
-	gcloud projects add-iam-policy-binding --member serviceAccount:$SA_EMAIL --role projects/$PROJECT/roles/gke_deployer $PROJECT
-	```
+    ```bash
+    gcloud projects add-iam-policy-binding --member serviceAccount:$SA_EMAIL --role projects/$PROJECT/roles/gke_deployer $PROJECT
+    ```
 1. Download a JSON Service Account key for your newly created service account. Take note of where
 the file was created, you will upload it to Jenkins in a subsequent step:
     ```bash
@@ -101,72 +91,34 @@ the file was created, you will upload it to Jenkins in a subsequent step:
 
 Your GCP service account will have limited IAM permissions. Use RBAC in kubernetes to configure permissions suited to your use case.
 
+Grant your GCP login account cluster-admin permissions before creating the following roles/role bindings:
+   ```bash
+   kubectl create clusterrolebinding gcp-cluster-admin-binding --clusterrole=cluster-admin --user=my_gcp_login@google.com
+   ```
+
 #### Less Restrictive Permissions
 
 The following permissions will grant you full read and write permissions to your cluster.
 
 1. Add the cluster-admin role to the service account associated with your Kubernetes cluster:
     ```bash
-	kubectl create clusterrolebinding cluster-admin-binding \
+    kubectl create clusterrolebinding cluster-admin-binding \
     --clusterrole cluster-admin \
     --user jenkins-gke@YOUR-PROJECT.iam.gserviceaccount.com
     ```
 
 #### More Restrictive Permissions
-
 The following permissions will grant you enough permissions to deploy to your cluster.
-
-1. Grant your GCP login account cluster-admin permissions before creating the following roles/role bindings:
-	```bash
-	 kubectl create clusterrolebinding gcp-cluster-admin-binding --clusterrole=cluster-admin --user=my_gcp_login@google.com
-	```
-1. Create the ClusterRole yaml file:
-	```
-	apiVersion: rbac.authorization.k8s.io/v1beta1
-	kind: ClusterRole
-	metadata:
-     name: robot-deployer
-	rules:
-	- apiGroups:
-      - extensions
-      - apps
-      resources:
-      - containers
-      - endpoints
-	  - services
-      - pods
-      verbs:
-      - create
-      - get
-      - list
-      - patch
-      - update
-      - watch
-    ```
+1. Create the [ClusterRole yaml](rbac/robot-deployer.yaml) file.
 1. Create the ClusterRole in kubernetes:
-	```bash
-	kubectl create -f PATH_TO_YOUR_ROLE_YAML
-	```
-1. Create the role binding:
-	```
-	kind: RoleBinding
-	apiVersion: rbac.authorization.k8s.io/v1
-	metadata:
-      name: restricted-rolebinding
-      namespace: YOUR_NAMESPACE
-	subjects:
-	  - kind: User
-      name: jenkins-gke@YOUR-PROJECT.iam.gserviceaccount.com
-      namespace: YOUR_NAMESPACE
-	roleRef:
-      kind: ClusterRole
-      name: robot-deployer
-      apiGroup: rbac.authorization.k8s.io
-	```
-1. Create the Role binding in kubernetes:
-	```bash
-	kubectl create -f PATH_TO_YOUR_ROLE_BINDING_YAML
-	```
+    ```bash
+    kubectl create -f PATH_TO_YOUR_ROLE_YAML
+    ```
+1. Create the [RoleBinding yaml](rbac/restricted-bindings.yaml) file.
+1. Create the RoleBinding in kubernetes:
+    ```bash
+    kubectl create -f PATH_TO_YOUR_ROLE_BINDING_YAML
+    ```
 
 ##### References:
 * [Google Container Engine RBAC docs](https://cloud.google.com/kubernetes-engine/docs/how-to/role-based-access-control)

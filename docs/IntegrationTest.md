@@ -13,62 +13,17 @@
 -->
 # Integration Tests
 ## Setup
-1. Make sure you have another cluster and service account set up for testing deployments as described in the GKE Plugin [usage documentation](Home.md#usage).
-
-1. Repeat steps in the [IAM Credentials](Home.md#iam-credentials) section on this new Jenkins instance with a new GCP service account.
-
-1. Create the following cluster role:
-	```
-	apiVersion: rbac.authorization.k8s.io/v1beta1
-	kind: ClusterRole
-	metadata:
-	 name: robot-deployer
-	rules:
-	- apiGroups:
-	  - extensions
-	  - apps
-	  resources:
-	  - containers
-	  - endpoints
-	  - services
-	  - pods
-	  verbs:
-	  - create
-	  - get
-	  - list
-	  - patch
-	  - update
-	  - watch
-	```
-
-1. Create the following role binding which allows testing the namespace "test":
-	```
-	kind: RoleBinding
-	apiVersion: rbac.authorization.k8s.io/v1
-	metadata:
-	  name: restricted-rolebinding
-	  namespace: test
-	subjects:
-	- kind: User
-	  name: jenkins-gke@YOUR-PROJECT.iam.gserviceaccount.com
-	  namespace: default
-	roleRef:
-	  kind: ClusterRole
-	  name: robot-deployer
-	  apiGroup: rbac.authorization.k8s.io
-	````
-
-# Testing the plugin on Jenkins
-1. Make sure you have another cluster and service account set up for testing deployments as
-described in the GKE Plugin [usage documentation](Home.md#usage). 
-
 <!--
 TODO(stephenashank): Remove this once the credentials can be preloaded through the helm chart.
 This depends on refactoring the Google Oauth Plugin.
 -->
+1. Make sure you have another cluster and service account set up for testing deployments as described in the GKE Plugin [usage documentation](Home.md#usage).
 
 1. Repeat steps in the [IAM Credentials](Home.md#iam-credentials) section on this new Jenkins instance with a new GCP service account.
 
+1. Create the following [RoleBinding](pipeline_it_bindings.yaml) which allows testing the namespace "test" when running `mvn verify`.
+
+## Testing the plugin on Jenkins
 1. Follow the instructions at [Source Build Installation](SourceBuildInstallation.md) to upload the
 plugin build that you will be testing.
 
