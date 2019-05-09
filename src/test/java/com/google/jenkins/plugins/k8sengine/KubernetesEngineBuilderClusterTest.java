@@ -48,7 +48,6 @@ import org.junit.Test;
 import org.mockito.Mockito;
 
 public class KubernetesEngineBuilderClusterTest {
-
   private static final String TEST_CLUSTER = "testCluster (us-west1-a)";
   private static final String OTHER_CLUSTER = "otherCluster (us-east1-b)";
 
