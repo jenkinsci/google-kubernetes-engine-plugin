@@ -93,7 +93,7 @@ Your GCP service account will have limited IAM permissions. Use RBAC in kubernet
 
 Grant your GCP login account cluster-admin permissions before creating the following roles/role bindings:
    ```bash
-   kubectl create clusterrolebinding gcp-cluster-admin-binding --clusterrole=cluster-admin --user=my_gcp_login@google.com
+   kubectl create clusterrolebinding gcp-cluster-admin-binding --clusterrole=cluster-admin --user=YOUR_GCP_ACCOUNT_EMAIL
    ```
 
 #### Less Restrictive Permissions
