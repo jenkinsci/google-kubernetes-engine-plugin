@@ -1,0 +1,8 @@
+title: "Jenkins GKE viewer"
+description: "Minimal IAM role for the Jenkins GKE plugin."
+stage: "GA"
+includedPermissions:
+- container.apiServices.get
+- container.apiServices.list
+- container.clusters.get
+- container.clusters.getCredentials

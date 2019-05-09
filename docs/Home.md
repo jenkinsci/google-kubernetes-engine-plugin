@@ -53,13 +53,15 @@ to publish deployments built within Jenkins to your Kubernetes clusters running 
     export SA=jenkins-gke
     gcloud iam service-accounts create $SA
     ```
-1. Add required service account roles:
+1. Create the following [yaml file](rbac/IAMrole.yaml) for a custom IAM role.
+1. Run the following command:
     ```bash
-    export SA_EMAIL=$SA@$PROJECT.iam.gserviceaccount.com
-    gcloud projects add-iam-policy-binding --member serviceAccount:$SA_EMAIL --role roles/iam.serviceAccountUser $PROJECT
-    gcloud projects add-iam-policy-binding --member serviceAccount:$SA_EMAIL --role roles/container.clusterAdmin $PROJECT
-    gcloud projects add-iam-policy-binding --member serviceAccount:$SA_EMAIL --role roles/container.admin $PROJECT
-    gcloud projects add-iam-policy-binding --member serviceAccount:$SA_EMAIL --role roles/compute.networkViewer $PROJECT
+    gcloud iam roles create gke_deployer --project $PROJECT --file \
+    PATH_TO_YOUR_IAM_ROLE_YAML
+	```
+1. Grant the IAM role to your GCP service account:
+    ```bash
+    gcloud projects add-iam-policy-binding --member serviceAccount:$SA_EMAIL --role projects/$PROJECT/roles/gke_deployer $PROJECT
     ```
 1. Download a JSON Service Account key for your newly created service account. Take note of where
 the file was created, you will upload it to Jenkins in a subsequent step:
@@ -78,31 +80,49 @@ the file was created, you will upload it to Jenkins in a subsequent step:
     ```bash
     export CLUSTER=my-jenkins-cluster
     export ZONE=us-central1-c
-    gcloud container clusters create --issue-client-certificate --enable-legacy-authorizaton --zone $ZONE $CLUSTER
-    ```
-1. If using an existing cluster, enable legacy authorization on the cluster:
-    ```bash
-    gcloud container clusters update --enable-legacy-authorization --zone $ZONE $CLUSTER
+    gcloud container clusters create --zone $ZONE $CLUSTER
     ```
 1. Get credentials for the cluster:
     ```bash
     gcloud container clusters get-credentials --zone $ZONE $CLUSTER
     ```
 
-\***Note**: You can use an existing cluster but it must have been created with Client Certificates
-enabled. If creating your cluster through Cloud Console, click **Advanced Options** and then
-under **Security** make sure that "Issue a client certificate" is checked. This is a ***permanent***
-property of the cluster. The "Your first cluster" template, for example, does not have this checked
-by default so it won't be possible to use such a cluster. Also check "Enable legacy authorization",
-which is always disabled by default. From Cloud Console you can also select an existing cluster,
-click **EDIT** and change the **Legacy Authorization** dropdown to "Enabled".
-
 ### Configure Kubernetes Cluster Permissions
 
-1. Add the cluster-admin role to the service account group within your Kubernetes cluster:
+Your GCP service account will have limited IAM permissions. Use RBAC in kubernetes to configure permissions suited to your use case.
+
+Grant your GCP login account cluster-admin permissions before creating the following roles/role bindings:
+   ```bash
+   kubectl create clusterrolebinding gcp-cluster-admin-binding --clusterrole=cluster-admin --user=YOUR_GCP_ACCOUNT_EMAIL
+   ```
+
+#### Less Restrictive Permissions
+
+The following permissions will grant you full read and write permissions to your cluster.
+
+1. Add the cluster-admin role to the service account associated with your Kubernetes cluster:
     ```bash
-    kubectl create clusterrolebinding serviceaccounts-cluster-admin --group=system:serviceaccounts --clusterrole=cluster-admin
+    kubectl create clusterrolebinding cluster-admin-binding \
+    --clusterrole cluster-admin \
+    --user jenkins-gke@YOUR-PROJECT.iam.gserviceaccount.com
     ```
+
+#### More Restrictive Permissions
+The following permissions will grant you enough permissions to deploy to your cluster.
+1. Create the [ClusterRole yaml](rbac/robot-deployer.yaml) file.
+1. Create the ClusterRole in kubernetes:
+    ```bash
+    kubectl create -f PATH_TO_YOUR_ROLE_YAML
+    ```
+1. Create the [RoleBinding yaml](rbac/restricted-bindings.yaml) file.
+1. Create the RoleBinding in kubernetes:
+    ```bash
+    kubectl create -f PATH_TO_YOUR_ROLE_BINDING_YAML
+    ```
+
+##### References:
+* [Google Container Engine RBAC docs](https://cloud.google.com/kubernetes-engine/docs/how-to/role-based-access-control)
+* [Configuring RBAC for GKE deployment](https://codeascraft.com/2018/06/05/deploying-to-google-kubernetes-engine/)
 
 ### Google Kubernetes Engine Build Step Configuration
 

@@ -203,7 +203,10 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
             "GKE Deploying, projectId: %s cluster: %s zone: %s", projectId, clusterName, zone));
     ContainerClient client = getContainerClient(credentialsId);
     Cluster cluster = client.getCluster(projectId, zone, clusterName);
-    KubeConfig kubeConfig = KubeConfig.fromCluster(projectId, cluster);
+
+    // generate a kubeconfig for the cluster
+    KubeConfig kubeConfig =
+        KubeConfig.fromCluster(projectId, cluster, CredentialsUtil.getAccessToken(credentialsId));
 
     KubectlWrapper kubectl =
         new KubectlWrapper.Builder()
@@ -342,8 +345,8 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
       }
 
       try {
-        this.getClientFactory(context, credentialsId);
-      } catch (AbortException | RuntimeException ex) {
+        CredentialsUtil.getAccessToken(context, credentialsId);
+      } catch (IOException ex) {
         LOGGER.log(Level.SEVERE, Messages.KubernetesEngineBuilder_CredentialAuthFailed(), ex);
         return FormValidation.error(Messages.KubernetesEngineBuilder_CredentialAuthFailed());
       }

@@ -140,9 +140,10 @@ public class KubeConfig {
    *
    * @param projectId The ID of the project the cluster resides in.
    * @param cluster The cluster data will be drawn from.
+   * @param accessToken Access token for GKE API access.
    * @return A {@link KubeConfig} from the specified {@link Cluster}.
    */
-  public static KubeConfig fromCluster(String projectId, Cluster cluster) {
+  public static KubeConfig fromCluster(String projectId, Cluster cluster, String accessToken) {
     Preconditions.checkArgument(!Strings.isNullOrEmpty(projectId));
     Preconditions.checkNotNull(cluster);
 
@@ -150,7 +151,7 @@ public class KubeConfig {
     return new KubeConfig.Builder()
         .currentContext(currentContext)
         .contexts(ImmutableList.<Object>of(context(currentContext)))
-        .users(ImmutableList.<Object>of(user(currentContext, cluster)))
+        .users(ImmutableList.<Object>of(user(currentContext, cluster, accessToken)))
         .clusters(ImmutableList.<Object>of(cluster(currentContext, cluster)))
         .build();
   }
@@ -183,17 +184,15 @@ public class KubeConfig {
         .build();
   }
 
-  private static ImmutableMap<String, Object> user(String currentContext, Cluster cluster) {
+  private static ImmutableMap<String, Object> user(
+      String currentContext, Cluster cluster, String accessToken) {
     Preconditions.checkArgument(!Strings.isNullOrEmpty(currentContext));
     Preconditions.checkNotNull(cluster);
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(accessToken));
+
     return new ImmutableMap.Builder<String, Object>()
         .put("name", currentContext)
-        .put(
-            "user",
-            new ImmutableMap.Builder<String, Object>()
-                .put("client-certificate-data", cluster.getMasterAuth().getClientCertificate())
-                .put("client-key-data", cluster.getMasterAuth().getClientKey())
-                .build())
+        .put("user", new ImmutableMap.Builder<String, Object>().put("token", accessToken).build())
         .build();
   }
 

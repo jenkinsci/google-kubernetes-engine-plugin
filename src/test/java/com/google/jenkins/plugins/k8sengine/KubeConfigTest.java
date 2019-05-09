@@ -66,11 +66,9 @@ public class KubeConfigTest {
     Mockito.when(cluster.getName()).thenReturn("testCluster");
     MasterAuth auth = Mockito.mock(MasterAuth.class);
     Mockito.when(cluster.getMasterAuth()).thenReturn(auth);
-    Mockito.when(auth.getClientCertificate()).thenReturn("testClientCert");
-    Mockito.when(auth.getClientKey()).thenReturn("testClientKey");
     Mockito.when(auth.getClusterCaCertificate()).thenReturn("testCaCert");
 
-    KubeConfig result = KubeConfig.fromCluster("testProject", cluster);
+    KubeConfig result = KubeConfig.fromCluster("testProject", cluster, "testAccessToken");
     assertNotNull(result);
 
     String currentContext = result.getCurrentContext();
@@ -94,10 +92,8 @@ public class KubeConfigTest {
     Mockito.when(cluster.getName()).thenReturn("testCluster");
     MasterAuth auth = Mockito.mock(MasterAuth.class);
     Mockito.when(cluster.getMasterAuth()).thenReturn(auth);
-    Mockito.when(auth.getClientCertificate()).thenReturn("testClientCert");
-    Mockito.when(auth.getClientKey()).thenReturn("testClientKey");
     Mockito.when(auth.getClusterCaCertificate()).thenReturn("testCaCert");
-    KubeConfig config = KubeConfig.fromCluster("testProject", cluster);
+    KubeConfig config = KubeConfig.fromCluster("testProject", cluster, "testAccessToken");
     String result = config.toYaml();
 
     StringWriter writer = new StringWriter();

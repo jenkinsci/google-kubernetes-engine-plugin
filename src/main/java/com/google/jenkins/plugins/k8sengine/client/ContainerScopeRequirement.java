@@ -17,12 +17,18 @@ package com.google.jenkins.plugins.k8sengine.client;
 
 import com.google.api.services.container.ContainerScopes;
 import com.google.jenkins.plugins.credentials.oauth.GoogleOAuth2ScopeRequirement;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 /** Defines the scope requirements for the GKE "Container" API. */
 public class ContainerScopeRequirement extends GoogleOAuth2ScopeRequirement {
   @Override
   public Collection<String> getScopes() {
-    return ContainerScopes.all();
+    List<String> scopes = new ArrayList<>();
+    scopes.addAll(ContainerScopes.all());
+    // E-mail scope for k8s to associate the GCP service account with the e-mail address
+    scopes.add("https://www.googleapis.com/auth/userinfo.email");
+    return scopes;
   }
 }

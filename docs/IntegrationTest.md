@@ -12,18 +12,18 @@
  License.
 -->
 # Integration Tests
-
-## Testing the plugin on Jenkins
-1. Make sure you have another cluster and service account set up for testing deployments as
-described in the GKE Plugin [usage documentation](Home.md#usage). 
-
+## Setup
 <!--
 TODO(stephenashank): Remove this once the credentials can be preloaded through the helm chart.
 This depends on refactoring the Google Oauth Plugin.
 -->
-1. Repeat steps 3-8 for the [IAM Credentials](Home.md#iam-credentials) section on this new Jenkins
-instance.
+1. Make sure you have another cluster and service account set up for testing deployments as described in the GKE Plugin [usage documentation](Home.md#usage).
 
+1. Repeat steps in the [IAM Credentials](Home.md#iam-credentials) section on this new Jenkins instance with a new GCP service account.
+
+1. Create the following [RoleBinding](rbac/pipeline_it_bindings.yaml) which allows testing the namespace "test" when running `mvn verify`.
+
+## Testing the plugin on Jenkins
 1. Follow the instructions at [Source Build Installation](SourceBuildInstallation.md) to upload the
 plugin build that you will be testing.
 
