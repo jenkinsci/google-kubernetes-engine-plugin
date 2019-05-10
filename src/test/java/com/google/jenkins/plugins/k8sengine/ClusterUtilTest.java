@@ -22,7 +22,6 @@ import org.junit.Test;
 
 /** Tests for verifying the behavior of {@link ClusterUtil methods} */
 public class ClusterUtilTest {
-
   @Test(expected = NullPointerException.class)
   public void testToNameAndZoneNullCluster() {
     ClusterUtil.toNameAndZone(null);
