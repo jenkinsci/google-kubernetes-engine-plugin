@@ -352,7 +352,7 @@ public class KubernetesEngineBuilderClusterTest {
 
     List<Cluster> clusters = new ArrayList<>();
 
-    initialClusters.forEach(c -> clusters.add(ContainerClient.fromNameAndZone(c)));
+    initialClusters.forEach(c -> clusters.add(ClusterUtil.fromNameAndZone(c)));
     Mockito.when(containerClient.listClusters(anyString(), anyString()))
         .thenReturn(ImmutableList.copyOf(clusters));
     return descriptor;

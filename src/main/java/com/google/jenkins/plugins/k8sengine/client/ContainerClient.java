@@ -16,7 +16,6 @@ package com.google.jenkins.plugins.k8sengine.client;
 
 import com.google.api.services.container.Container;
 import com.google.api.services.container.model.Cluster;
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
@@ -90,25 +89,5 @@ public class ContainerClient {
       return ZONE_WILDCARD;
     }
     return zone;
-  }
-
-  public static String toNameAndZone(Cluster cluster) {
-    return toNameAndZone(cluster.getName(), cluster.getZone());
-  }
-
-  public static String toNameAndZone(String name, String zone) {
-    return String.format("%s (%s)", name, zone);
-  }
-
-  @VisibleForTesting
-  public static Cluster fromNameAndZone(String nameAndZone) {
-    String[] values = valuesFromNameAndZone(nameAndZone);
-    return new Cluster().setName(values[0]).setZone(values[1]);
-  }
-
-  public static String[] valuesFromNameAndZone(String nameAndZone) {
-    String[] clusters = nameAndZone.split(" [(]");
-    clusters[1] = clusters[1].substring(0, clusters[1].length() - 1);
-    return clusters;
   }
 }

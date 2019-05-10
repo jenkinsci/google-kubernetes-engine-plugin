@@ -137,13 +137,13 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
   }
 
   public String getCluster() {
-    return ContainerClient.toNameAndZone(this.clusterName, this.zone);
+    return ClusterUtil.toNameAndZone(this.clusterName, this.zone);
   }
 
   @DataBoundSetter
   public void setCluster(String cluster) {
     Preconditions.checkArgument(!Strings.isNullOrEmpty(cluster));
-    String[] values = ContainerClient.valuesFromNameAndZone(cluster);
+    String[] values = ClusterUtil.valuesFromNameAndZone(cluster);
     setClusterName(values[0]);
     setZone(values[1]);
   }
@@ -572,7 +572,7 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
           return items;
         }
 
-        clusters.forEach(c -> items.add(ContainerClient.toNameAndZone(c)));
+        clusters.forEach(c -> items.add(ClusterUtil.toNameAndZone(c)));
         selectOption(items, cluster);
         return items;
       } catch (IOException ioe) {
@@ -617,9 +617,7 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
           return FormValidation.error(Messages.KubernetesEngineBuilder_NoClusterInProjectZone());
         }
         Optional<Cluster> clusterOption =
-            clusters.stream()
-                .filter(c -> cluster.equals(ContainerClient.toNameAndZone(c)))
-                .findFirst();
+            clusters.stream().filter(c -> cluster.equals(ClusterUtil.toNameAndZone(c))).findFirst();
         if (!clusterOption.isPresent()) {
           return FormValidation.error(Messages.KubernetesEngineBuilder_ClusterNotInProjectZone());
         }
