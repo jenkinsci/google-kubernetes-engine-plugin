@@ -44,6 +44,7 @@ public class KubectlWrapper {
   private Launcher launcher;
   private FilePath workspace;
   private String namespace;
+  private boolean verboseLogging;
 
   private KubectlWrapper() {}
 
@@ -79,6 +80,14 @@ public class KubectlWrapper {
     return this.namespace;
   }
 
+  private void setVerboseLogging(boolean verboseLogging) {
+    this.verboseLogging = verboseLogging;
+  }
+
+  private boolean isVerboseLogging() {
+    return verboseLogging;
+  }
+
   /**
    * Runs the specified kubectl command.
    *
@@ -109,7 +118,8 @@ public class KubectlWrapper {
               .add("config")
               .add("use-context")
               .add(kubeConfig.getCurrentContext())
-              .toList());
+              .toList(),
+          verboseLogging);
 
       // Run the kubectl command
       ArgumentListBuilder kubectlCmdBuilder =
@@ -122,7 +132,7 @@ public class KubectlWrapper {
         kubectlCmdBuilder.add("--namespace").add(namespace);
       }
       args.forEach(kubectlCmdBuilder::add);
-      output = launchAndJoinCommand(getLauncher(), kubectlCmdBuilder.toList());
+      output = launchAndJoinCommand(getLauncher(), kubectlCmdBuilder.toList(), verboseLogging);
     } catch (IOException | InterruptedException e) {
       LOGGER.log(
           Level.SEVERE,
@@ -138,11 +148,18 @@ public class KubectlWrapper {
     return output;
   }
 
-  private static String launchAndJoinCommand(Launcher launcher, List<String> args)
+  private static String launchAndJoinCommand(
+      Launcher launcher, List<String> args, boolean verboseLogging)
       throws IOException, InterruptedException {
     ByteArrayOutputStream cmdLogStream = new ByteArrayOutputStream();
     int status =
-        launcher.launch().cmds(args).stderr(cmdLogStream).stdout(cmdLogStream).quiet(true).join();
+        launcher
+            .launch()
+            .cmds(args)
+            .stderr(cmdLogStream)
+            .stdout(cmdLogStream)
+            .quiet(!verboseLogging)
+            .join();
     if (status != 0) {
       String logs = cmdLogStream.toString(CHARSET);
       LOGGER.log(Level.SEVERE, String.format("kubectl command log: %s", logs));
@@ -239,6 +256,11 @@ public class KubectlWrapper {
      */
     public Builder namespace(String namespace) {
       wrapper.setNamespace(namespace);
+      return this;
+    }
+
+    Builder verboseLogging(boolean verboseLogging) {
+      wrapper.setVerboseLogging(verboseLogging);
       return this;
     }
 

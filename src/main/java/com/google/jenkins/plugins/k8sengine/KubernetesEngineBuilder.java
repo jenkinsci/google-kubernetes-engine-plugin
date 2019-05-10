@@ -88,6 +88,7 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
   private int verifyTimeoutInMinutes = DEFAULT_VERIFY_TIMEOUT_MINUTES;
   private boolean verifyServices;
   private boolean isTestCleanup;
+  private boolean verboseLogging = false;
   private LinkedList<KubeConfigAfterBuildStep> afterBuildStepStack;
 
   /** Constructs a new {@link KubernetesEngineBuilder}. */
@@ -180,6 +181,15 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
     this.verifyTimeoutInMinutes = verifyTimeoutInMinutes;
   }
 
+  public boolean isVerboseLogging() {
+    return this.verboseLogging;
+  }
+
+  @DataBoundSetter
+  public void setVerboseLogging(boolean verboseLogging) {
+    this.verboseLogging = verboseLogging;
+  }
+
   @VisibleForTesting
   void pushAfterBuildStep(KubeConfigAfterBuildStep afterBuildStep) {
     if (afterBuildStepStack == null) {
@@ -214,6 +224,7 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
             .launcher(launcher)
             .kubeConfig(kubeConfig)
             .namespace(namespace)
+            .verboseLogging(verboseLogging)
             .build();
 
     FilePath manifestFile = workspace.child(manifestPattern);
