@@ -11,16 +11,16 @@ import org.junit.runner.RunWith;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
+/** Tests for verifying the use of the verboseLogging flag in {@link KubectlWrapper}.*/
 @RunWith(MockitoJUnitRunner.class)
 public class KubectlWrapperVerboseLoggingTest {
-
   @Test(expected = IOException.class)
-  public void testQuietLoggingAppliedInPerform() throws IOException, InterruptedException {
+  public void testQuietLoggingApplied() throws IOException, InterruptedException {
     KubectlWrapper kubectlWrapper =
         Mockito.spy(
             new KubectlWrapper.Builder()
-                .kubeConfig(setUpKubeconfig())
                 .launcher(setUpLauncher())
+                .kubeConfig(setUpKubeconfig())
                 .workspace(setUpWorkspace())
                 .namespace("")
                 .verboseLogging(false)
@@ -29,12 +29,12 @@ public class KubectlWrapperVerboseLoggingTest {
   }
 
   @Test
-  public void testVerboseLoggingAppliedInPerform() throws IOException, InterruptedException {
+  public void testVerboseLoggingApplied() throws IOException, InterruptedException {
     KubectlWrapper kubectlWrapper =
         Mockito.spy(
             new KubectlWrapper.Builder()
-                .kubeConfig(setUpKubeconfig())
                 .launcher(setUpLauncher())
+                .kubeConfig(setUpKubeconfig())
                 .workspace(setUpWorkspace())
                 .namespace("")
                 .verboseLogging(true)
@@ -57,6 +57,13 @@ public class KubectlWrapperVerboseLoggingTest {
     return launcher;
   }
 
+  private KubeConfig setUpKubeconfig() throws IOException {
+    KubeConfig kubeConfig = Mockito.mock(KubeConfig.class);
+    Mockito.when(kubeConfig.toYaml()).thenReturn("yaml");
+    Mockito.when(kubeConfig.getCurrentContext()).thenReturn("currentContext");
+    return kubeConfig;
+  }
+
   private FilePath setUpWorkspace() throws IOException, InterruptedException {
     FilePath kubeConfigFile = Mockito.mock(FilePath.class);
     Mockito.when(kubeConfigFile.getRemote()).thenReturn("remote");
@@ -65,12 +72,5 @@ public class KubectlWrapperVerboseLoggingTest {
     Mockito.when(workspace.createTempFile(".kube","config")).thenReturn(kubeConfigFile);
     Mockito.when(workspace.child("remote")).thenReturn(kubeConfigFile);
     return workspace;
-  }
-
-  private KubeConfig setUpKubeconfig() throws IOException {
-    KubeConfig kubeConfig = Mockito.mock(KubeConfig.class);
-    Mockito.when(kubeConfig.toYaml()).thenReturn("yaml");
-    Mockito.when(kubeConfig.getCurrentContext()).thenReturn("currentContext");
-    return kubeConfig;
   }
 }
