@@ -25,7 +25,6 @@ import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.api.services.cloudresourcemanager.CloudResourceManager;
 import com.google.api.services.cloudresourcemanager.CloudResourceManagerRequestInitializer;
-import com.google.api.services.compute.Compute;
 import com.google.api.services.container.Container;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
@@ -101,23 +100,6 @@ public class ClientFactory {
   public ContainerClient containerClient() {
     return new ContainerClient(
         new Container.Builder(transport, jsonFactory, credential)
-            .setGoogleClientRequestInitializer(
-                request ->
-                    request.setRequestHeaders(
-                        request.getRequestHeaders().setUserAgent(APPLICATION_NAME)))
-            .setHttpRequestInitializer(new RetryHttpInitializerWrapper(credential))
-            .setApplicationName(APPLICATION_NAME)
-            .build());
-  }
-
-  /**
-   * Creates a new {@link ComputeClient}.
-   *
-   * @return A new {@link ComputeClient} instance.
-   */
-  public ComputeClient computeClient() {
-    return new ComputeClient(
-        new Compute.Builder(transport, jsonFactory, credential)
             .setGoogleClientRequestInitializer(
                 request ->
                     request.setRequestHeaders(
