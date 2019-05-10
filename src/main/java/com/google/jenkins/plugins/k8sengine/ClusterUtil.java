@@ -22,26 +22,50 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 
 /** Utility functions for converting between {@link Cluster}s and their String representations. */
-public class ClusterUtil {
-  public static String toNameAndZone(Cluster cluster) {
+class ClusterUtil {
+
+  /**
+   * Given a GKE {@link Cluster} return a String representation containing the name and zone.
+   * @param cluster The non-null {@link Cluster} object.
+   * @return A String of the form "name (zone)" based on the given cluster's properties.
+   */
+  static String toNameAndZone(Cluster cluster) {
     Preconditions.checkNotNull(cluster);
     return toNameAndZone(cluster.getName(), cluster.getZone());
   }
 
-  public static String toNameAndZone(String name, String zone) {
+  /**
+   * Given a name and zone for a cluster, return the combined String representation.
+   * @param name A non-null, non-empty cluster name
+   * @param zone A non-null, non-empty GCP resource zone.
+   * @return A String of the form "name (zone)".
+   */
+  static String toNameAndZone(String name, String zone) {
     Preconditions.checkArgument(!Strings.isNullOrEmpty(name));
     Preconditions.checkArgument(!Strings.isNullOrEmpty(zone));
     return String.format("%s (%s)", name, zone);
   }
 
+
+  /**
+   * Only used for mocking the {@link com.google.jenkins.plugins.k8sengine.client.ContainerClient}.
+   * Constructs a {@link Cluster} from the given nameAndZone value.
+   * @param nameAndZone A non-null, non-empty String of the form "name (zone)"
+   * @return A cluster with the name and zone properties from the provided nameAndZone.
+   */
   @VisibleForTesting
-  public static Cluster fromNameAndZone(String nameAndZone) {
+  static Cluster fromNameAndZone(String nameAndZone) {
     Preconditions.checkArgument(!Strings.isNullOrEmpty(nameAndZone));
     String[] values = valuesFromNameAndZone(nameAndZone);
     return new Cluster().setName(values[0]).setZone(values[1]);
   }
 
-  public static String[] valuesFromNameAndZone(String nameAndZone) {
+  /**
+   * Extracts the individual values from a combined nameAndZone String.
+   * @param nameAndZone A non-null, non-empty String of the form "name (zone)"
+   * @return The String array {name, zone} from the provided value.
+   */
+  static String[] valuesFromNameAndZone(String nameAndZone) {
     Preconditions.checkArgument(!Strings.isNullOrEmpty(nameAndZone));
     String[] clusters = nameAndZone.split(" [(]");
     if (clusters.length != 2) {
