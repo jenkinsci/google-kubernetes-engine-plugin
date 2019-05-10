@@ -69,6 +69,7 @@ import org.kohsuke.stapler.QueryParameter;
 
 /** Provides a build step for publishing build artifacts to a Kubernetes cluster running on GKE. */
 public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep, Serializable {
+  public static final long serialVersionUID = 333L;
   private static final Logger LOGGER = Logger.getLogger(KubernetesEngineBuilder.class.getName());
   static final String EMPTY_NAME = "- none -";
   static final String EMPTY_VALUE = "";
@@ -120,8 +121,9 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
 
   @DataBoundSetter
   public void setZone(String zone) {
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(zone));
-    this.zone = zone;
+    if (!Strings.isNullOrEmpty(zone)) {
+      this.zone = zone;
+    }
   }
 
   public String getClusterName() {
@@ -132,6 +134,18 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
   public void setClusterName(String clusterName) {
     Preconditions.checkArgument(!Strings.isNullOrEmpty(clusterName));
     this.clusterName = clusterName;
+  }
+
+  public String getCluster() {
+    return ClusterUtil.toNameAndZone(this.clusterName, this.zone);
+  }
+
+  @DataBoundSetter
+  public void setCluster(String cluster) {
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(cluster));
+    String[] values = ClusterUtil.valuesFromNameAndZone(cluster);
+    setClusterName(values[0]);
+    setZone(values[1]);
   }
 
   public String getNamespace() {
@@ -476,7 +490,11 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
         }
 
         zones.forEach(z -> items.add(z.getName()));
-        selectOption(items, zone);
+        if (Strings.isNullOrEmpty(zone)) {
+          items.get(0).selected = true;
+        } else {
+          selectOption(items, zone);
+        }
         return items;
       } catch (IOException ioe) {
         LOGGER.log(Level.SEVERE, Messages.KubernetesEngineBuilder_ZoneFillError(), ioe);
@@ -491,8 +509,8 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
         @QueryParameter("zone") final String zone,
         @QueryParameter("credentialsId") final String credentialsId,
         @QueryParameter("projectId") final String projectId) {
-      if (Strings.isNullOrEmpty(credentialsId) && Strings.isNullOrEmpty(zone)) {
-        return FormValidation.error(Messages.KubernetesEngineBuilder_ZoneRequired());
+      if (Strings.isNullOrEmpty(zone)) {
+        return FormValidation.ok();
       } else if (Strings.isNullOrEmpty(credentialsId)) {
         return FormValidation.error(Messages.KubernetesEngineBuilder_ZoneCredentialIDRequired());
       }
@@ -504,18 +522,13 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
         return FormValidation.error(Messages.KubernetesEngineBuilder_CredentialAuthFailed());
       }
 
-      if (Strings.isNullOrEmpty(projectId) && Strings.isNullOrEmpty(zone)) {
-        return FormValidation.error(Messages.KubernetesEngineBuilder_ZoneRequired());
-      } else if (Strings.isNullOrEmpty(projectId)) {
+      if (Strings.isNullOrEmpty(projectId)) {
         return FormValidation.error(Messages.KubernetesEngineBuilder_ZoneProjectIDRequired());
       }
 
       try {
         ComputeClient compute = clientFactory.computeClient();
         List<Zone> zones = compute.getZones(projectId);
-        if (Strings.isNullOrEmpty(zone)) {
-          return FormValidation.error(Messages.KubernetesEngineBuilder_ZoneRequired());
-        }
 
         Optional<Zone> matchingZone =
             zones.stream().filter(z -> zone.equalsIgnoreCase(z.getName())).findFirst();
@@ -529,17 +542,15 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
       return FormValidation.ok();
     }
 
-    public ListBoxModel doFillClusterNameItems(
+    public ListBoxModel doFillClusterItems(
         @AncestorInPath Jenkins context,
-        @QueryParameter("clusterName") final String clusterName,
+        @QueryParameter("cluster") final String cluster,
         @QueryParameter("credentialsId") final String credentialsId,
         @QueryParameter("projectId") final String projectId,
         @QueryParameter("zone") final String zone) {
       ListBoxModel items = new ListBoxModel();
       items.add(EMPTY_NAME, EMPTY_VALUE);
-      if (Strings.isNullOrEmpty(credentialsId)
-          || Strings.isNullOrEmpty(projectId)
-          || Strings.isNullOrEmpty(zone)) {
+      if (Strings.isNullOrEmpty(credentialsId) || Strings.isNullOrEmpty(projectId)) {
         return items;
       }
 
@@ -561,8 +572,8 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
           return items;
         }
 
-        clusters.forEach(c -> items.add(c.getName()));
-        selectOption(items, clusterName);
+        clusters.forEach(c -> items.add(ClusterUtil.toNameAndZone(c)));
+        selectOption(items, cluster);
         return items;
       } catch (IOException ioe) {
         LOGGER.log(Level.SEVERE, Messages.KubernetesEngineBuilder_ClusterFillError(), ioe);
@@ -572,13 +583,13 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
       }
     }
 
-    public FormValidation doCheckClusterName(
+    public FormValidation doCheckCluster(
         @AncestorInPath Jenkins context,
-        @QueryParameter("clusterName") final String clusterName,
+        @QueryParameter("cluster") final String cluster,
         @QueryParameter("credentialsId") final String credentialsId,
         @QueryParameter("projectId") final String projectId,
         @QueryParameter("zone") final String zone) {
-      if (Strings.isNullOrEmpty(credentialsId) && Strings.isNullOrEmpty(clusterName)) {
+      if (Strings.isNullOrEmpty(credentialsId) && Strings.isNullOrEmpty(cluster)) {
         return FormValidation.error(Messages.KubernetesEngineBuilder_ClusterRequired());
       } else if (Strings.isNullOrEmpty(credentialsId)) {
         return FormValidation.error(Messages.KubernetesEngineBuilder_ClusterCredentialIDRequired());
@@ -591,26 +602,23 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
         return FormValidation.error(Messages.KubernetesEngineBuilder_CredentialAuthFailed());
       }
 
-      if ((Strings.isNullOrEmpty(projectId) || Strings.isNullOrEmpty(zone))
-          && Strings.isNullOrEmpty(clusterName)) {
+      if (Strings.isNullOrEmpty(projectId) && Strings.isNullOrEmpty(cluster)) {
         return FormValidation.error(Messages.KubernetesEngineBuilder_ClusterRequired());
       } else if (Strings.isNullOrEmpty(projectId)) {
         return FormValidation.error(Messages.KubernetesEngineBuilder_ClusterProjectIDRequired());
-      } else if (Strings.isNullOrEmpty(zone)) {
-        return FormValidation.error(Messages.KubernetesEngineBuilder_ClusterZoneRequired());
       }
 
       try {
         ContainerClient client = clientFactory.containerClient();
         List<Cluster> clusters = client.listClusters(projectId, zone);
-        if (Strings.isNullOrEmpty(clusterName)) {
+        if (Strings.isNullOrEmpty(cluster)) {
           return FormValidation.error(Messages.KubernetesEngineBuilder_ClusterRequired());
         } else if (clusters.size() == 0) {
           return FormValidation.error(Messages.KubernetesEngineBuilder_NoClusterInProjectZone());
         }
-        Optional<Cluster> cluster =
-            clusters.stream().filter(c -> clusterName.equals(c.getName())).findFirst();
-        if (!cluster.isPresent()) {
+        Optional<Cluster> clusterOption =
+            clusters.stream().filter(c -> cluster.equals(ClusterUtil.toNameAndZone(c))).findFirst();
+        if (!clusterOption.isPresent()) {
           return FormValidation.error(Messages.KubernetesEngineBuilder_ClusterNotInProjectZone());
         }
       } catch (IOException ioe) {

@@ -30,6 +30,7 @@ import java.util.List;
  *     Engine</a>
  */
 public class ContainerClient {
+  private static final String ZONE_WILDCARD = "-";
   private final Container container;
 
   /**
@@ -68,13 +69,25 @@ public class ContainerClient {
    */
   public List<Cluster> listClusters(String projectId, String zone) throws IOException {
     Preconditions.checkArgument(!Strings.isNullOrEmpty(projectId));
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(zone));
     List<Cluster> clusters =
-        container.projects().zones().clusters().list(projectId, zone).execute().getClusters();
+        container
+            .projects()
+            .zones()
+            .clusters()
+            .list(projectId, toFilter(zone))
+            .execute()
+            .getClusters();
     if (clusters == null) {
       return ImmutableList.of();
     }
     clusters.sort(Comparator.comparing(Cluster::getName));
     return ImmutableList.copyOf(clusters);
+  }
+
+  private static String toFilter(String zone) {
+    if (Strings.isNullOrEmpty(zone)) {
+      return ZONE_WILDCARD;
+    }
+    return zone;
   }
 }
