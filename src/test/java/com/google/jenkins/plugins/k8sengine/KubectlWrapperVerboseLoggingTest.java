@@ -11,7 +11,7 @@ import org.junit.runner.RunWith;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
-/** Tests for verifying the use of the verboseLogging flag in {@link KubectlWrapper}.*/
+/** Tests for verifying the use of the verboseLogging flag in {@link KubectlWrapper}. */
 @RunWith(MockitoJUnitRunner.class)
 public class KubectlWrapperVerboseLoggingTest {
   @Test(expected = IOException.class)
@@ -25,7 +25,7 @@ public class KubectlWrapperVerboseLoggingTest {
                 .namespace("")
                 .verboseLogging(false)
                 .build());
-    kubectlWrapper.runKubectlCommand("apply", ImmutableList.of( "-f", "manifest.yaml"));
+    kubectlWrapper.runKubectlCommand("apply", ImmutableList.of("-f", "manifest.yaml"));
   }
 
   @Test
@@ -39,7 +39,7 @@ public class KubectlWrapperVerboseLoggingTest {
                 .namespace("")
                 .verboseLogging(true)
                 .build());
-    kubectlWrapper.runKubectlCommand("apply", ImmutableList.of( "-f", "manifest.yaml"));
+    kubectlWrapper.runKubectlCommand("apply", ImmutableList.of("-f", "manifest.yaml"));
   }
 
   private Launcher setUpLauncher() throws IOException, InterruptedException {
@@ -69,7 +69,7 @@ public class KubectlWrapperVerboseLoggingTest {
     Mockito.when(kubeConfigFile.getRemote()).thenReturn("remote");
     Mockito.when(kubeConfigFile.delete()).thenReturn(true);
     FilePath workspace = Mockito.mock(FilePath.class);
-    Mockito.when(workspace.createTempFile(".kube","config")).thenReturn(kubeConfigFile);
+    Mockito.when(workspace.createTempFile(".kube", "config")).thenReturn(kubeConfigFile);
     Mockito.when(workspace.child("remote")).thenReturn(kubeConfigFile);
     return workspace;
   }
