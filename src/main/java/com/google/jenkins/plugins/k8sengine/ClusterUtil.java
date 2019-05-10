@@ -26,7 +26,7 @@ class ClusterUtil {
   /**
    * Given a GKE {@link Cluster} return a String representation containing the name and zone.
    *
-   * @param cluster The non-null {@link Cluster} object.
+   * @param cluster The {@link Cluster} object to extract values from.
    * @return A String of the form "name (zone)" based on the given cluster's properties.
    */
   static String toNameAndZone(Cluster cluster) {
@@ -37,8 +37,8 @@ class ClusterUtil {
   /**
    * Given a name and zone for a cluster, return the combined String representation.
    *
-   * @param name A non-null, non-empty cluster name
-   * @param zone A non-null, non-empty GCP resource zone.
+   * @param name A non-empty cluster name
+   * @param zone A non-empty GCP resource zone.
    * @return A String of the form "name (zone)".
    */
   static String toNameAndZone(String name, String zone) {
@@ -51,7 +51,7 @@ class ClusterUtil {
    * Only used for mocking the {@link com.google.jenkins.plugins.k8sengine.client.ContainerClient}.
    * Constructs a {@link Cluster} from the given nameAndZone value.
    *
-   * @param nameAndZone A non-null, non-empty String of the form "name (zone)"
+   * @param nameAndZone A non-empty String of the form "name (zone)"
    * @return A cluster with the name and zone properties from the provided nameAndZone.
    */
   @VisibleForTesting
@@ -64,7 +64,7 @@ class ClusterUtil {
   /**
    * Extracts the individual values from a combined nameAndZone String.
    *
-   * @param nameAndZone A non-null, non-empty String of the form "name (zone)"
+   * @param nameAndZone A non-empty String of the form "name (zone)"
    * @return The String array {name, zone} from the provided value.
    */
   static String[] valuesFromNameAndZone(String nameAndZone) {
