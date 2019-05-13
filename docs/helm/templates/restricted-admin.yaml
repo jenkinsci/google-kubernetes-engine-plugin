@@ -1,0 +1,29 @@
+#
+# A set of objects for configuring namespaces
+# and a deployer user that is given the robot-deployer ClusterRole.
+
+{{- if .Values.Permissions }}
+  {{- range $index, $namespace:= .Values.Permissions}}
+apiVersion: v1
+kind: Namespace
+metadata:
+    name: {{ $namespace.NamespaceName }}
+---
+    {{- if $namespace.GCPServiceAccount }}
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: RoleBinding
+metadata:
+  name: {{ $namespace.NamespaceName }}-robot-deployer
+  namespace: {{ $namespace.NamespaceName }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: robot-deployer
+subjects:
+- apiGroup: rbac.authorization.k8s.io
+  kind: User
+  name: {{ $namespace.GCPServiceAccount }}
+    {{- end }}
+---
+  {{- end }}
+{{- end }}

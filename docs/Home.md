@@ -119,6 +119,17 @@ The following permissions will grant you enough permissions to deploy to your cl
     ```bash
     kubectl create -f PATH_TO_YOUR_ROLE_BINDING_YAML
     ```
+##### Automation Option
+For the more restrictive permissions option, we offer an example automated solution for configuring RBAC permissions.
+1. Create your service account with a custom IAM role using the following terraform [file](rbac/example.tf) and run:
+    ```bash
+    terraform apply #assuming terraform init was already run
+    ```
+1. Use the templates in the following helm [chart](helm/) and run:
+    ```bash
+    helm install --name YOUR_HELM_CHART . -f rbac-values.yaml
+    ```
+
 
 ##### References:
 * [Google Container Engine RBAC docs](https://cloud.google.com/kubernetes-engine/docs/how-to/role-based-access-control)
