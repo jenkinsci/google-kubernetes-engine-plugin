@@ -206,7 +206,7 @@ public class KubernetesEngineBuilderClusterTest {
     FormValidation result =
         descriptor.doCheckCluster(jenkins, TEST_CLUSTER, TEST_CREDENTIALS_ID, TEST_PROJECT_ID);
     assertNotNull(result);
-    assertEquals(Messages.KubernetesEngineBuilder_NoClusterInProjectZone(), result.getMessage());
+    assertEquals(Messages.KubernetesEngineBuilder_NoClusterInProject(), result.getMessage());
   }
 
   @Test

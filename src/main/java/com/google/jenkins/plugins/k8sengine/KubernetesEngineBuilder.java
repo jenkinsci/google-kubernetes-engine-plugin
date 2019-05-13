@@ -527,12 +527,12 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
         if (Strings.isNullOrEmpty(cluster)) {
           return FormValidation.error(Messages.KubernetesEngineBuilder_ClusterRequired());
         } else if (clusters.size() == 0) {
-          return FormValidation.error(Messages.KubernetesEngineBuilder_NoClusterInProjectZone());
+          return FormValidation.error(Messages.KubernetesEngineBuilder_NoClusterInProject());
         }
         Optional<Cluster> clusterOption =
             clusters.stream().filter(c -> cluster.equals(ClusterUtil.toNameAndZone(c))).findFirst();
         if (!clusterOption.isPresent()) {
-          return FormValidation.error(Messages.KubernetesEngineBuilder_ClusterNotInProjectZone());
+          return FormValidation.error(Messages.KubernetesEngineBuilder_ClusterNotInProject());
         }
       } catch (IOException ioe) {
         return FormValidation.error(Messages.KubernetesEngineBuilder_ClusterVerificationError());
