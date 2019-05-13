@@ -60,21 +60,20 @@ public class ContainerClient {
   }
 
   /**
-   * Retrieves a list of {@link Cluster} objects from the container client.
+   * Retrieves a list of all {@link Cluster} objects for the project from the container client.
    *
-   * @param projectId The ID of the project the clusters resides.
-   * @param zone The location of the clusters.
+   * @param projectId The ID of the project the clusters reside in.
    * @return The retrieved list of {@link Cluster} objects.
    * @throws IOException When an error occurred attempting to get the cluster.
    */
-  public List<Cluster> listClusters(String projectId, String zone) throws IOException {
+  public List<Cluster> listAllClusters(String projectId) throws IOException {
     Preconditions.checkArgument(!Strings.isNullOrEmpty(projectId));
     List<Cluster> clusters =
         container
             .projects()
             .zones()
             .clusters()
-            .list(projectId, toFilter(zone))
+            .list(projectId, ZONE_WILDCARD)
             .execute()
             .getClusters();
     if (clusters == null) {
@@ -82,12 +81,5 @@ public class ContainerClient {
     }
     clusters.sort(Comparator.comparing(Cluster::getName));
     return ImmutableList.copyOf(clusters);
-  }
-
-  private static String toFilter(String zone) {
-    if (Strings.isNullOrEmpty(zone)) {
-      return ZONE_WILDCARD;
-    }
-    return zone;
   }
 }

@@ -91,76 +91,58 @@ public class ContainerClientTest {
   }
 
   @Test(expected = IllegalArgumentException.class)
-  public void testListClustersErrorWithNullProjectId() throws IOException {
+  public void testListAllClustersErrorWithNullProjectId() throws IOException {
     ContainerClient containerClient = setUpListClient(null, null);
-    containerClient.listClusters(null, TEST_ZONE);
-  }
-
-  @Test
-  public void testListClustersErrorWithNullZone() throws IOException {
-    ContainerClient containerClient = setUpListClient(ImmutableList.of(TEST_CLUSTER), null);
-    List<Cluster> expected = initClusterList(ImmutableList.of(TEST_CLUSTER));
-    List<Cluster> response = containerClient.listClusters(TEST_PROJECT_ID, null);
-    assertNotNull(response);
-    assertEquals(expected, response);
+    containerClient.listAllClusters(null);
   }
 
   @Test(expected = IllegalArgumentException.class)
-  public void testListClustersErrorWithEmptyProjectId() throws IOException {
+  public void testListAllClustersErrorWithEmptyProjectId() throws IOException {
     ContainerClient containerClient = setUpListClient(null, null);
-    containerClient.listClusters("", TEST_ZONE);
+    containerClient.listAllClusters("");
   }
 
   @Test
-  public void testListClustersWithEmptyZoneClustersExist() throws IOException {
+  public void testListAllClustersWithValidInputsWhenClustersExist() throws IOException {
     ContainerClient containerClient = setUpListClient(ImmutableList.of(TEST_CLUSTER), null);
     List<Cluster> expected = initClusterList(ImmutableList.of(TEST_CLUSTER));
-    List<Cluster> response = containerClient.listClusters(TEST_PROJECT_ID, "");
+    List<Cluster> response = containerClient.listAllClusters(TEST_PROJECT_ID);
     assertNotNull(response);
     assertEquals(expected, response);
   }
 
   @Test
-  public void testListClustersWithValidInputsWhenClustersExist() throws IOException {
-    ContainerClient containerClient = setUpListClient(ImmutableList.of(TEST_CLUSTER), null);
-    List<Cluster> expected = initClusterList(ImmutableList.of(TEST_CLUSTER));
-    List<Cluster> response = containerClient.listClusters(TEST_PROJECT_ID, TEST_ZONE);
-    assertNotNull(response);
-    assertEquals(expected, response);
-  }
-
-  @Test
-  public void testListClustersSortedWithMultipleClusters() throws IOException {
+  public void testListAllClustersSortedWithMultipleClusters() throws IOException {
     ContainerClient containerClient =
         setUpListClient(ImmutableList.of(TEST_CLUSTER, OTHER_CLUSTER), null);
     List<Cluster> expected = initClusterList(ImmutableList.of(OTHER_CLUSTER, TEST_CLUSTER));
-    List<Cluster> response = containerClient.listClusters(TEST_PROJECT_ID, TEST_ZONE);
+    List<Cluster> response = containerClient.listAllClusters(TEST_PROJECT_ID);
     assertNotNull(response);
     assertEquals(expected, response);
   }
 
   @Test
-  public void testListClustersWithValidInputsWhenClustersIsNull() throws IOException {
+  public void testListAllClustersWithValidInputsWhenClustersIsNull() throws IOException {
     ContainerClient containerClient = setUpListClient(null, null);
     List<Cluster> expected = ImmutableList.of();
-    List<Cluster> response = containerClient.listClusters(TEST_PROJECT_ID, TEST_ZONE);
+    List<Cluster> response = containerClient.listAllClusters(TEST_PROJECT_ID);
     assertNotNull(response);
     assertEquals(expected, response);
   }
 
   @Test
-  public void testListClustersEmptyWithValidProjectWithNoClusters() throws IOException {
+  public void testListAllClustersEmptyWithValidProjectWithNoClusters() throws IOException {
     ContainerClient containerClient = setUpListClient(ImmutableList.of(), null);
     List<Cluster> expected = ImmutableList.of();
-    List<Cluster> response = containerClient.listClusters(TEST_PROJECT_ID, TEST_ZONE);
+    List<Cluster> response = containerClient.listAllClusters(TEST_PROJECT_ID);
     assertNotNull(response);
     assertEquals(expected, response);
   }
 
   @Test(expected = IOException.class)
-  public void testListClustersThrowsErrorWithInvalidProject() throws IOException {
+  public void testListAllClustersThrowsErrorWithInvalidProject() throws IOException {
     ContainerClient containerClient = setUpListClient(null, new IOException());
-    containerClient.listClusters(TEST_PROJECT_ID, TEST_ZONE);
+    containerClient.listAllClusters(TEST_PROJECT_ID);
   }
 
   private static List<Cluster> initClusterList(List<String> clusterNames) {

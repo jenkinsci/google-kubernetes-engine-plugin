@@ -23,12 +23,10 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 
 import com.google.api.services.cloudresourcemanager.model.Project;
-import com.google.api.services.compute.model.Zone;
 import com.google.common.collect.ImmutableList;
 import com.google.jenkins.plugins.k8sengine.KubernetesEngineBuilder.DescriptorImpl;
 import com.google.jenkins.plugins.k8sengine.client.ClientFactory;
 import com.google.jenkins.plugins.k8sengine.client.CloudResourceManagerClient;
-import com.google.jenkins.plugins.k8sengine.client.ComputeClient;
 import hudson.AbortException;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
@@ -262,182 +260,6 @@ public class KubernetesEngineBuilderTest {
   }
 
   @Test
-  public void testDoFillZoneItemsEmptyWithEmptyProjectId() throws IOException {
-    DescriptorImpl descriptor = setUpZoneDescriptor(ImmutableList.of(), null, null);
-    ListBoxModel expected =
-        initExpected(ImmutableList.of(EMPTY_NAME), ImmutableList.of(EMPTY_VALUE));
-    ListBoxModel result = descriptor.doFillZoneItems(jenkins, null, TEST_CREDENTIALS_ID, null);
-    assertNotNull(result);
-    assertListBoxModelEquals(expected, result);
-  }
-
-  @Test
-  public void testDoFillZoneItemsEmptyWithEmptyCredentialsId() throws IOException {
-    DescriptorImpl descriptor = setUpZoneDescriptor(ImmutableList.of(), null, null);
-    ListBoxModel expected =
-        initExpected(ImmutableList.of(EMPTY_NAME), ImmutableList.of(EMPTY_VALUE));
-    ListBoxModel result = descriptor.doFillZoneItems(jenkins, null, null, TEST_PROJECT_ID);
-    assertNotNull(result);
-    assertListBoxModelEquals(expected, result);
-  }
-
-  @Test
-  public void testDoFillZoneItemsWithValidArguments() throws IOException {
-    DescriptorImpl descriptor =
-        setUpZoneDescriptor(ImmutableList.of(TEST_ZONE_A, TEST_ZONE_B), null, null);
-    ListBoxModel expected =
-        initExpected(
-            ImmutableList.of(EMPTY_NAME, TEST_ZONE_A, TEST_ZONE_B),
-            ImmutableList.of(EMPTY_VALUE, TEST_ZONE_A, TEST_ZONE_B));
-    ListBoxModel result =
-        descriptor.doFillZoneItems(jenkins, null, TEST_CREDENTIALS_ID, TEST_PROJECT_ID);
-    assertNotNull(result);
-    assertListBoxModelEquals(expected, result);
-    assertValueSelected(result, EMPTY_VALUE);
-  }
-
-  @Test
-  public void testDoFillZoneItemsWithValidArgumentsAndPreviousValue() throws IOException {
-    DescriptorImpl descriptor =
-        setUpZoneDescriptor(ImmutableList.of(TEST_ZONE_A, TEST_ZONE_B), null, null);
-    ListBoxModel expected =
-        initExpected(
-            ImmutableList.of(EMPTY_NAME, TEST_ZONE_A, TEST_ZONE_B),
-            ImmutableList.of(EMPTY_VALUE, TEST_ZONE_A, TEST_ZONE_B));
-    ListBoxModel result =
-        descriptor.doFillZoneItems(jenkins, TEST_ZONE_B, TEST_CREDENTIALS_ID, TEST_PROJECT_ID);
-    assertNotNull(result);
-    assertListBoxModelEquals(expected, result);
-    assertValueSelected(result, TEST_ZONE_B);
-  }
-
-  @Test
-  public void testDoFillZoneItemsEmptyWithValidArgumentsNoZones() throws IOException {
-    DescriptorImpl descriptor = setUpZoneDescriptor(ImmutableList.of(), null, null);
-    ListBoxModel expected =
-        initExpected(ImmutableList.of(EMPTY_NAME), ImmutableList.of(EMPTY_VALUE));
-    ListBoxModel result =
-        descriptor.doFillZoneItems(jenkins, null, TEST_CREDENTIALS_ID, TEST_PROJECT_ID);
-    assertNotNull(result);
-    assertListBoxModelEquals(expected, result);
-  }
-
-  @Test
-  public void testDoFillZoneItemsErrorMessageWithAbortException() throws IOException {
-    DescriptorImpl descriptor = setUpZoneDescriptor(ImmutableList.of(), new AbortException(), null);
-    ListBoxModel expected =
-        initExpected(
-            ImmutableList.of(Messages.KubernetesEngineBuilder_CredentialAuthFailed()),
-            ImmutableList.of(EMPTY_VALUE));
-    ListBoxModel result =
-        descriptor.doFillZoneItems(jenkins, null, TEST_CREDENTIALS_ID, TEST_PROJECT_ID);
-    assertNotNull(result);
-    assertListBoxModelEquals(expected, result);
-  }
-
-  @Test
-  public void testDoFillZoneItemsErrorMessageWithIOException() throws IOException {
-    DescriptorImpl descriptor = setUpZoneDescriptor(ImmutableList.of(), null, new IOException());
-    ListBoxModel expected =
-        initExpected(
-            ImmutableList.of(Messages.KubernetesEngineBuilder_ZoneFillError()),
-            ImmutableList.of(EMPTY_VALUE));
-    ListBoxModel result =
-        descriptor.doFillZoneItems(jenkins, null, TEST_CREDENTIALS_ID, TEST_PROJECT_ID);
-    assertNotNull(result);
-    assertListBoxModelEquals(expected, result);
-  }
-
-  @Test
-  public void testDoCheckZoneOkWithEmptyZone() throws IOException {
-    DescriptorImpl descriptor = setUpZoneDescriptor(ImmutableList.of(), null, null);
-    FormValidation result =
-        descriptor.doCheckZone(jenkins, null, TEST_CREDENTIALS_ID, TEST_PROJECT_ID);
-    assertNotNull(result);
-    assertEquals(FormValidation.ok(), result);
-  }
-
-  @Test
-  public void testDoCheckZoneMessageWithEmptyProjectId() throws IOException {
-    DescriptorImpl descriptor = setUpZoneDescriptor(ImmutableList.of(), null, null);
-    FormValidation result = descriptor.doCheckZone(jenkins, TEST_ZONE_A, TEST_CREDENTIALS_ID, null);
-    assertNotNull(result);
-    assertEquals(Messages.KubernetesEngineBuilder_ZoneProjectIDRequired(), result.getMessage());
-  }
-
-  @Test
-  public void testDoCheckZoneMessageWithEmptyCredentialsId() throws IOException {
-    DescriptorImpl descriptor = setUpZoneDescriptor(ImmutableList.of(), null, null);
-    FormValidation result = descriptor.doCheckZone(jenkins, TEST_ZONE_A, null, TEST_PROJECT_ID);
-    assertNotNull(result);
-    assertEquals(Messages.KubernetesEngineBuilder_ZoneCredentialIDRequired(), result.getMessage());
-  }
-
-  @Test
-  public void testDoCheckZoneMessageWithNoAvailableZones() throws IOException {
-    DescriptorImpl descriptor = setUpZoneDescriptor(ImmutableList.of(), null, null);
-    FormValidation result =
-        descriptor.doCheckZone(jenkins, TEST_ZONE_A, TEST_CREDENTIALS_ID, TEST_PROJECT_ID);
-    assertNotNull(result);
-    assertEquals(Messages.KubernetesEngineBuilder_ZoneNotInProject(), result.getMessage());
-  }
-
-  @Test
-  public void testDoCheckZoneMessageWithNonMatchingZones() throws IOException {
-    DescriptorImpl descriptor = setUpZoneDescriptor(ImmutableList.of(TEST_ZONE_B), null, null);
-    FormValidation result =
-        descriptor.doCheckZone(jenkins, TEST_ZONE_A, TEST_CREDENTIALS_ID, OTHER_PROJECT_ID);
-    assertNotNull(result);
-    assertEquals(Messages.KubernetesEngineBuilder_ZoneNotInProject(), result.getMessage());
-  }
-
-  @Test
-  public void testDoCheckZoneMessageWithAbortException() throws IOException {
-    DescriptorImpl descriptor = setUpZoneDescriptor(ImmutableList.of(), new AbortException(), null);
-    FormValidation result =
-        descriptor.doCheckZone(jenkins, TEST_ZONE_A, TEST_CREDENTIALS_ID, TEST_PROJECT_ID);
-    assertNotNull(result);
-    assertEquals(Messages.KubernetesEngineBuilder_CredentialAuthFailed(), result.getMessage());
-  }
-
-  @Test
-  public void testDoCheckZoneMessageWithIOException() throws IOException {
-    DescriptorImpl descriptor = setUpZoneDescriptor(ImmutableList.of(), null, new IOException());
-    FormValidation result =
-        descriptor.doCheckZone(jenkins, TEST_ZONE_A, TEST_CREDENTIALS_ID, TEST_PROJECT_ID);
-    assertNotNull(result);
-    assertEquals(Messages.KubernetesEngineBuilder_ZoneVerificationError(), result.getMessage());
-  }
-
-  @Test
-  public void testDoCheckZoneOkWithAbortExceptionAndEmptyZone() throws IOException {
-    DescriptorImpl descriptor = setUpZoneDescriptor(ImmutableList.of(), new AbortException(), null);
-    FormValidation result =
-        descriptor.doCheckZone(jenkins, null, TEST_CREDENTIALS_ID, TEST_PROJECT_ID);
-    assertNotNull(result);
-    assertEquals(FormValidation.ok(), result);
-  }
-
-  @Test
-  public void testDoCheckZoneOkWithIOExceptionAndEmptyZone() throws IOException {
-    DescriptorImpl descriptor = setUpZoneDescriptor(ImmutableList.of(), null, new IOException());
-    FormValidation result =
-        descriptor.doCheckZone(jenkins, null, TEST_CREDENTIALS_ID, TEST_PROJECT_ID);
-    assertNotNull(result);
-    assertEquals(FormValidation.ok(), result);
-  }
-
-  @Test
-  public void testDoCheckZoneOKWithMatchingZones() throws IOException {
-    DescriptorImpl descriptor =
-        setUpZoneDescriptor(ImmutableList.of(TEST_ZONE_A, TEST_ZONE_B), null, null);
-    FormValidation result =
-        descriptor.doCheckZone(jenkins, TEST_ZONE_A, TEST_CREDENTIALS_ID, TEST_PROJECT_ID);
-    assertNotNull(result);
-    assertEquals(FormValidation.ok(), result);
-  }
-
-  @Test
   public void testDoCheckVerifyTimeoutInMinutesNAN() {
     DescriptorImpl descriptor = Mockito.spy(DescriptorImpl.class);
     FormValidation result = descriptor.doCheckVerifyTimeoutInMinutes("abc");
@@ -498,37 +320,6 @@ public class KubernetesEngineBuilderTest {
     initialProjects.forEach(p -> projects.add(new Project().setProjectId(p)));
     Mockito.when(cloudResourceManagerClient.getAccountProjects())
         .thenReturn(ImmutableList.copyOf(projects));
-    return descriptor;
-  }
-
-  private DescriptorImpl setUpZoneDescriptor(
-      List<String> initialZones, AbortException abortException, IOException ioException)
-      throws IOException {
-    DescriptorImpl descriptor = Mockito.spy(DescriptorImpl.class);
-
-    if (abortException != null) {
-      Mockito.doThrow(abortException)
-          .when(descriptor)
-          .getClientFactory(any(Jenkins.class), anyString());
-      return descriptor;
-    }
-
-    ClientFactory clientFactory = Mockito.mock(ClientFactory.class);
-    Mockito.doReturn(clientFactory)
-        .when(descriptor)
-        .getClientFactory(any(Jenkins.class), anyString());
-
-    ComputeClient computeClient = Mockito.mock(ComputeClient.class);
-    Mockito.when(clientFactory.computeClient()).thenReturn(computeClient);
-
-    if (ioException != null) {
-      Mockito.when(computeClient.getZones(anyString())).thenThrow(ioException);
-      return descriptor;
-    }
-
-    List<Zone> zones = new ArrayList<>();
-    initialZones.forEach(z -> zones.add(new Zone().setName(z)));
-    Mockito.when(computeClient.getZones(anyString())).thenReturn(ImmutableList.copyOf(zones));
     return descriptor;
   }
 
