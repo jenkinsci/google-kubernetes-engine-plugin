@@ -1,9 +1,16 @@
+# Set up project ID variable
+variable project {
+    type    = "string"
+    default = "{{YOUR_GCP_PROJECT_ID}}"
+}
+
 # Create the Google Cloud terraform provider
 provider "google" {
-  project = "{{YOUR_PROJECT_ID}}"
+  project = "${var.project}"
   region  = "us-central1"
   zone    = "us-central1-c"
 }
+
 # Create a custom IAM role to bind to our GCP service account
 
 # Declare a special IAM role
@@ -11,7 +18,7 @@ resource "google_project_iam_custom_role" "minimal-k8s-role" {
   role_id     = "Minimalk8sIamRole"
   title       = "Minimal IAM role for GKE access"
   description = "Bare minimum permissions to access the kubernetes API for using the Jenkins GKE plugin."
-  project = "{{YOUR_PROJECT_ID}}"
+  project = "${var.project}"
 
   permissions = [
     "compute.zones.list",
@@ -33,8 +40,8 @@ resource "google_service_account" "jenkins-gke-deployer" {
 
 # Assign the special IAM role to the service account
 resource "google_project_iam_member" "jenkins-deployer-gke-access" {
-  project = "{{YOUR_PROJECT_ID}}"
-  role    = "projects/{{YOUR_PROJECT_ID}}/roles/Minimalk8sIamRole"
+  project = "${var.project}"
+  role    = "projects/${var.project}/roles/Minimalk8sIamRole"
   member  = "serviceAccount:${google_service_account.jenkins-gke-deployer.email}"
 }
 
