@@ -1,4 +1,4 @@
-# Contains account e-mails and namespaces as needed for the different role bindings needed.
+# Contains account e-mails and namespaces as needed for the rolebinding templates.
 ClusterAdmins::
  - YOUR_GCP_LOGIN_EMAIL
 
