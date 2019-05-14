@@ -18,7 +18,7 @@ resource "google_project_iam_custom_role" "minimal-k8s-role" {
   role_id     = "Minimalk8sIamRole"
   title       = "Minimal IAM role for GKE access"
   description = "Bare minimum permissions to access the kubernetes API for using the Jenkins GKE plugin."
-  project = "${var.project}"
+  project     = "${var.project}"
 
   permissions = [
     "compute.zones.list",
