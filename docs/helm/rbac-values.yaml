@@ -2,7 +2,9 @@
 ClusterAdmins::
  - YOUR_GCP_LOGIN_EMAIL
 
-#uses example namespaces
+# Replace NamespaceName and GCPServiceAccount with your own values.
+# Add more/less NamespaceName and GCPServiceAccount pairs pertaining to your use case.
+# Following values gives GCPServiceAccount permissions to deploy to NamespaceName.
 Permissions:
  - NamespaceName: "test"
    GCPServiceAccount: "jenkins-gke-tester@YOUR_PROJECT.iam.gserviceaccount.com"

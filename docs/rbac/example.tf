@@ -1,4 +1,5 @@
 # Set up project ID variable
+# Replace {{YOUR_GCP_PROJECT_ID}} with your own project id.
 variable project {
     type    = "string"
     default = "{{YOUR_GCP_PROJECT_ID}}"
