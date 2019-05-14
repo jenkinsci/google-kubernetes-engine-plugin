@@ -19,6 +19,7 @@ package com.google.jenkins.plugins.k8sengine;
 import static com.google.jenkins.plugins.k8sengine.ITUtil.copyTestFileToDir;
 import static com.google.jenkins.plugins.k8sengine.ITUtil.dumpLog;
 import static com.google.jenkins.plugins.k8sengine.ITUtil.formatRandomName;
+import static com.google.jenkins.plugins.k8sengine.ITUtil.getLocation;
 import static com.google.jenkins.plugins.k8sengine.ITUtil.loadResource;
 import static org.junit.Assert.assertNotNull;
 
@@ -58,7 +59,7 @@ public class KubernetesEngineBuilderPipelineIT {
   private static EnvVars envVars;
   private static String clusterName;
   private static String projectId;
-  private static String testZone;
+  private static String testLocation;
   private static String credentialsId;
   private static ContainerClient client;
 
@@ -69,8 +70,7 @@ public class KubernetesEngineBuilderPipelineIT {
     projectId = System.getenv("GOOGLE_PROJECT_ID");
     assertNotNull("GOOGLE_PROJECT_ID env var must be set", projectId);
 
-    testZone = System.getenv("GOOGLE_PROJECT_ZONE");
-    assertNotNull("GOOGLE_PROJECT_ZONE env var must be set", testZone);
+    testLocation = getLocation();
 
     clusterName = System.getenv("GOOGLE_GKE_CLUSTER");
     assertNotNull("GOOGLE_GKE_CLUSTER env var must be set", clusterName);
@@ -98,7 +98,7 @@ public class KubernetesEngineBuilderPipelineIT {
     envVars.put("PROJECT_ID", projectId);
     envVars.put("CLUSTER_NAME", clusterName);
     envVars.put("CREDENTIALS_ID", credentialsId);
-    envVars.put("ZONE", testZone);
+    envVars.put("LOCATION", testLocation);
     jenkinsRule.jenkins.getGlobalNodeProperties().add(prop);
   }
 
@@ -237,7 +237,7 @@ public class KubernetesEngineBuilderPipelineIT {
       String name,
       String namespace)
       throws Exception {
-    Cluster cluster = client.getCluster(projectId, testZone, clusterName);
+    Cluster cluster = client.getCluster(projectId, testLocation, clusterName);
     KubeConfig kubeConfig =
         KubeConfig.fromCluster(projectId, cluster, CredentialsUtil.getAccessToken(credentialsId));
     KubectlWrapper kubectl =

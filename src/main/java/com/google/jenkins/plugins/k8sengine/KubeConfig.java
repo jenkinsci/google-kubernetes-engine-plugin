@@ -147,7 +147,8 @@ public class KubeConfig {
     Preconditions.checkArgument(!Strings.isNullOrEmpty(projectId));
     Preconditions.checkNotNull(cluster);
 
-    final String currentContext = contextString(projectId, cluster.getZone(), cluster.getName());
+    final String currentContext =
+        contextString(projectId, cluster.getLocation(), cluster.getName());
     return new KubeConfig.Builder()
         .currentContext(currentContext)
         .contexts(ImmutableList.<Object>of(context(currentContext)))
@@ -157,11 +158,11 @@ public class KubeConfig {
   }
 
   @VisibleForTesting
-  static String contextString(String project, String zone, String cluster) {
+  static String contextString(String project, String location, String cluster) {
     Preconditions.checkArgument(!Strings.isNullOrEmpty(project));
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(zone));
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(location));
     Preconditions.checkArgument(!Strings.isNullOrEmpty(cluster));
-    return String.format(KUBECONTEXT_FORMAT, project, zone, cluster);
+    return String.format(KUBECONTEXT_FORMAT, project, location, cluster);
   }
 
   @VisibleForTesting

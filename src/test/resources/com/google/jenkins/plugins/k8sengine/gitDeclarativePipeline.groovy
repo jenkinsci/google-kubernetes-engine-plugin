@@ -22,7 +22,7 @@ pipeline {
         }
         stage('Deploy') {
             steps{
-                step([$class: 'KubernetesEngineBuilder', projectId: env.PROJECT_ID, clusterName: env.CLUSTER_NAME, zone: env.ZONE, namespace: env.NAMESPACE, manifestPattern: env.MANIFEST_PATTERN, credentialsId: env.CREDENTIALS_ID, verifyDeployments: true])
+                step([$class: 'KubernetesEngineBuilder', projectId: env.PROJECT_ID, clusterName: env.CLUSTER_NAME, location: env.LOCATION, namespace: env.NAMESPACE, manifestPattern: env.MANIFEST_PATTERN, credentialsId: env.CREDENTIALS_ID, verifyDeployments: true])
             }
         }
     }

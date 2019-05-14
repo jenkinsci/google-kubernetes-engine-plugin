@@ -30,7 +30,7 @@ import java.util.List;
  *     Engine</a>
  */
 public class ContainerClient {
-  private static final String ZONE_WILDCARD = "-";
+  private static final String LOCATION_WILDCARD = "-";
   private final Container container;
 
   /**
@@ -47,16 +47,16 @@ public class ContainerClient {
    * Retrieves a {@link Cluster} from the container client.
    *
    * @param projectId The ID of the project the cluster resides in.
-   * @param zone The location of the cluster.
+   * @param location The location of the cluster.
    * @param cluster The name of the cluster.
    * @return The retrieved {@link Cluster}.
    * @throws IOException When an error occurred attempting to get the cluster.
    */
-  public Cluster getCluster(String projectId, String zone, String cluster) throws IOException {
+  public Cluster getCluster(String projectId, String location, String cluster) throws IOException {
     Preconditions.checkArgument(!Strings.isNullOrEmpty(projectId));
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(zone));
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(location));
     Preconditions.checkArgument(!Strings.isNullOrEmpty(cluster));
-    return container.projects().zones().clusters().get(projectId, zone, cluster).execute();
+    return container.projects().zones().clusters().get(projectId, location, cluster).execute();
   }
 
   /**
@@ -73,7 +73,7 @@ public class ContainerClient {
             .projects()
             .zones()
             .clusters()
-            .list(projectId, ZONE_WILDCARD)
+            .list(projectId, LOCATION_WILDCARD)
             .execute()
             .getClusters();
     if (clusters == null) {

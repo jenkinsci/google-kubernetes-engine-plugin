@@ -20,6 +20,7 @@ import static com.google.jenkins.plugins.k8sengine.ITUtil.copyTestFileToDir;
 import static com.google.jenkins.plugins.k8sengine.ITUtil.createTestWorkspace;
 import static com.google.jenkins.plugins.k8sengine.ITUtil.dumpLog;
 import static com.google.jenkins.plugins.k8sengine.ITUtil.formatRandomName;
+import static com.google.jenkins.plugins.k8sengine.ITUtil.getLocation;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
@@ -62,7 +63,7 @@ public class KubernetesEngineBuilderIT {
 
   private static String clusterName;
   private static String projectId;
-  private static String testZone;
+  private static String testLocation;
   private static String credentialsId;
   private static ContainerClient client;
 
@@ -73,8 +74,7 @@ public class KubernetesEngineBuilderIT {
     projectId = System.getenv("GOOGLE_PROJECT_ID");
     assertNotNull("GOOGLE_PROJECT_ID env var must be set", projectId);
 
-    testZone = System.getenv("GOOGLE_PROJECT_ZONE");
-    assertNotNull("GOOGLE_PROJECT_ZONE env var must be set", testZone);
+    testLocation = getLocation();
 
     clusterName = System.getenv("GOOGLE_GKE_CLUSTER");
     assertNotNull("GOOGLE_GKE_CLUSTER env var must be set", clusterName);
@@ -277,7 +277,7 @@ public class KubernetesEngineBuilderIT {
     gkeBuilder.setProjectId(projectId);
     gkeBuilder.setClusterName(clusterName);
     gkeBuilder.setCredentialsId(credentialsId);
-    gkeBuilder.setZone(testZone);
+    gkeBuilder.setLocation(testLocation);
     gkeBuilder.setNamespace("");
     gkeBuilder.setManifestPattern(TEST_DEPLOYMENT_MANIFEST);
     gkeBuilder.setVerifyDeployments(true);

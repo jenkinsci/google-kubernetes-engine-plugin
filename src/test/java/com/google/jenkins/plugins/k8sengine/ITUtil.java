@@ -16,6 +16,8 @@
 
 package com.google.jenkins.plugins.k8sengine;
 
+import static org.junit.Assert.assertNotNull;
+
 import com.google.common.io.ByteStreams;
 import hudson.FilePath;
 import hudson.model.Project;
@@ -97,5 +99,19 @@ public class ITUtil {
     while ((line = reader.readLine()) != null) {
       logger.info(line);
     }
+  }
+
+  /**
+   * Retrieves the location set through environment variables
+   *
+   * @return A Google Compute Resource Region (us-west1) or Zone (us-west1-a) string
+   */
+  static String getLocation() {
+    String location = System.getenv("GOOGLE_PROJECT_LOCATION");
+    if (location == null) {
+      location = System.getenv("GOOGLE_PROJECT_ZONE");
+    }
+    assertNotNull("GOOGLE_PROJECT_LOCATION env var must be set", location);
+    return location;
   }
 }

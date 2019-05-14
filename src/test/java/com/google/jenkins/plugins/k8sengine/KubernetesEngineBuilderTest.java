@@ -44,8 +44,6 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
 public class KubernetesEngineBuilderTest {
-  static final String TEST_ZONE_A = "us-west1-a";
-  static final String TEST_ZONE_B = "us-central1-b";
   static final String TEST_PROJECT_ID = "test-project-id";
   static final String OTHER_PROJECT_ID = "other-project-id";
   static final String TEST_CREDENTIALS_ID = "test-credentials-id";

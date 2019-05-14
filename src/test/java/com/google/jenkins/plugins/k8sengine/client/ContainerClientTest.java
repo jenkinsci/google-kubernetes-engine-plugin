@@ -35,18 +35,18 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class ContainerClientTest {
   private static final String TEST_PROJECT_ID = "test-project-id";
-  private static final String TEST_ZONE = "us-west1-a";
+  private static final String TEST_LOCATION = "us-west1-a";
   private static final String TEST_CLUSTER = "testCluster";
   private static final String OTHER_CLUSTER = "otherCluster";
 
   @Test(expected = IllegalArgumentException.class)
   public void testGetClustersErrorWithNullProjectId() throws IOException {
     ContainerClient containerClient = setUpGetClient(null, null);
-    containerClient.getCluster(null, TEST_ZONE, TEST_CLUSTER);
+    containerClient.getCluster(null, TEST_LOCATION, TEST_CLUSTER);
   }
 
   @Test(expected = IllegalArgumentException.class)
-  public void testGetClustersErrorWithNullZone() throws IOException {
+  public void testGetClustersErrorWithNullLocation() throws IOException {
     ContainerClient containerClient = setUpGetClient(null, null);
     containerClient.getCluster(TEST_PROJECT_ID, null, TEST_CLUSTER);
   }
@@ -54,17 +54,17 @@ public class ContainerClientTest {
   @Test(expected = IllegalArgumentException.class)
   public void testGetClustersErrorWithNullClusterName() throws IOException {
     ContainerClient containerClient = setUpGetClient(null, null);
-    containerClient.getCluster(TEST_PROJECT_ID, TEST_ZONE, null);
+    containerClient.getCluster(TEST_PROJECT_ID, TEST_LOCATION, null);
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void testGetClustersErrorWithEmptyProjectId() throws IOException {
     ContainerClient containerClient = setUpGetClient(null, null);
-    containerClient.getCluster("", TEST_ZONE, TEST_CLUSTER);
+    containerClient.getCluster("", TEST_LOCATION, TEST_CLUSTER);
   }
 
   @Test(expected = IllegalArgumentException.class)
-  public void testGetClustersErrorWithEmptyZone() throws IOException {
+  public void testGetClustersErrorWithEmptyLocation() throws IOException {
     ContainerClient containerClient = setUpGetClient(null, null);
     containerClient.getCluster(TEST_PROJECT_ID, "", TEST_CLUSTER);
   }
@@ -72,14 +72,14 @@ public class ContainerClientTest {
   @Test(expected = IllegalArgumentException.class)
   public void testGetClustersErrorWithEmptyClusterName() throws IOException {
     ContainerClient containerClient = setUpGetClient(null, null);
-    containerClient.getCluster(TEST_PROJECT_ID, TEST_ZONE, "");
+    containerClient.getCluster(TEST_PROJECT_ID, TEST_LOCATION, "");
   }
 
   @Test
   public void testGetClusterReturnsProperlyWhenClusterExists() throws IOException {
     ContainerClient containerClient = setUpGetClient(TEST_CLUSTER, null);
     Cluster expected = new Cluster().setName(TEST_CLUSTER);
-    Cluster response = containerClient.getCluster(TEST_PROJECT_ID, TEST_ZONE, TEST_CLUSTER);
+    Cluster response = containerClient.getCluster(TEST_PROJECT_ID, TEST_LOCATION, TEST_CLUSTER);
     assertNotNull(response);
     assertEquals(expected, response);
   }
@@ -87,7 +87,7 @@ public class ContainerClientTest {
   @Test(expected = IOException.class)
   public void testGetClusterThrowsErrorWhenClusterDoesntExists() throws IOException {
     ContainerClient containerClient = setUpGetClient(null, new IOException());
-    containerClient.getCluster(TEST_PROJECT_ID, TEST_ZONE, TEST_CLUSTER);
+    containerClient.getCluster(TEST_PROJECT_ID, TEST_LOCATION, TEST_CLUSTER);
   }
 
   @Test(expected = IllegalArgumentException.class)
@@ -147,7 +147,7 @@ public class ContainerClientTest {
 
   private static List<Cluster> initClusterList(List<String> clusterNames) {
     List<Cluster> clusters = new ArrayList<>();
-    clusterNames.forEach(e -> clusters.add(new Cluster().setName(e).setZone(TEST_ZONE)));
+    clusterNames.forEach(e -> clusters.add(new Cluster().setName(e).setLocation(TEST_LOCATION)));
     return clusters;
   }
 
@@ -155,11 +155,11 @@ public class ContainerClientTest {
       throws IOException {
     Container container = Mockito.mock(Container.class);
     Container.Projects projects = Mockito.mock(Container.Projects.class);
-    Container.Projects.Zones zones = Mockito.mock(Container.Projects.Zones.class);
+    Container.Projects.Zones locations = Mockito.mock(Container.Projects.Zones.class);
     Clusters clusters = Mockito.mock(Container.Projects.Zones.Clusters.class);
     Mockito.when(container.projects()).thenReturn(projects);
-    Mockito.when(projects.zones()).thenReturn(zones);
-    Mockito.when(zones.clusters()).thenReturn(clusters);
+    Mockito.when(projects.zones()).thenReturn(locations);
+    Mockito.when(locations.clusters()).thenReturn(clusters);
     if (getCall != null) {
       Mockito.when(clusters.get(anyString(), anyString(), anyString())).thenReturn(getCall);
     }

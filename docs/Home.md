@@ -79,12 +79,12 @@ the file was created, you will upload it to Jenkins in a subsequent step:
 1. Create a GKE cluster*:
     ```bash
     export CLUSTER=my-jenkins-cluster
-    export ZONE=us-central1-c
-    gcloud container clusters create --zone $ZONE $CLUSTER
+    export LOCATION=us-central1-c
+    gcloud container clusters create --zone $LOCATION $CLUSTER
     ```
 1. Get credentials for the cluster:
     ```bash
-    gcloud container clusters get-credentials --zone $ZONE $CLUSTER
+    gcloud container clusters get-credentials --zone $LOCATION $CLUSTER
     ```
 
 ### Configure Kubernetes Cluster Permissions
@@ -135,7 +135,8 @@ The GKE Build Step has the following parameters:
 
 1. credentialsId(string): The ID of the credentials that you uploaded earlier.
 1. projectId(string): The Project ID housing the GKE cluster to be published to.
-1. zone(string): The Zone housing the GKE cluster to be published to.
+1. zone(string): [**Deprecated**] The Zone housing the GKE cluster to be published to.
+1. location(string): The Zone or Region housing the GKE cluster to be published to.
 1. clusterName(string): The name of the Cluster to be published to.
 1. manifestPattern(string): The file pattern of the Kubernetes manifest to be deployed.
 1. verifyDeployments(boolean): [Optional] Whether the plugin will verify deployments.
@@ -148,7 +149,6 @@ The GKE Build Step has the following parameters:
 click Google Kubernetes Engine.
 1. In the Service Account Credentials dropdown, select the credentials that you uploaded earlier.
 1. Select the Project ID housing the GKE cluster to be published to.
-1. Select the Zone housing the GKE cluster to be published to.
 1. Select the Cluster to be published to.
 1. Enter the file path of the Kubernetes [manifest](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/) within your project to be used for deployment.
 
@@ -164,13 +164,13 @@ pipeline {
     environment {
         PROJECT_ID = '<YOUR_PROJECT_ID>'
         CLUSTER_NAME = '<YOUR_CLUSTER_NAME>'
-        ZONE = '<YOUR_CLUSTER_ZONE>'
+        LOCATION = '<YOUR_CLUSTER_LOCATION>'
         CREDENTIALS_ID = '<YOUR_CREDENTIAS_ID>'
     }
     stages {
         stage('Deploy to GKE') {
             steps{
-                step([$class: 'KubernetesEngineBuilder', projectId: env.PROJECT_ID, clusterName: env.CLUSTER_NAME, zone: env.ZONE, manifestPattern: 'manifest.yaml', credentialsId: env.CREDENTIALS_ID, verifyDeployments: true])
+                step([$class: 'KubernetesEngineBuilder', projectId: env.PROJECT_ID, clusterName: env.CLUSTER_NAME, location: env.LOCATION, manifestPattern: 'manifest.yaml', credentialsId: env.CREDENTIALS_ID, verifyDeployments: true])
             }
         }
     }
