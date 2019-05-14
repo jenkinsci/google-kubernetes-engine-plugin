@@ -79,12 +79,12 @@ the file was created, you will upload it to Jenkins in a subsequent step:
 1. Create a GKE cluster*:
     ```bash
     export CLUSTER=my-jenkins-cluster
-    export LOCATION=us-central1-c
-    gcloud container clusters create --zone $LOCATION $CLUSTER
+    export ZONE=us-central1-c
+    gcloud container clusters create --zone $ZONE $CLUSTER
     ```
 1. Get credentials for the cluster:
     ```bash
-    gcloud container clusters get-credentials --zone $LOCATION $CLUSTER
+    gcloud container clusters get-credentials --zone $ZONE $CLUSTER
     ```
 
 ### Configure Kubernetes Cluster Permissions
