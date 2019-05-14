@@ -127,7 +127,7 @@ For the more restrictive permissions option, we offer an example automated solut
     ```
 1. Use the templates in the following helm [chart](helm/) and run:
     ```bash
-    helm install --name YOUR_HELM_CHART . -f rbac-values.yaml
+    helm install --name YOUR_RELEASE_NAME . -f rbac-values.yaml
     ```
 
 

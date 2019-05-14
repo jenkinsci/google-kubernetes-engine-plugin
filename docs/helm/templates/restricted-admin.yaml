@@ -2,7 +2,6 @@
 # A set of objects for configuring namespaces
 # and a deployer user that is given the robot-deployer ClusterRole.
 # robot-deployer yaml at https://github.com/jenkinsci/google-kubernetes-engine-plugin/blob/develop/docs/rbac/robot-deployer.yaml
-
 {{- if .Values.Permissions }}
   {{- range $index, $namespace:= .Values.Permissions}}
 apiVersion: v1
