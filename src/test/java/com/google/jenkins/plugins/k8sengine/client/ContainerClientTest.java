@@ -19,7 +19,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.mockito.ArgumentMatchers.anyString;
 
 import com.google.api.services.container.Container;
-import com.google.api.services.container.Container.Projects.Zones.Clusters;
+import com.google.api.services.container.Container.Projects.Locations.Clusters;
 import com.google.api.services.container.model.Cluster;
 import com.google.api.services.container.model.ListClustersResponse;
 import com.google.common.collect.ImmutableList;
@@ -155,16 +155,16 @@ public class ContainerClientTest {
       throws IOException {
     Container container = Mockito.mock(Container.class);
     Container.Projects projects = Mockito.mock(Container.Projects.class);
-    Container.Projects.Zones locations = Mockito.mock(Container.Projects.Zones.class);
-    Clusters clusters = Mockito.mock(Container.Projects.Zones.Clusters.class);
+    Container.Projects.Locations locations = Mockito.mock(Container.Projects.Locations.class);
+    Clusters clusters = Mockito.mock(Container.Projects.Locations.Clusters.class);
     Mockito.when(container.projects()).thenReturn(projects);
-    Mockito.when(projects.zones()).thenReturn(locations);
+    Mockito.when(projects.locations()).thenReturn(locations);
     Mockito.when(locations.clusters()).thenReturn(clusters);
     if (getCall != null) {
-      Mockito.when(clusters.get(anyString(), anyString(), anyString())).thenReturn(getCall);
+      Mockito.when(clusters.get(anyString())).thenReturn(getCall);
     }
     if (listCall != null) {
-      Mockito.when(clusters.list(anyString(), anyString())).thenReturn(listCall);
+      Mockito.when(clusters.list(anyString())).thenReturn(listCall);
     }
     return new ContainerClient(container);
   }

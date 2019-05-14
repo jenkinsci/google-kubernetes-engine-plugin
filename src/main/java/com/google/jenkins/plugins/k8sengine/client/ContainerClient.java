@@ -56,7 +56,12 @@ public class ContainerClient {
     Preconditions.checkArgument(!Strings.isNullOrEmpty(projectId));
     Preconditions.checkArgument(!Strings.isNullOrEmpty(location));
     Preconditions.checkArgument(!Strings.isNullOrEmpty(cluster));
-    return container.projects().zones().clusters().get(projectId, location, cluster).execute();
+    return container
+        .projects()
+        .locations()
+        .clusters()
+        .get(toApiName(projectId, location, cluster))
+        .execute();
   }
 
   /**
@@ -71,9 +76,9 @@ public class ContainerClient {
     List<Cluster> clusters =
         container
             .projects()
-            .zones()
+            .locations()
             .clusters()
-            .list(projectId, LOCATION_WILDCARD)
+            .list(toApiParent(projectId))
             .execute()
             .getClusters();
     if (clusters == null) {
@@ -81,5 +86,13 @@ public class ContainerClient {
     }
     clusters.sort(Comparator.comparing(Cluster::getName));
     return ImmutableList.copyOf(clusters);
+  }
+
+  private static String toApiName(String projectId, String location, String clusterName) {
+    return String.format("projects/%s/locations/%s/clusters/%s", projectId, location, clusterName);
+  }
+
+  private static String toApiParent(String projectId) {
+    return String.format("projects/%s/locations/%s", projectId, LOCATION_WILDCARD);
   }
 }
