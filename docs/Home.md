@@ -122,6 +122,8 @@ The following permissions will grant you enough permissions to deploy to your cl
 ##### Automation Option
 For the more restrictive permissions option, we offer an example automated solution for configuring RBAC permissions.
 1. Create your service account with a custom IAM role using the following terraform [file](rbac/example.tf) and run:
+
+    **Note**: Run the terraform command in the same directory as your terraform file.
     ```bash
     terraform apply #assuming terraform init was already run
     ```

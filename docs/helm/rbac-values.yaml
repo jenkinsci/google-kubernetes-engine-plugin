@@ -6,7 +6,7 @@ ClusterAdmins::
 # Add more/less NamespaceName and GCPServiceAccount pairs pertaining to your use case.
 # Following values gives GCPServiceAccount permissions to deploy to NamespaceName.
 Permissions:
- - NamespaceName: "test"
+ - NamespaceName: "YOUR_CLUSTER_NAMESPACE"
    GCPServiceAccount: "jenkins-gke-tester@YOUR_PROJECT.iam.gserviceaccount.com"
- - NamespaceName: "production"
+ - NamespaceName: "YOUR_CLUSTER_NAMESPACE"
    GCPServiceAccount: "jenkins-gke-deployer@YOUR_PROJECT.iam.gserviceaccount.com"

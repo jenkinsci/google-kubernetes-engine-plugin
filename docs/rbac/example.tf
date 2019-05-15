@@ -5,6 +5,13 @@ variable project {
     default = "{{YOUR_GCP_PROJECT_ID}}"
 }
 
+# Set up region
+# Replace {{YOUR_PROJECT_REGION}} with your project region.
+variable region {
+    type    = "string"
+    default = "{{YOUR_PROJECT_REGION}}"g
+}
+
 # Create the Google Cloud terraform provider
 provider "google" {
   project = "${var.project}"
