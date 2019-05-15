@@ -9,7 +9,7 @@ variable project {
 # Replace {{YOUR_PROJECT_REGION}} with your project region.
 variable region {
     type    = "string"
-    default = "{{YOUR_PROJECT_REGION}}"g
+    default = "{{YOUR_PROJECT_REGION}}"
 }
 
 # Create the Google Cloud terraform provider
