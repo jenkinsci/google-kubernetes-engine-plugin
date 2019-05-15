@@ -15,8 +15,7 @@ variable region {
 # Create the Google Cloud terraform provider
 provider "google" {
   project = "${var.project}"
-  region  = "us-central1"
-  zone    = "us-central1-c"
+  region  = "${var.region}"
 }
 
 # Create a custom IAM role to bind to our GCP service account
