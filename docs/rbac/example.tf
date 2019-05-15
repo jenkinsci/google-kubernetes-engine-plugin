@@ -1,12 +1,12 @@
 # Set up project ID variable
-# Replace {{YOUR_GCP_PROJECT_ID}} with your own project id.
+# Replace {{YOUR_GCP_PROJECT_ID}} with your own project id
 variable project {
     type    = "string"
     default = "{{YOUR_GCP_PROJECT_ID}}"
 }
 
-# Set up region
-# Replace {{YOUR_PROJECT_REGION}} with your project region.
+# Set up region variable
+# Replace {{YOUR_PROJECT_REGION}} with your project region
 variable region {
     type    = "string"
     default = "{{YOUR_PROJECT_REGION}}"
