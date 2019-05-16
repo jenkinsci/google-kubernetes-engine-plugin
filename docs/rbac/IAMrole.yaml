@@ -6,3 +6,5 @@ includedPermissions:
 - container.apiServices.list
 - container.clusters.get
 - container.clusters.getCredentials
+- container.clusters.list
+- resourcemanager.projects.get

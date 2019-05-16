@@ -61,6 +61,7 @@ to publish deployments built within Jenkins to your Kubernetes clusters running 
 	```
 1. Grant the IAM role to your GCP service account:
     ```bash
+    export SA_EMAIL=$SA@$PROJECT.iam.gserviceaccount.com
     gcloud projects add-iam-policy-binding --member serviceAccount:$SA_EMAIL --role projects/$PROJECT/roles/gke_deployer $PROJECT
     ```
 1. Download a JSON Service Account key for your newly created service account. Take note of where
@@ -68,6 +69,8 @@ the file was created, you will upload it to Jenkins in a subsequent step:
     ```bash
     gcloud iam service-accounts keys create ~/jenkins-gke-key.json --iam-account $SA_EMAIL
     ```
+1. If using cloud shell, click the 3 vertical dots and **Download file**, then enter
+   "jenkins-gke-key.json".
 1. In Jenkins, click the Credentials button on the left side of the screen. Then click System.
 1. Click Global credentials then **Add credentials** on the left.
 1. In the Kind dropdown, select **Google Service Account from private key**.
@@ -76,7 +79,7 @@ the file was created, you will upload it to Jenkins in a subsequent step:
 
 ### Configure GKE Cluster
 
-1. Create a GKE cluster*:
+1. Create a GKE cluster:
     ```bash
     export CLUSTER=my-jenkins-cluster
     export ZONE=us-central1-c
