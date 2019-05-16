@@ -30,6 +30,24 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
  ### Fixed
  
 
+## [0.6.0] - 2019-05-16
+### Security
+ - Issue #20: It is no longer required to enable legacy authorization.
+ - Issue #20: Required IAM permissions reduced.
+
+### Added
+ - Issue #60: Support for regional clusters. Use the location field in the pipeline to specify
+   either a compute region (e.g. us-central1) or zone (e.g. us-central1-a).
+
+### Changed
+ - Issue #20: Refactored authentication to use access token.
+ - Issue #60: Cluster dropdown populates clusters from all regions and zones and the entries
+   include both the cluster name and location.
+ - Issue #67: The log output is less verbose during deployment.
+
+### Removed
+ - Issue #60: Removed dropdown for zone selection.
+
 ## [0.5.0] - 2019-05-07
 
  ### Security
