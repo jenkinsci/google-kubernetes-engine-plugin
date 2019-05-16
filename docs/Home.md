@@ -121,18 +121,18 @@ The following permissions will grant you enough permissions to deploy to your cl
     ```
 ##### Automation Option
 For the more restrictive permissions option, we offer an example automated solution for configuring RBAC permissions.
- * The overall strategy is to grant your GCP service account read-only access to Kubernetes objects on the GKE side while creating<br/>
+ * The overall strategy is to grant your GCP service account read-only access to Kubernetes objects on the GKE side while creating <br/>
   limited write access using RBAC in Kubernetes.
  * The automation option includes a helm chart and a terraform file to configure enough permissions to deploy to your cluster.
- * The helm chart contains templates to configure permissions in Kubernetes with RBAC:
-    * robot-deployer-binding.yaml: Bind your service account to the robot-deployer [ClusterRole](rbac/robot-deployer.yaml), which has permissions<br/>
+ * The helm chart contains the following templates to configure permissions in Kubernetes with RBAC:
+    * robot-deployer-binding.yaml: Bind your service account to the robot-deployer [ClusterRole](rbac/robot-deployer.yaml), which has permissions <br/>
      on the Kubernetes side to deploy to your cluster.
     * cluster-admin.yaml: Bind your GCP account to the Kubernetes cluster-admin ClusterRole, which grants you permissions <br/>
      to configure roles and role bindings in Kubernetes.
-    * rbac-values.yaml: Replace the GCP account, service accounts, and namespaces with your own to grant specific service accounts<br/>
+    * rbac-values.yaml: Replace the GCP account, service accounts, and namespaces with your own to grant specific service accounts <br/>
      permissions to deploy to clusters under a certain namespace.
  * The terraform file contains:
-    * example.tf: Creates a GCP service account named jenkins-gke-deployer with a custom IAM role. The custom IAM role has read-only access<br/>
+    * example.tf: Creates a GCP service account named jenkins-gke-deployer with a custom IAM role. The custom IAM role has read-only access <br/>
      to your GKE clusters. Finer permissions are configured using RBAC in Kubernetes.
 1. Create your service account with a custom IAM role using the following terraform [file](rbac/example.tf) and run:
 
