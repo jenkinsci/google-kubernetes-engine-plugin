@@ -79,7 +79,8 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
 
   private String credentialsId;
   private String projectId;
-  private String zone;
+  @Deprecated private String zone;
+  private String location;
   private String clusterName;
   private String namespace;
   private String manifestPattern;
@@ -114,14 +115,34 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
     this.projectId = projectId;
   }
 
+  @Deprecated
   public String getZone() {
-    return this.zone;
+    return getLocation();
+  }
+
+  @Deprecated
+  @DataBoundSetter
+  public void setZone(String zone) {
+    setLocation(zone);
+  }
+
+  public String getLocation() {
+    setupLocation();
+    return this.location;
   }
 
   @DataBoundSetter
-  public void setZone(String zone) {
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(zone));
-    this.zone = zone;
+  public void setLocation(String location) {
+    setupLocation();
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(location));
+    this.location = location;
+  }
+
+  private void setupLocation() {
+    if (Strings.isNullOrEmpty(this.location)) {
+      this.location = this.zone;
+      this.zone = null;
+    }
   }
 
   public String getClusterName() {
@@ -135,15 +156,16 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
   }
 
   public String getCluster() {
-    return ClusterUtil.toNameAndZone(this.clusterName, this.zone);
+    setupLocation();
+    return ClusterUtil.toNameAndLocation(this.clusterName, this.location);
   }
 
   @DataBoundSetter
   public void setCluster(String cluster) {
     Preconditions.checkArgument(!Strings.isNullOrEmpty(cluster));
-    String[] values = ClusterUtil.valuesFromNameAndZone(cluster);
+    String[] values = ClusterUtil.valuesFromNameAndLocation(cluster);
     setClusterName(values[0]);
-    setZone(values[1]);
+    setLocation(values[1]);
   }
 
   public String getNamespace() {
@@ -221,9 +243,10 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
     LOGGER.log(
         Level.INFO,
         String.format(
-            "GKE Deploying, projectId: %s cluster: %s zone: %s", projectId, clusterName, zone));
+            "GKE Deploying, projectId: %s cluster: %s location: %s",
+            projectId, clusterName, getLocation()));
     ContainerClient client = getContainerClient(credentialsId);
-    Cluster cluster = client.getCluster(projectId, zone, clusterName);
+    Cluster cluster = client.getCluster(projectId, getLocation(), clusterName);
 
     // generate a kubeconfig for the cluster
     KubeConfig kubeConfig =
@@ -295,8 +318,8 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
     LOGGER.log(
         Level.INFO,
         String.format(
-            "GKE verifying deployment to, projectId: %s cluster: %s zone: %s manifests: %s",
-            projectId, clusterName, zone, workspace.child(manifestPattern)));
+            "GKE verifying deployment to, projectId: %s cluster: %s location: %s manifests: %s",
+            projectId, clusterName, getLocation(), workspace.child(manifestPattern)));
 
     consoleLogger.println(
         String.format("Verifying manifests: %s", workspace.child(manifestPattern)));
@@ -497,7 +520,7 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
           return items;
         }
 
-        clusters.forEach(c -> items.add(ClusterUtil.toNameAndZone(c)));
+        clusters.forEach(c -> items.add(ClusterUtil.toNameAndLocation(c)));
         selectOption(items, cluster);
         return items;
       } catch (IOException ioe) {
@@ -541,7 +564,9 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
           return FormValidation.error(Messages.KubernetesEngineBuilder_NoClusterInProject());
         }
         Optional<Cluster> clusterOption =
-            clusters.stream().filter(c -> cluster.equals(ClusterUtil.toNameAndZone(c))).findFirst();
+            clusters.stream()
+                .filter(c -> cluster.equals(ClusterUtil.toNameAndLocation(c)))
+                .findFirst();
         if (!clusterOption.isPresent()) {
           return FormValidation.error(Messages.KubernetesEngineBuilder_ClusterNotInProject());
         }

@@ -62,7 +62,7 @@ public class KubeConfigTest {
   public void testFromClusterReturnsProperly() throws Exception {
     Cluster cluster = Mockito.mock(Cluster.class);
     Mockito.when(cluster.getEndpoint()).thenReturn("testEndpoint");
-    Mockito.when(cluster.getZone()).thenReturn("us-central1-c");
+    Mockito.when(cluster.getLocation()).thenReturn("us-central1-c");
     Mockito.when(cluster.getName()).thenReturn("testCluster");
     MasterAuth auth = Mockito.mock(MasterAuth.class);
     Mockito.when(cluster.getMasterAuth()).thenReturn(auth);
@@ -88,7 +88,7 @@ public class KubeConfigTest {
   public void testToYamlReturnsProperly() throws Exception {
     Cluster cluster = Mockito.mock(Cluster.class);
     Mockito.when(cluster.getEndpoint()).thenReturn("testEndpoint");
-    Mockito.when(cluster.getZone()).thenReturn("us-central1-c");
+    Mockito.when(cluster.getLocation()).thenReturn("us-central1-c");
     Mockito.when(cluster.getName()).thenReturn("testCluster");
     MasterAuth auth = Mockito.mock(MasterAuth.class);
     Mockito.when(cluster.getMasterAuth()).thenReturn(auth);
