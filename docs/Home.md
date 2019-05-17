@@ -119,6 +119,32 @@ The following permissions will grant you enough permissions to deploy to your cl
     ```bash
     kubectl create -f PATH_TO_YOUR_ROLE_BINDING_YAML
     ```
+##### Automation Option
+For the more restrictive permissions option, we offer an example automated solution for configuring RBAC permissions.
+ * The overall strategy is to grant your GCP service account an IAM role with read-only access to clusters within GKE, as well 
+ as an RBAC cluster role binding with limited access to deploy resources in Kubernetes.
+ * The automation option includes a helm chart and a terraform file to configure enough permissions to deploy to your cluster.
+ * The helm chart contains the following templates to configure permissions in Kubernetes with RBAC:
+    * robot-deployer-binding.yaml: Bind your service account to the robot-deployer [ClusterRole](rbac/robot-deployer.yaml), which has permissions
+    on the Kubernetes side to deploy to your cluster.
+    * cluster-admin.yaml: Bind your GCP account to the Kubernetes cluster-admin ClusterRole, which grants you permissions
+    to configure roles and role bindings in Kubernetes.
+    * rbac-values.yaml: Replace the GCP account, service accounts, and namespaces with your own to grant specific service accounts
+    permissions to deploy to clusters under a certain namespace.
+ * The terraform file contains:
+    * example.tf: Creates a GCP service account named jenkins-gke-deployer with a custom IAM role. The custom IAM role has read-only access
+    to your GKE clusters. Finer permissions are configured using RBAC in Kubernetes.
+1. Create your service account with a custom IAM role using the following terraform [file](rbac/example.tf) and run:
+
+    **Note**: Run the terraform command in the same directory as your terraform file.
+    ```bash
+    terraform apply #assuming terraform init was already run
+    ```
+1. Use the templates in the following helm [chart](helm/) and run:
+    ```bash
+    helm install --name YOUR_RELEASE_NAME . -f rbac-values.yaml
+    ```
+
 
 ##### References:
 * [Google Container Engine RBAC docs](https://cloud.google.com/kubernetes-engine/docs/how-to/role-based-access-control)
