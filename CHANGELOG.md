@@ -36,6 +36,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
  - Issue #20: Required IAM permissions reduced.
 
 ### Added
+ - Issue #20: Helm chart for configuration of RBAC.
  - Issue #60: Support for regional clusters. Use the location field in the pipeline to specify
    either a compute region (e.g. us-central1) or zone (e.g. us-central1-a).
 
