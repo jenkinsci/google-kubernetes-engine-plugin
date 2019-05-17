@@ -121,8 +121,8 @@ The following permissions will grant you enough permissions to deploy to your cl
     ```
 ##### Automation Option
 For the more restrictive permissions option, we offer an example automated solution for configuring RBAC permissions.
- * The overall strategy is to grant your GCP service account read-only access to Kubernetes objects on the GKE side while creating
- limited write access using RBAC in Kubernetes.
+ * The overall strategy is to grant your GCP service account an IAM role with read-only access to clusters within GKE, as well 
+ as an RBAC cluster role binding with limited access to deploy resources in Kubernetes.
  * The automation option includes a helm chart and a terraform file to configure enough permissions to deploy to your cluster.
  * The helm chart contains the following templates to configure permissions in Kubernetes with RBAC:
     * robot-deployer-binding.yaml: Bind your service account to the robot-deployer [ClusterRole](rbac/robot-deployer.yaml), which has permissions
