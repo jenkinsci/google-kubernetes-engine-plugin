@@ -17,6 +17,7 @@
 package com.google.jenkins.plugins.k8sengine;
 
 import com.cloudbees.plugins.credentials.CredentialsMatchers;
+import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.common.StandardCredentials;
 import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
 import com.cloudbees.plugins.credentials.domains.DomainRequirement;
@@ -37,7 +38,6 @@ import hudson.Extension;
 import hudson.FilePath;
 import hudson.Launcher;
 import hudson.model.AbstractProject;
-import hudson.model.Item;
 import hudson.model.Run;
 import hudson.model.TaskListener;
 import hudson.security.ACL;
@@ -368,7 +368,7 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
     }
 
     public ListBoxModel doFillCredentialsIdItems(@AncestorInPath Jenkins context) {
-      if (context == null || !context.hasPermission(Item.CONFIGURE)) {
+      if (context == null || !context.hasPermission(CredentialsProvider.VIEW)) {
         return new StandardListBoxModel();
       }
 
