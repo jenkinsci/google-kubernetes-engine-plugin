@@ -31,8 +31,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
  
 ## [0.6.1] - 2019-06-06
 ### Changed
- - Issue #79: The Google OAuth2 Service Account credentials now only require the Credentials:View
-   permission. Previously the Item:Configure permission was required. 
+ - Issue #79: Viewing the Google OAuth2 Service Account credentials in the build step dropdown now
+ only requires the Credentials:View permission. Previously the Item:Configure permission was
+ required. 
 
 ## [0.6.0] - 2019-05-16
 ### Security
