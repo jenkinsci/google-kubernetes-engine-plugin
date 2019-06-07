@@ -19,11 +19,11 @@
     <groupId>org.jenkins-ci.plugins</groupId>
     <artifactId>plugin</artifactId>
     <version>3.37</version>
-    <relativePath/>
+    <relativePath />
   </parent>
 
   <artifactId>google-kubernetes-engine</artifactId>
-  <version>0.6.1</version>
+  <version>0.6.2-SNAPSHOT</version>
   <packaging>hpi</packaging>
 
   <name>Google Kubernetes Engine Plugin</name>
@@ -64,7 +64,7 @@
     <connection>scm:git:git://github.com/jenkinsci/${project.artifactId}-plugin.git</connection>
     <developerConnection>scm:git:git@github.com:jenkinsci/${project.artifactId}-plugin.git</developerConnection>
     <url>https://github.com/jenkinsci/${project.artifactId}-plugin</url>
-    <tag>google-kubernetes-engine-0.6.1</tag>
+    <tag>HEAD</tag>
   </scm>
 
   <properties>
@@ -341,7 +341,7 @@
         <version>2.7</version>
         <configuration>
           <instrumentation>
-            <excludes/>
+            <excludes />
           </instrumentation>
           <formats>
             <format>html</format>
