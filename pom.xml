@@ -19,7 +19,7 @@
     <groupId>org.jenkins-ci.plugins</groupId>
     <artifactId>plugin</artifactId>
     <version>3.37</version>
-    <relativePath />
+    <relativePath/>
   </parent>
 
   <artifactId>google-kubernetes-engine</artifactId>
@@ -49,12 +49,7 @@
       <email>stephenshank@google.com</email>
     </developer>
     <developer>
-      <id>rachelyen</id>
-      <name>Rachel Yen</name>
-      <email>rachelyen@google.com</email>
-    </developer>
-    <developer>
-      <id>craigatgoogle</id>
+      <id>craigdbarber</id>
       <name>Craig Barber</name>
       <email>craigbarber@google.com</email>
     </developer>
@@ -346,7 +341,7 @@
         <version>2.7</version>
         <configuration>
           <instrumentation>
-            <excludes />
+            <excludes/>
           </instrumentation>
           <formats>
             <format>html</format>
