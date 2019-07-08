@@ -20,7 +20,6 @@ import com.cloudbees.plugins.credentials.CredentialsMatchers;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.domains.DomainRequirement;
 import com.google.api.client.auth.oauth2.Credential;
-import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
@@ -100,9 +99,9 @@ public class CredentialsUtil {
     Preconditions.checkArgument(!Strings.isNullOrEmpty(credentialsId));
     Preconditions.checkNotNull(itemGroup);
     GoogleRobotCredentials robotCreds =
-        getRobotCredentials(itemGroup, ImmutableList.<DomainRequirement>of(), credentialsId);
+        getRobotCredentials(itemGroup, ImmutableList.of(), credentialsId);
 
-    GoogleCredential googleCredential = (GoogleCredential) getGoogleCredential(robotCreds);
+    Credential googleCredential = getGoogleCredential(robotCreds);
     return getAccessToken(googleCredential);
   }
   /**
@@ -124,7 +123,7 @@ public class CredentialsUtil {
    * @return Access token from OAuth to allow kubectl to interact with the cluster.
    * @throws IOException If an error occured fetching the access token.
    */
-  static String getAccessToken(GoogleCredential googleCredential) throws IOException {
+  static String getAccessToken(Credential googleCredential) throws IOException {
     Preconditions.checkNotNull(googleCredential);
 
     googleCredential.refreshToken();
