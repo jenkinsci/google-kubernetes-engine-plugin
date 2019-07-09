@@ -29,6 +29,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 				 
  ### Fixed
  
+## [0.6.2] - 2019-07-09
+### Fixed
+ - Issue #85: To allow for customers using Google OAuth2 credentials from metadata, use
+ `Credential` type rather than the more specific `GoogleCredential` when retrieving access token.
+
 ## [0.6.1] - 2019-06-06
 ### Changed
  - Issue #79: Viewing the Google OAuth2 Service Account credentials in the build step dropdown now
