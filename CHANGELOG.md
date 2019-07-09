@@ -30,6 +30,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
  ### Fixed
  
 ## [0.6.2] - 2019-07-09
+### Removed
+ - Removed the maven plugin findbugs in favor of spotbugs from the Jenkins parent plugin pom file.
+
 ### Fixed
  - Issue #85: To allow for customers using Google OAuth2 credentials from metadata, use
  `Credential` type rather than the more specific `GoogleCredential` when retrieving access token.
