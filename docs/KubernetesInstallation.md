@@ -19,11 +19,11 @@ Kubernetes in order to meet the plugin's pre-requisites, namely that the
 
 ## Installing on an existing Jenkins installation with Kubernetes Cloud
 
-This section assumes the user has an existing Jenkins installation configured to
+This section assumes that the user has an existing Jenkins installation configured to
 use a Kubernetes cluster as the cloud via the
 [kubernetes-plugin](https://github.com/jenkinsci/kubernetes-plugin).
 Furthermore, it's assumed that the GKE plugin has been installed either through
-the [Plugin Manager](https://jenkins.io/doc/book/managing/plugins/) or else
+the [Plugin Manager](https://jenkins.io/doc/book/managing/plugins/) or
 using the [SourceBuildInstallation](SourceBuildInstallation.md) guide. This
 content provides guidance on changing the existing Kubernetes cloud
 configuration to be compatible with the GKE plugin.
