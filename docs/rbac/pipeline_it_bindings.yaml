@@ -1,5 +1,12 @@
-kind: RoleBinding
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: test
+  labels:
+    name: test
+---
 apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
 metadata:
   name: pipeline-it-rolebinding
   namespace: test
