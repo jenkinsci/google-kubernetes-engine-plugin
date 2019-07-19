@@ -20,6 +20,7 @@ import com.jayway.jsonpath.Configuration;
 import com.jayway.jsonpath.InvalidJsonException;
 import hudson.FilePath;
 import hudson.Launcher;
+import hudson.slaves.WorkspaceList;
 import hudson.util.ArgumentListBuilder;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -103,8 +104,11 @@ public class KubectlWrapper {
     Set<String> tempFiles = new HashSet<>();
     try {
       // Set up the kubeconfig file for authentication
-      FilePath kubeConfigFile = workspace.createTempFile(".kube", "config");
+      FilePath tempDir = WorkspaceList.tempDir(workspace);
+      tempDir.mkdirs();
+      FilePath kubeConfigFile = tempDir.createTempFile(".kube", "config");
       tempFiles.add(kubeConfigFile.getRemote());
+      tempFiles.add(tempDir.getRemote());
       String config = getKubeConfig().toYaml();
 
       // Setup the kubeconfig
@@ -141,7 +145,12 @@ public class KubectlWrapper {
       throw e;
     } finally {
       for (String tempFile : tempFiles) {
-        getWorkspace().child(tempFile).delete();
+        try {
+          getWorkspace().child(tempFile).delete();
+        } catch (Exception ee) {
+          // This catch is to prevent ordering issues arising from tempfiles existing inside of
+          // inside tempdirs which may have already been deleted.
+        }
       }
     }
 
