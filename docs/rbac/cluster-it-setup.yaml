@@ -12,7 +12,7 @@ metadata:
   namespace: test
 subjects:
 - kind: User
-  name: jenkins-gke@YOUR-PROJECT.iam.gserviceaccount.com
+  name: jenkins-gke@YOUR_GCP_SA_ID.iam.gserviceaccount.com
   namespace: default
 roleRef:
   kind: ClusterRole

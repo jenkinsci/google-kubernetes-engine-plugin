@@ -137,11 +137,11 @@ For the more restrictive permissions option, we offer an example automated solut
  * The terraform file contains:
     * example.tf: Creates a GCP service account named jenkins-gke-deployer with a custom IAM role. The custom IAM role has read-only access
     to your GKE clusters. Finer permissions are configured using RBAC in Kubernetes.
-1. Create your service account with a custom IAM role using the following terraform [file](rbac/example.tf) and run:
-
-    **Note**: Run the terraform command in the same directory as your terraform file.
+1. Create your service account with a custom IAM role using [terraform](https://www.terraform.io/docs/index.html):
     ```bash
-    terraform apply #assuming terraform init was already run
+    cd docs/rbac/
+    terraform init
+    terraform apply
     ```
 1. Use the templates in the following helm [chart](helm/) and run:
     ```bash
