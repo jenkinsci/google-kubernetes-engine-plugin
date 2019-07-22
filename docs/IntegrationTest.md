@@ -27,7 +27,7 @@ export TEST_CLUSTER=<YOUR_TEST_CLUSTER_NAME>
 export CLUSTER_ZONE=<YOUR_TEST_CLUSTER_ZONE>
 export PROJECT_ID=<YOUR_TEST_GCP_PROJECT_ID>
 export TEST_GCP_SA_ID=<YOUR_GCP_SA_ID>
-gclond config set project $PROJECT_ID
+gcloud config set project $PROJECT_ID
 gcloud container clusters get-credentials $TEST_CLUSTER --zone $CLUSTER_ZONE
 cd docs/rbac
 sed s/YOUR_GCP_SA_ID/$TEST_GCP_SA_ID/ docs/rbac/cluster-it-setup.yaml > /tmp/cluster-it-setup.yaml

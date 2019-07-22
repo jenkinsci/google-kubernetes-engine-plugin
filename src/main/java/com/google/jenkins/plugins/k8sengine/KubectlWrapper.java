@@ -148,6 +148,7 @@ public class KubectlWrapper {
         try {
           getWorkspace().child(tempFile).delete();
         } catch (Exception ee) {
+          LOGGER.log(Level.WARNING, String.format("Failed to delete temp file: %s", tempFile), ee);
           // This catch is to prevent ordering issues arising from tempfiles existing inside of
           // inside tempdirs which may have already been deleted.
         }
