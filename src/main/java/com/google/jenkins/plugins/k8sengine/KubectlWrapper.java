@@ -20,13 +20,12 @@ import com.jayway.jsonpath.Configuration;
 import com.jayway.jsonpath.InvalidJsonException;
 import hudson.FilePath;
 import hudson.Launcher;
+import hudson.slaves.WorkspaceList;
 import hudson.util.ArgumentListBuilder;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -100,11 +99,12 @@ public class KubectlWrapper {
   public String runKubectlCommand(String command, ImmutableList<String> args)
       throws IOException, InterruptedException {
     String output = "";
-    Set<String> tempFiles = new HashSet<>();
+    FilePath tempDir = null;
     try {
       // Set up the kubeconfig file for authentication
-      FilePath kubeConfigFile = workspace.createTempFile(".kube", "config");
-      tempFiles.add(kubeConfigFile.getRemote());
+      tempDir = WorkspaceList.tempDir(workspace);
+      tempDir.mkdirs();
+      FilePath kubeConfigFile = tempDir.createTempFile(".kube", "config");
       String config = getKubeConfig().toYaml();
 
       // Setup the kubeconfig
@@ -140,8 +140,12 @@ public class KubectlWrapper {
           e);
       throw e;
     } finally {
-      for (String tempFile : tempFiles) {
-        getWorkspace().child(tempFile).delete();
+      try {
+        if (tempDir != null) {
+          tempDir.deleteRecursive();
+        }
+      } catch (Exception ee) {
+        LOGGER.log(Level.WARNING, String.format("Failed to delete dir: %s", tempDir), ee);
       }
     }
 

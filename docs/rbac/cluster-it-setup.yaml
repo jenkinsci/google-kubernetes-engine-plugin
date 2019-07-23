@@ -1,11 +1,18 @@
-kind: RoleBinding
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: test
+  labels:
+    name: test
+---
 apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
 metadata:
   name: pipeline-it-rolebinding
   namespace: test
 subjects:
 - kind: User
-  name: jenkins-gke@YOUR-PROJECT.iam.gserviceaccount.com
+  name: jenkins-gke@YOUR_GCP_SA_ID.iam.gserviceaccount.com
   namespace: default
 roleRef:
   kind: ClusterRole

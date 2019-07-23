@@ -19,9 +19,21 @@ This depends on refactoring the Google Oauth Plugin.
 -->
 1. Make sure you have another cluster and service account set up for testing deployments as described in the GKE Plugin [usage documentation](Home.md#usage).
 
-1. Repeat steps in the [IAM Credentials](Home.md#iam-credentials) section on this new Jenkins instance with a new GCP service account.
+1. Ensure a GCP Service Account has been created for testing. If needed, follow the instruction in the [Automation Option](Home.md#automation-option) section.
 
-1. Create the following [RoleBinding](rbac/pipeline_it_bindings.yaml) which allows testing the namespace "test" when running `mvn verify`.
+1. Bootstrap the necessary cluster resources/roles for running integration tests:
+```bash
+export TEST_CLUSTER=<YOUR_TEST_CLUSTER_NAME>
+export CLUSTER_ZONE=<YOUR_TEST_CLUSTER_ZONE>
+export PROJECT_ID=<YOUR_TEST_GCP_PROJECT_ID>
+export TEST_GCP_SA_ID=<YOUR_GCP_SA_ID>
+gcloud config set project $PROJECT_ID
+gcloud container clusters get-credentials $TEST_CLUSTER --zone $CLUSTER_ZONE
+cd docs/rbac
+sed s/YOUR_GCP_SA_ID/$TEST_GCP_SA_ID/ docs/rbac/cluster-it-setup.yaml > /tmp/cluster-it-setup.yaml
+kubectl apply -f /tmp/cluster-it-setup.yaml
+rm /tmp/cluster-it-setup.yaml
+```
 
 ## Testing the plugin on Jenkins
 1. Follow the instructions at [Source Build Installation](SourceBuildInstallation.md) to upload the
