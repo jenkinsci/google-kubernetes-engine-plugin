@@ -24,10 +24,8 @@ import hudson.slaves.WorkspaceList;
 import hudson.util.ArgumentListBuilder;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -101,14 +99,12 @@ public class KubectlWrapper {
   public String runKubectlCommand(String command, ImmutableList<String> args)
       throws IOException, InterruptedException {
     String output = "";
-    Set<String> tempFiles = new HashSet<>();
+    FilePath tempDir = null;
     try {
       // Set up the kubeconfig file for authentication
-      FilePath tempDir = WorkspaceList.tempDir(workspace);
+      tempDir = WorkspaceList.tempDir(workspace);
       tempDir.mkdirs();
       FilePath kubeConfigFile = tempDir.createTempFile(".kube", "config");
-      tempFiles.add(kubeConfigFile.getRemote());
-      tempFiles.add(tempDir.getRemote());
       String config = getKubeConfig().toYaml();
 
       // Setup the kubeconfig
@@ -144,14 +140,12 @@ public class KubectlWrapper {
           e);
       throw e;
     } finally {
-      for (String tempFile : tempFiles) {
-        try {
-          getWorkspace().child(tempFile).delete();
-        } catch (Exception ee) {
-          LOGGER.log(Level.WARNING, String.format("Failed to delete temp file: %s", tempFile), ee);
-          // This catch is to prevent ordering issues arising from tempfiles existing inside of
-          // inside tempdirs which may have already been deleted.
+      try {
+        if (tempDir != null) {
+          tempDir.deleteRecursive();
         }
+      } catch (Exception ee) {
+        LOGGER.log(Level.WARNING, String.format("Failed to delete dir: %s", tempDir), ee);
       }
     }
 
