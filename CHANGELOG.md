@@ -29,6 +29,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 				 
  ### Fixed
  
+## [0.6.3] - 2019-07-23
+### Security
+- Fixed security issue regarding temp KubeConfig files: https://issues.jenkins-ci.org/browse/SECURITY-1345
+ 
 ## [0.6.2] - 2019-07-09
 ### Removed
  - Removed the maven plugin findbugs in favor of spotbugs from the Jenkins parent plugin pom file.
