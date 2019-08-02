@@ -106,8 +106,8 @@ The following permissions will grant you full read and write permissions to your
 1. Add the cluster-admin role to the service account associated with your Kubernetes cluster:
     ```bash
     kubectl create clusterrolebinding cluster-admin-binding \
-    --clusterrole cluster-admin \
-    --user jenkins-gke@YOUR-PROJECT.iam.gserviceaccount.com
+    --clusterrole=cluster-admin \
+    --user=jenkins-gke@YOUR-PROJECT.iam.gserviceaccount.com
     ```
 
 #### More Restrictive Permissions
