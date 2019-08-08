@@ -43,7 +43,11 @@ to publish deployments built within Jenkins to your Kubernetes clusters running 
     ```
 2. Enable required GCP service APIs:
     ```bash
-    gcloud services enable --project $PROJECT compute.googleapis.com container.googleapis.com servicemanagement.googleapis.com cloudresourcemanager.googleapis.com
+    gcloud services enable compute.googleapis.com \
+    container.googleapis.com \
+    servicemanagement.googleapis.com \
+    cloudresourcemanager.googleapis.com \
+    --project $PROJECT
     ```
 
 ### IAM Credentials
@@ -62,7 +66,9 @@ to publish deployments built within Jenkins to your Kubernetes clusters running 
 1. Grant the IAM role to your GCP service account:
     ```bash
     export SA_EMAIL=$SA@$PROJECT.iam.gserviceaccount.com
-    gcloud projects add-iam-policy-binding --member serviceAccount:$SA_EMAIL --role projects/$PROJECT/roles/gke_deployer $PROJECT
+    gcloud projects add-iam-policy-binding $PROJECT \
+    --member serviceAccount:$SA_EMAIL \
+    --role projects/$PROJECT/roles/gke_deployer
     ```
 1. Download a JSON Service Account key for your newly created service account. Take note of where
 the file was created, you will upload it to Jenkins in a subsequent step:
@@ -83,20 +89,24 @@ the file was created, you will upload it to Jenkins in a subsequent step:
     ```bash
     export CLUSTER=my-jenkins-cluster
     export ZONE=us-central1-c
-    gcloud container clusters create --zone $ZONE $CLUSTER
+    gcloud container clusters create $CLUSTER --zone $ZONE 
     ```
 1. Get credentials for the cluster:
     ```bash
-    gcloud container clusters get-credentials --zone $ZONE $CLUSTER
+    gcloud container clusters get-credentials $CLUSTER --zone $ZONE 
     ```
 
 ### Configure Kubernetes Cluster Permissions
 
-Your GCP service account will have limited IAM permissions. Use RBAC in kubernetes to configure permissions suited to your use case.
+Your GCP service account will have limited IAM permissions. Use RBAC in kubernetes to configure
+permissions suited to your use case.
 
-Grant your GCP login account cluster-admin permissions before creating the following roles/role bindings:
+Grant your GCP login account cluster-admin permissions before creating the following roles/role
+bindings:
    ```bash
-   kubectl create clusterrolebinding gcp-cluster-admin-binding --clusterrole=cluster-admin --user=YOUR_GCP_ACCOUNT_EMAIL
+   kubectl create clusterrolebinding gcp-cluster-admin-binding \
+   --clusterrole=cluster-admin \
+   --user=YOUR_GCP_ACCOUNT_EMAIL
    ```
 
 #### Less Restrictive Permissions
@@ -107,7 +117,7 @@ The following permissions will grant you full read and write permissions to your
     ```bash
     kubectl create clusterrolebinding cluster-admin-binding \
     --clusterrole=cluster-admin \
-    --user=jenkins-gke@YOUR-PROJECT.iam.gserviceaccount.com
+    --user=$SA_EMAIL
     ```
 
 #### More Restrictive Permissions
@@ -117,27 +127,35 @@ The following permissions will grant you enough permissions to deploy to your cl
     ```bash
     kubectl create -f PATH_TO_YOUR_ROLE_YAML
     ```
-1. Create the [RoleBinding yaml](rbac/restricted-bindings.yaml) file.
+1. Create the [RoleBinding yaml](rbac/robot-deployer-bindings.yaml) file.
 1. Create the RoleBinding in kubernetes:
     ```bash
     kubectl create -f PATH_TO_YOUR_ROLE_BINDING_YAML
     ```
 ##### Automation Option
-For the more restrictive permissions option, we offer an example automated solution for configuring RBAC permissions.
- * The overall strategy is to grant your GCP service account an IAM role with read-only access to clusters within GKE, as well 
- as an RBAC cluster role binding with limited access to deploy resources in Kubernetes.
- * The automation option includes a helm chart and a terraform file to configure enough permissions to deploy to your cluster.
+For the more restrictive permissions option, we offer an example automated solution for configuring
+RBAC permissions.
+ * The overall strategy is to grant your GCP service account an IAM role with read-only access to
+   clusters within GKE, as well as an RBAC cluster role binding with limited access to deploy
+   resources in Kubernetes.
+ * The automation option includes a helm chart and a terraform file to configure enough permissions
+   to deploy to your cluster.
  * The helm chart contains the following templates to configure permissions in Kubernetes with RBAC:
-    * robot-deployer-binding.yaml: Bind your service account to the robot-deployer [ClusterRole](rbac/robot-deployer.yaml), which has permissions
-    on the Kubernetes side to deploy to your cluster.
-    * cluster-admin.yaml: Bind your GCP account to the Kubernetes cluster-admin ClusterRole, which grants you permissions
-    to configure roles and role bindings in Kubernetes.
-    * rbac-values.yaml: Replace the GCP account, service accounts, and namespaces with your own to grant specific service accounts
-    permissions to deploy to clusters under a certain namespace.
+    * [robot-deployer-binding.yaml](helm/templates/robot-deployer-binding.yaml): Bind your service
+    account to the robot-deployer [ClusterRole](rbac/robot-deployer.yaml), which has permissions on
+    the Kubernetes side to deploy to your cluster.
+    * [cluster-admin.yaml](helm/templates/cluster-admin.yaml): Bind your GCP account to the
+    Kubernetes cluster-admin ClusterRole, which grants you permissions to configure roles and role
+    bindings in Kubernetes.
+    * [rbac-values.yaml](helm/rbac-values.yaml): Replace the GCP account, service accounts, and
+    namespaces with your own to grant specific service accounts permissions to deploy to clusters
+    under a certain namespace.
  * The terraform file contains:
-    * example.tf: Creates a GCP service account named jenkins-gke-deployer with a custom IAM role. The custom IAM role has read-only access
-    to your GKE clusters. Finer permissions are configured using RBAC in Kubernetes.
-1. Create your service account with a custom IAM role using [terraform](https://www.terraform.io/docs/index.html):
+    * [gcp-sa-setup.tf](rbac/gcp-sa-setup.tf): Creates a GCP service account named
+    jenkins-gke-deployer with a custom IAM role. The custom IAM role has read-only access to your
+    GKE clusters. Finer permissions are configured using RBAC in Kubernetes.
+1. Create your service account with a custom IAM role using [terraform](
+   https://www.terraform.io/docs/index.html):
     ```bash
     cd docs/rbac/
     terraform init
@@ -145,13 +163,15 @@ For the more restrictive permissions option, we offer an example automated solut
     ```
 1. Use the templates in the following helm [chart](helm/) and run:
     ```bash
-    helm install --name YOUR_RELEASE_NAME . -f rbac-values.yaml
+    helm install . --name YOUR_RELEASE_NAME -f rbac-values.yaml
     ```
 
 
 ##### References:
-* [Google Container Engine RBAC docs](https://cloud.google.com/kubernetes-engine/docs/how-to/role-based-access-control)
-* [Configuring RBAC for GKE deployment](https://codeascraft.com/2018/06/05/deploying-to-google-kubernetes-engine/)
+* [Google Container Engine RBAC docs](
+  https://cloud.google.com/kubernetes-engine/docs/how-to/role-based-access-control)
+* [Configuring RBAC for GKE deployment](
+  https://codeascraft.com/2018/06/05/deploying-to-google-kubernetes-engine/)
 
 ### Google Kubernetes Engine Build Step Configuration
 
@@ -179,7 +199,9 @@ click Google Kubernetes Engine.
 1. In the Service Account Credentials dropdown, select the credentials that you uploaded earlier.
 1. Select the Project ID housing the GKE cluster to be published to.
 1. Select the Cluster to be published to.
-1. Enter the file path of the Kubernetes [manifest](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/) within your project to be used for deployment.
+1. Enter the file path of the Kubernetes [manifest](
+   https://kubernetes.io/docs/concepts/workloads/controllers/deployment/) within your project to be
+   used for deployment.
 
 #### Jenkins Declarative Pipeline
 
@@ -199,7 +221,14 @@ pipeline {
     stages {
         stage('Deploy to GKE') {
             steps{
-                step([$class: 'KubernetesEngineBuilder', projectId: env.PROJECT_ID, clusterName: env.CLUSTER_NAME, location: env.LOCATION, manifestPattern: 'manifest.yaml', credentialsId: env.CREDENTIALS_ID, verifyDeployments: true])
+                step([
+                $class: 'KubernetesEngineBuilder',
+                projectId: env.PROJECT_ID,
+                clusterName: env.CLUSTER_NAME,
+                location: env.LOCATION,
+                manifestPattern: 'manifest.yaml',
+                credentialsId: env.CREDENTIALS_ID,
+                verifyDeployments: true])
             }
         }
     }
@@ -208,7 +237,9 @@ pipeline {
 
 ### Jenkins Environment Configuration
 
-<!--- TODO(stephenshank): Link to an image that adds kubectl to the existing jenkins agent image: https://hub.docker.com/r/jenkinsci/jnlp-slave/ --->
+<!--- TODO(stephenshank): Link to an image that adds kubectl to the existing jenkins agent image:
+      https://hub.docker.com/r/jenkinsci/jnlp-slave/ --->
 
-The GKE Jenkins plugin requires the [kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/)
-binary to be installed within the Jenkins agent environment.
+The GKE Jenkins plugin requires the [kubectl](
+https://kubernetes.io/docs/tasks/tools/install-kubectl/) binary to be installed within the Jenkins
+agent environment.
