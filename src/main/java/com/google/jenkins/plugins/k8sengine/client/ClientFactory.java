@@ -21,13 +21,10 @@ import com.cloudbees.plugins.credentials.domains.DomainRequirement;
 import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.http.HttpTransport;
-import com.google.api.client.json.JsonFactory;
-import com.google.api.client.json.jackson2.JacksonFactory;
-import com.google.api.services.cloudresourcemanager.CloudResourceManager;
-import com.google.api.services.cloudresourcemanager.CloudResourceManagerRequestInitializer;
-import com.google.api.services.container.Container;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
+import com.google.graphite.platforms.plugin.client.CloudResourceManagerClient;
+import com.google.graphite.platforms.plugin.client.ContainerClient;
 import com.google.jenkins.plugins.credentials.oauth.GoogleRobotCredentials;
 import hudson.AbortException;
 import hudson.model.ItemGroup;
@@ -39,11 +36,9 @@ import java.util.Optional;
 public class ClientFactory {
   public static final String APPLICATION_NAME = "jenkins-google-gke-plugin";
 
-  private final Credential credential;
-  private final HttpTransport transport;
-  private final JsonFactory jsonFactory;
   private final String credentialsId;
   private final String defaultProjectId;
+  private final com.google.graphite.platforms.plugin.client.ClientFactory clientFactory;
 
   /**
    * Creates a {@link ClientFactory} instance.
@@ -64,19 +59,27 @@ public class ClientFactory {
       throws AbortException {
     GoogleRobotCredentials robotCreds =
         getRobotCredentials(itemGroup, domainRequirements, credentialsId);
-    this.credential = getGoogleCredential(robotCreds);
+    Credential credential = getGoogleCredential(robotCreds);
     this.defaultProjectId =
         Strings.isNullOrEmpty(robotCreds.getProjectId()) ? "" : robotCreds.getProjectId();
     this.credentialsId = credentialsId;
 
+    HttpTransport transport;
     try {
-      this.transport = httpTransport.orElse(GoogleNetHttpTransport.newTrustedTransport());
+      transport = httpTransport.orElse(GoogleNetHttpTransport.newTrustedTransport());
     } catch (GeneralSecurityException | IOException e) {
       throw new AbortException(
           Messages.ClientFactory_FailedToInitializeHTTPTransport(e.getMessage()));
     }
 
-    this.jsonFactory = new JacksonFactory();
+    try {
+      this.clientFactory =
+          new com.google.graphite.platforms.plugin.client.ClientFactory(
+              Optional.ofNullable(transport), credential, APPLICATION_NAME);
+    } catch (GeneralSecurityException | IOException e) {
+      throw new AbortException(
+          Messages.ClientFactory_FailedToInitializeHTTPTransport(e.getMessage()));
+    }
   }
 
   /**
@@ -98,15 +101,7 @@ public class ClientFactory {
    * @return A new {@link ContainerClient} instance.
    */
   public ContainerClient containerClient() {
-    return new ContainerClient(
-        new Container.Builder(transport, jsonFactory, credential)
-            .setGoogleClientRequestInitializer(
-                request ->
-                    request.setRequestHeaders(
-                        request.getRequestHeaders().setUserAgent(APPLICATION_NAME)))
-            .setHttpRequestInitializer(new RetryHttpInitializerWrapper(credential))
-            .setApplicationName(APPLICATION_NAME)
-            .build());
+    return this.clientFactory.containerClient();
   }
 
   /**
@@ -115,16 +110,7 @@ public class ClientFactory {
    * @return A new {@link CloudResourceManagerClient} instance.
    */
   public CloudResourceManagerClient cloudResourceManagerClient() {
-    return new CloudResourceManagerClient(
-        new CloudResourceManager.Builder(
-                transport, jsonFactory, new RetryHttpInitializerWrapper(credential))
-            .setGoogleClientRequestInitializer(
-                request ->
-                    request.setRequestHeaders(
-                        request.getRequestHeaders().setUserAgent(APPLICATION_NAME)))
-            .setApplicationName(APPLICATION_NAME)
-            .setCloudResourceManagerRequestInitializer(new CloudResourceManagerRequestInitializer())
-            .build());
+    return this.clientFactory.cloudResourceManagerClient();
   }
 
   /** @return The default Project ID associated with this ClientFactory's credentials. */

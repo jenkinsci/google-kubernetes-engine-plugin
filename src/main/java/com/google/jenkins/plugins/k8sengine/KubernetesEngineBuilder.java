@@ -29,10 +29,10 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import com.google.graphite.platforms.plugin.client.CloudResourceManagerClient;
+import com.google.graphite.platforms.plugin.client.ContainerClient;
 import com.google.jenkins.plugins.credentials.oauth.GoogleOAuth2Credentials;
 import com.google.jenkins.plugins.k8sengine.client.ClientFactory;
-import com.google.jenkins.plugins.k8sengine.client.CloudResourceManagerClient;
-import com.google.jenkins.plugins.k8sengine.client.ContainerClient;
 import hudson.AbortException;
 import hudson.Extension;
 import hudson.FilePath;
@@ -75,7 +75,7 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
   static final String METRICS_LABEL_KEY = "app.kubernetes.io/managed-by";
   static final String METRICS_LABEL_VALUE = "graphite-jenkins-gke";
   static final ImmutableSet<String> METRICS_TARGET_TYPES =
-      ImmutableSet.<String>of("Deployment", "Service", "ReplicaSet");
+      ImmutableSet.of("Deployment", "Service", "ReplicaSet");
 
   private String credentialsId;
   private String projectId;
@@ -422,7 +422,7 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
       String defaultProjectId = clientFactory.getDefaultProjectId();
       try {
         CloudResourceManagerClient client = clientFactory.cloudResourceManagerClient();
-        List<Project> projects = client.getAccountProjects();
+        List<Project> projects = client.listProjects();
 
         if (projects.isEmpty()) {
           return items;
@@ -473,7 +473,7 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
 
       try {
         CloudResourceManagerClient client = clientFactory.cloudResourceManagerClient();
-        List<Project> projects = client.getAccountProjects();
+        List<Project> projects = client.listProjects();
         if (Strings.isNullOrEmpty(projectId)) {
           return FormValidation.error(Messages.KubernetesEngineBuilder_ProjectIDRequired());
         }

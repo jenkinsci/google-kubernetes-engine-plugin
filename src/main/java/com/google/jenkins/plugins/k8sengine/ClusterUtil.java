@@ -48,7 +48,7 @@ class ClusterUtil {
   }
 
   /**
-   * Only used for mocking the {@link com.google.jenkins.plugins.k8sengine.client.ContainerClient}.
+   * Only used for mocking the {@link com.google.graphite.platforms.plugin.client.ContainerClient}.
    * Constructs a {@link Cluster} from the given nameAndLocation value.
    *
    * @param nameAndLocation A non-empty String of the form "name (location)"
