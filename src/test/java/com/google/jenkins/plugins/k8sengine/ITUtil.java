@@ -18,7 +18,10 @@ package com.google.jenkins.plugins.k8sengine;
 
 import static org.junit.Assert.assertNotNull;
 
+import com.cloudbees.plugins.credentials.SecretBytes;
 import com.google.common.io.ByteStreams;
+import com.google.jenkins.plugins.credentials.oauth.JsonServiceAccountConfig;
+import com.google.jenkins.plugins.credentials.oauth.ServiceAccountConfig;
 import hudson.FilePath;
 import hudson.model.Project;
 import hudson.model.Run;
@@ -113,5 +116,22 @@ public class ITUtil {
     }
     assertNotNull("GOOGLE_PROJECT_LOCATION env var must be set", location);
     return location;
+  }
+
+  /**
+   * Retrieves the credentials set through environment variables and converts into a Service Account
+   * configuration for use in the Jenkins credential store.
+   *
+   * @return A {@link ServiceAccountConfig} for the provided Json Key.
+   */
+  public static ServiceAccountConfig getServiceAccountConfig() {
+    String serviceAccountKeyJson = System.getenv("GOOGLE_CREDENTIALS");
+    assertNotNull("GOOGLE_CREDENTIALS env var must be set", serviceAccountKeyJson);
+    SecretBytes bytes =
+        SecretBytes.fromBytes(serviceAccountKeyJson.getBytes(StandardCharsets.UTF_8));
+    JsonServiceAccountConfig config = new JsonServiceAccountConfig();
+    config.setSecretJsonKey(bytes);
+    assertNotNull(config.getAccountId());
+    return config;
   }
 }

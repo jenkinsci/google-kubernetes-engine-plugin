@@ -24,9 +24,9 @@ import static org.mockito.ArgumentMatchers.anyString;
 
 import com.google.api.services.cloudresourcemanager.model.Project;
 import com.google.common.collect.ImmutableList;
+import com.google.graphite.platforms.plugin.client.ClientFactory;
 import com.google.graphite.platforms.plugin.client.CloudResourceManagerClient;
 import com.google.jenkins.plugins.k8sengine.KubernetesEngineBuilder.DescriptorImpl;
-import com.google.jenkins.plugins.k8sengine.client.ClientFactory;
 import hudson.AbortException;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
@@ -304,7 +304,10 @@ public class KubernetesEngineBuilderTest {
         .when(descriptor)
         .getClientFactory(any(Jenkins.class), anyString());
 
-    Mockito.when(clientFactory.getDefaultProjectId()).thenReturn(defaultProjectId);
+    Mockito.doReturn(defaultProjectId)
+        .when(descriptor)
+        .getDefaultProjectId(any(Jenkins.class), anyString());
+
     CloudResourceManagerClient cloudResourceManagerClient =
         Mockito.mock(CloudResourceManagerClient.class);
     Mockito.when(clientFactory.cloudResourceManagerClient()).thenReturn(cloudResourceManagerClient);
