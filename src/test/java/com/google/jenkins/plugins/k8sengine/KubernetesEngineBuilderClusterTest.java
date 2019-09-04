@@ -30,9 +30,9 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 
 import com.google.api.services.container.model.Cluster;
+import com.google.cloud.graphite.platforms.plugin.client.ClientFactory;
+import com.google.cloud.graphite.platforms.plugin.client.ContainerClient;
 import com.google.common.collect.ImmutableList;
-import com.google.graphite.platforms.plugin.client.ClientFactory;
-import com.google.graphite.platforms.plugin.client.ContainerClient;
 import com.google.jenkins.plugins.k8sengine.KubernetesEngineBuilder.DescriptorImpl;
 import hudson.AbortException;
 import hudson.util.FormValidation;
