@@ -29,7 +29,6 @@ export PROJECT_ID=<YOUR_TEST_GCP_PROJECT_ID>
 export TEST_GCP_SA_ID=<YOUR_GCP_SA_ID>
 gcloud config set project $PROJECT_ID
 gcloud container clusters get-credentials $TEST_CLUSTER --zone $CLUSTER_ZONE
-cd docs/rbac
 sed s/YOUR_GCP_SA_ID/$TEST_GCP_SA_ID/ docs/rbac/cluster-it-setup.yaml > /tmp/cluster-it-setup.yaml
 kubectl apply -f /tmp/cluster-it-setup.yaml
 rm /tmp/cluster-it-setup.yaml
