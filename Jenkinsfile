@@ -29,7 +29,7 @@ pipeline {
     	    	kubernetes {
       		    cloud 'kubernetes'
       		    label 'mavenpod'
-      		    yamlFile 'gke/jenkins/maven-pod.yaml'
+      		    yamlFile 'jenkins/maven-pod.yaml'
 		}
 	    }
 	    steps {
