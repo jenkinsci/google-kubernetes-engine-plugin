@@ -34,13 +34,11 @@ pipeline {
 	    }
 	    steps {
 	    	container('maven') {
-                    dir("gke") {
-		        // build
-	    	        sh "mvn clean package"
+		    // build
+	    	    sh "mvn clean package"
 
-		        // run tests
-		        sh "mvn verify"
-                    }
+		    // run tests
+		    sh "mvn verify"
 		}
 	    }
 	}
