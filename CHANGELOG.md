@@ -28,6 +28,30 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
  ### Removed
 				 
  ### Fixed
+
+## [0.7.0] - 2019-09-??
+### Added
+- com.google.cloud.graphite:gcp-client:0.1.2 from
+[gcp-plugin-core-java](https://github.com/GoogleCloudPlatform/gcp-plugin-core-java) for replacing
+current clients.
+- ClientUtil to generate ClientFactory from gcp-plugin-core-java.
+
+### Changed
+- org.jenkins-ci.plugins:credentials version changed: 2.1.16 to 2.2.0
+- org.jenkins-ci.plugins:google-oauth-plugin version changed: 0.7 to 0.9
+- com.google.api-client:api-client version changed: 1.25.0 to 1.24.1
+- com.google.http-client:api-client version changed: 1.25.0 to 1.24.1
+- com.google.guava version changed: 19.0 to 14.0.1
+- Retrieving the default project ID of a service account is now handled in CredentialsUtil after
+the removal of ClientFactory. 
+
+### Removed
+- com.google.apis:google-api-services-container, handled by gcp-plugin-core-java.
+- com.google.apis:google-api-services-cloudresourcemanager, handled by gcp-plugin-core-java.
+- ClientFactory, CloudResourceManagerClient, ContainerClient and associated tests: migrated to
+gcp-plugin-core-java.
+- StringJsonServiceAccountConfig: Now using JsonServiceAccountConfig from google-oauth-plugin
+directly for test credentials.
  
 ## [0.6.3] - 2019-07-23
 ### Security

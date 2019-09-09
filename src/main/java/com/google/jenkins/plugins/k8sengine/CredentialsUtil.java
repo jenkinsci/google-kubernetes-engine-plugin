@@ -129,4 +129,34 @@ public class CredentialsUtil {
     googleCredential.refreshToken();
     return googleCredential.getAccessToken();
   }
+
+  /**
+   * Given a credentialsId and Jenkins context, return the default project ID for the service
+   * account credentials specified.
+   *
+   * @param itemGroup A handle to the Jenkins instance. Must be non-null.
+   * @param credentialsId The service account credential's ID. Must be non-null.
+   * @return The project ID specified when creating the credential in the Jenkins credential store.
+   * @throws AbortException If an error occurred fetching the credential.
+   */
+  static String getDefaultProjectId(ItemGroup itemGroup, String credentialsId)
+      throws AbortException {
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(credentialsId));
+    Preconditions.checkNotNull(itemGroup);
+    GoogleRobotCredentials robotCreds =
+        getRobotCredentials(itemGroup, ImmutableList.of(), credentialsId);
+    return Strings.isNullOrEmpty(robotCreds.getProjectId()) ? "" : robotCreds.getProjectId();
+  }
+
+  /**
+   * Wrapper to get the default project ID for a credential using Jenkins.get() as the context.
+   *
+   * @param credentialsId The service account credential's ID. Must be non-null.
+   * @return The project ID specified when creating the credential in the Jenkins credential store.
+   * @throws AbortException If an error occurred fetching the credential.
+   */
+  static String getDefaultProjectId(String credentialsId) throws AbortException {
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(credentialsId));
+    return getDefaultProjectId(Jenkins.get(), credentialsId);
+  }
 }

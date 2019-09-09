@@ -21,6 +21,7 @@ import static com.google.jenkins.plugins.k8sengine.ITUtil.createTestWorkspace;
 import static com.google.jenkins.plugins.k8sengine.ITUtil.dumpLog;
 import static com.google.jenkins.plugins.k8sengine.ITUtil.formatRandomName;
 import static com.google.jenkins.plugins.k8sengine.ITUtil.getLocation;
+import static com.google.jenkins.plugins.k8sengine.ITUtil.getServiceAccountConfig;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
@@ -28,13 +29,11 @@ import com.cloudbees.plugins.credentials.Credentials;
 import com.cloudbees.plugins.credentials.CredentialsStore;
 import com.cloudbees.plugins.credentials.SystemCredentialsProvider;
 import com.cloudbees.plugins.credentials.domains.Domain;
-import com.cloudbees.plugins.credentials.domains.DomainRequirement;
-import com.google.api.client.http.HttpTransport;
+import com.google.cloud.graphite.platforms.plugin.client.ContainerClient;
 import com.google.common.collect.ImmutableList;
 import com.google.jenkins.plugins.credentials.oauth.GoogleRobotPrivateKeyCredentials;
 import com.google.jenkins.plugins.credentials.oauth.ServiceAccountConfig;
-import com.google.jenkins.plugins.k8sengine.client.ClientFactory;
-import com.google.jenkins.plugins.k8sengine.client.ContainerClient;
+import com.google.jenkins.plugins.k8sengine.client.ClientUtil;
 import com.jayway.jsonpath.JsonPath;
 import hudson.model.FreeStyleBuild;
 import hudson.model.FreeStyleProject;
@@ -42,7 +41,6 @@ import hudson.model.Result;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -80,23 +78,15 @@ public class KubernetesEngineBuilderIT {
     assertNotNull("GOOGLE_GKE_CLUSTER env var must be set", clusterName);
 
     LOGGER.info("Creating credentials");
-    String serviceAccountKeyJson = System.getenv("GOOGLE_CREDENTIALS");
-    assertNotNull("GOOGLE_CREDENTIALS env var must be set", serviceAccountKeyJson);
+    ServiceAccountConfig sac = getServiceAccountConfig();
     credentialsId = projectId;
-    ServiceAccountConfig sac = new StringJsonServiceAccountConfig(serviceAccountKeyJson);
-    Credentials c = (Credentials) new GoogleRobotPrivateKeyCredentials(credentialsId, sac, null);
+    Credentials c = new GoogleRobotPrivateKeyCredentials(credentialsId, sac, null);
     CredentialsStore store =
         new SystemCredentialsProvider.ProviderImpl().getStore(jenkinsRule.jenkins);
     store.addCredentials(Domain.global(), c);
 
     LOGGER.info("Creating container client");
-    client =
-        new ClientFactory(
-                jenkinsRule.jenkins,
-                ImmutableList.<DomainRequirement>of(),
-                credentialsId,
-                Optional.<HttpTransport>empty())
-            .containerClient();
+    client = ClientUtil.getClientFactory(jenkinsRule.jenkins, credentialsId).containerClient();
   }
 
   @Test

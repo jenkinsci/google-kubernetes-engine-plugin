@@ -23,10 +23,10 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 
 import com.google.api.services.cloudresourcemanager.model.Project;
+import com.google.cloud.graphite.platforms.plugin.client.ClientFactory;
+import com.google.cloud.graphite.platforms.plugin.client.CloudResourceManagerClient;
 import com.google.common.collect.ImmutableList;
 import com.google.jenkins.plugins.k8sengine.KubernetesEngineBuilder.DescriptorImpl;
-import com.google.jenkins.plugins.k8sengine.client.ClientFactory;
-import com.google.jenkins.plugins.k8sengine.client.CloudResourceManagerClient;
 import hudson.AbortException;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
@@ -304,19 +304,22 @@ public class KubernetesEngineBuilderTest {
         .when(descriptor)
         .getClientFactory(any(Jenkins.class), anyString());
 
-    Mockito.when(clientFactory.getDefaultProjectId()).thenReturn(defaultProjectId);
+    Mockito.doReturn(defaultProjectId)
+        .when(descriptor)
+        .getDefaultProjectId(any(Jenkins.class), anyString());
+
     CloudResourceManagerClient cloudResourceManagerClient =
         Mockito.mock(CloudResourceManagerClient.class);
     Mockito.when(clientFactory.cloudResourceManagerClient()).thenReturn(cloudResourceManagerClient);
 
     if (ioException != null) {
-      Mockito.when(cloudResourceManagerClient.getAccountProjects()).thenThrow(ioException);
+      Mockito.when(cloudResourceManagerClient.listProjects()).thenThrow(ioException);
       return descriptor;
     }
 
     List<Project> projects = new ArrayList<>();
     initialProjects.forEach(p -> projects.add(new Project().setProjectId(p)));
-    Mockito.when(cloudResourceManagerClient.getAccountProjects())
+    Mockito.when(cloudResourceManagerClient.listProjects())
         .thenReturn(ImmutableList.copyOf(projects));
     return descriptor;
   }

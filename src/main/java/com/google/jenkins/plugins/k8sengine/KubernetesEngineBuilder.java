@@ -21,18 +21,18 @@ import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.common.StandardCredentials;
 import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
 import com.cloudbees.plugins.credentials.domains.DomainRequirement;
-import com.google.api.client.http.HttpTransport;
 import com.google.api.services.cloudresourcemanager.model.Project;
 import com.google.api.services.container.model.Cluster;
+import com.google.cloud.graphite.platforms.plugin.client.ClientFactory;
+import com.google.cloud.graphite.platforms.plugin.client.CloudResourceManagerClient;
+import com.google.cloud.graphite.platforms.plugin.client.ContainerClient;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.jenkins.plugins.credentials.oauth.GoogleOAuth2Credentials;
-import com.google.jenkins.plugins.k8sengine.client.ClientFactory;
-import com.google.jenkins.plugins.k8sengine.client.CloudResourceManagerClient;
-import com.google.jenkins.plugins.k8sengine.client.ContainerClient;
+import com.google.jenkins.plugins.k8sengine.client.ClientUtil;
 import hudson.AbortException;
 import hudson.Extension;
 import hudson.FilePath;
@@ -75,7 +75,7 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
   static final String METRICS_LABEL_KEY = "app.kubernetes.io/managed-by";
   static final String METRICS_LABEL_VALUE = "graphite-jenkins-gke";
   static final ImmutableSet<String> METRICS_TARGET_TYPES =
-      ImmutableSet.<String>of("Deployment", "Service", "ReplicaSet");
+      ImmutableSet.of("Deployment", "Service", "ReplicaSet");
 
   private String credentialsId;
   private String projectId;
@@ -346,6 +346,8 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
   @Extension
   public static final class DescriptorImpl extends BuildStepDescriptor<Builder> {
     private ClientFactory clientFactory;
+    private String defaultProjectId;
+    private String credentialsId;
 
     @Nonnull
     @Override
@@ -360,11 +362,26 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
 
     @VisibleForTesting
     ClientFactory getClientFactory(Jenkins context, String credentialsId) throws AbortException {
-      if (this.clientFactory == null
-          || !this.clientFactory.getCredentialsId().equals(credentialsId)) {
-        this.clientFactory = new ClientFactory(context, credentialsId);
+      if (this.clientFactory == null || updateCredentialsId(credentialsId)) {
+        this.clientFactory = ClientUtil.getClientFactory(context, credentialsId);
       }
       return this.clientFactory;
+    }
+
+    @VisibleForTesting
+    String getDefaultProjectId(Jenkins context, String credentialsId) throws AbortException {
+      if (this.defaultProjectId == null || updateCredentialsId(credentialsId)) {
+        this.defaultProjectId = CredentialsUtil.getDefaultProjectId(context, credentialsId);
+      }
+      return this.defaultProjectId;
+    }
+
+    private boolean updateCredentialsId(String credentialsId) {
+      if (this.credentialsId == null || !this.credentialsId.equals(credentialsId)) {
+        this.credentialsId = credentialsId;
+        return true;
+      }
+      return false;
     }
 
     public ListBoxModel doFillCredentialsIdItems(@AncestorInPath Jenkins context) {
@@ -410,8 +427,10 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
       }
 
       ClientFactory clientFactory;
+      String defaultProjectId;
       try {
         clientFactory = this.getClientFactory(context, credentialsId);
+        defaultProjectId = getDefaultProjectId(context, credentialsId);
       } catch (AbortException | RuntimeException ex) {
         LOGGER.log(Level.SEVERE, Messages.KubernetesEngineBuilder_CredentialAuthFailed(), ex);
         items.clear();
@@ -419,10 +438,9 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
         return items;
       }
 
-      String defaultProjectId = clientFactory.getDefaultProjectId();
       try {
         CloudResourceManagerClient client = clientFactory.cloudResourceManagerClient();
-        List<Project> projects = client.getAccountProjects();
+        List<Project> projects = client.listProjects();
 
         if (projects.isEmpty()) {
           return items;
@@ -473,7 +491,7 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
 
       try {
         CloudResourceManagerClient client = clientFactory.cloudResourceManagerClient();
-        List<Project> projects = client.getAccountProjects();
+        List<Project> projects = client.listProjects();
         if (Strings.isNullOrEmpty(projectId)) {
           return FormValidation.error(Messages.KubernetesEngineBuilder_ProjectIDRequired());
         }
@@ -625,12 +643,7 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
   }
 
   private static ContainerClient getContainerClient(String credentialsId) throws AbortException {
-    return new ClientFactory(
-            Jenkins.get(),
-            ImmutableList.<DomainRequirement>of(),
-            credentialsId,
-            Optional.<HttpTransport>empty())
-        .containerClient();
+    return ClientUtil.getClientFactory(Jenkins.get(), credentialsId).containerClient();
   }
 
   @FunctionalInterface
