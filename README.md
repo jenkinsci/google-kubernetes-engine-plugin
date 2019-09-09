@@ -44,6 +44,10 @@ and install from source.
 Please file feature requests and bug reports as
 [github issues](https://github.com/jenkinsci/google-kubernetes-engine-plugin/issues).
 
+**NOTE**: Starting with version 0.7 of this plugin, version 0.9 or higher of the
+[Google OAuth Credentials plugin](https://github.com/jenkinsci/google-oauth-plugin) must be used.
+Older versions of this plugin are still compatible with version 0.9 of the OAuth plugin.
+
 ## Community
 
 The GCP Jenkins community uses the **#gcp-jenkins** slack channel on
