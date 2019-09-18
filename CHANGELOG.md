@@ -29,7 +29,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 				 
  ### Fixed
 
-## [0.7.0] - 2019-09-??
+## [0.7.0] - 2019-09-18
 ### Added
 - com.google.cloud.graphite:gcp-client:0.1.2 from
 [gcp-plugin-core-java](https://github.com/GoogleCloudPlatform/gcp-plugin-core-java) for replacing
