@@ -33,7 +33,7 @@ to publish deployments built within Jenkins to your Kubernetes clusters running 
   * structs: 1.17
   * credentials: 2.1.16
 
-## Usage
+## Setup
 
 ### Enable Required APIs
 
@@ -172,6 +172,8 @@ RBAC permissions.
   https://cloud.google.com/kubernetes-engine/docs/how-to/role-based-access-control)
 * [Configuring RBAC for GKE deployment](
   https://codeascraft.com/2018/06/05/deploying-to-google-kubernetes-engine/)
+  
+## Usage
 
 ### Google Kubernetes Engine Build Step Configuration
 
