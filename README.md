@@ -39,6 +39,10 @@ documentation.
 See [Plugin Source Build Installation](docs/SourceBuildInstallation.md) to build
 and install from source.
 
+## Usage
+
+See the [Usage](docs/Home.md#usage) documentation for how to create a `Deploy to GKE` build step.
+
 ## Feature requests and bug reports
 
 Please file feature requests and bug reports as
