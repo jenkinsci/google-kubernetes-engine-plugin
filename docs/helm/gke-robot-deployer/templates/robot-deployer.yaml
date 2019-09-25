@@ -1,0 +1,22 @@
+# A role for granting the permissions deemed necessary for deploying to kubernetes
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRole
+metadata:
+ name: robot-deployer
+rules:
+- apiGroups:
+  - extensions
+  - apps
+  - v1
+  resources:
+  - containers
+  - endpoints
+  - services
+  - pods
+  verbs:
+  - create
+  - get
+  - list
+  - patch
+  - update
+  - watch

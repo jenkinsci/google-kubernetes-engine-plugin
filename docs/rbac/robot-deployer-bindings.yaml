@@ -5,7 +5,7 @@ metadata:
   namespace: default
 subjects:
 - kind: User
-  name: jenkins-gke@YOUR-PROJECT.iam.gserviceaccount.com
+  name: ${SA_EMAIL}
   namespace: default
 roleRef:
   kind: ClusterRole

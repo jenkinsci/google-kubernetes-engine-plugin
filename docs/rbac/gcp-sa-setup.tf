@@ -1,15 +1,16 @@
-# Set up project ID variable
-# Replace {{YOUR_GCP_PROJECT_ID}} with your own project id
 variable project {
-    type    = "string"
-    default = "{{YOUR_GCP_PROJECT_ID}}"
+  type        = "string"
+  description = "The GCP project to be configured."
 }
 
-# Set up region variable
-# Replace {{YOUR_PROJECT_REGION}} with your project region
 variable region {
-    type    = "string"
-    default = "{{YOUR_PROJECT_REGION}}"
+  type        = "string"
+  description = "The GCP region."
+}
+
+variable sa_name {
+  type        = "string"
+  description = "The name of the service account to be created."
 }
 
 # Create the Google Cloud terraform provider
@@ -21,8 +22,8 @@ provider "google" {
 # Create a custom IAM role to bind to our GCP service account
 
 # Declare a special IAM role
-resource "google_project_iam_custom_role" "minimal-k8s-role" {
-  role_id     = "Minimalk8sIamRole"
+resource "google_project_iam_custom_role" "gke-deployer" {
+  role_id     = "gke_deployer"
   title       = "Minimal IAM role for GKE access"
   description = "Bare minimum permissions to access the kubernetes API for using the Jenkins GKE plugin."
   project     = "${var.project}"
@@ -41,18 +42,13 @@ resource "google_project_iam_custom_role" "minimal-k8s-role" {
 # Create our service account called jenkins-gke-deployer.
 # More information: https://www.terraform.io/docs/providers/google/r/google_service_account.html
 resource "google_service_account" "jenkins-gke-deployer" {
-  account_id   = "jenkins-gke-deployer"
-  display_name = "jenkins-gke-deployer"
+  account_id   = "${var.sa_name}"
+  display_name = "${var.sa_name}"
 }
 
 # Assign the special IAM role to the service account
 resource "google_project_iam_member" "jenkins-deployer-gke-access" {
   project = "${var.project}"
-  role    = "projects/${var.project}/roles/Minimalk8sIamRole"
+  role    = "projects/${var.project}/roles/${google_project_iam_custom_role.gke-deployer.role_id}"
   member  = "serviceAccount:${google_service_account.jenkins-gke-deployer.email}"
-}
-
-# Store the service account key in Terraform so that we can access it
-resource "google_service_account_key" "jenkins-gke-deployer" {
-  service_account_id = "${google_service_account.jenkins-gke-deployer.id}"
 }

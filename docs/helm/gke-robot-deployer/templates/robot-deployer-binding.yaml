@@ -2,19 +2,15 @@
 # A set of objects for configuring namespaces
 # and a deployer user (your GCP service account) that is given the robot-deployer ClusterRole. (see rbac-values.yaml)
 # robot-deployer yaml at https://github.com/jenkinsci/google-kubernetes-engine-plugin/blob/develop/docs/rbac/robot-deployer.yaml
-{{- if .Values.Permissions }}
-  {{- range $index, $namespace:= .Values.Permissions}}
-apiVersion: v1
-kind: Namespace
-metadata:
-    name: {{ $namespace.NamespaceName }}
+{{- if .Values.Namespaces }}
+  {{- range $index, $namespace:= .Values.Namespaces}}
 ---
-    {{- if $namespace.GCPServiceAccount }}
+    {{- if $namespace.RobotDeployer }}
 apiVersion: rbac.authorization.k8s.io/v1beta1
 kind: RoleBinding
 metadata:
-  name: {{ $namespace.NamespaceName }}-robot-deployer
-  namespace: {{ $namespace.NamespaceName }}
+  name: {{$namespace.NamespaceName}}-robot-deployer
+  namespace: {{$namespace.NamespaceName}}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
@@ -22,7 +18,7 @@ roleRef:
 subjects:
 - apiGroup: rbac.authorization.k8s.io
   kind: User
-  name: {{ $namespace.GCPServiceAccount }}
+  name: {{$namespace.RobotDeployer}}
     {{- end }}
 ---
   {{- end }}
