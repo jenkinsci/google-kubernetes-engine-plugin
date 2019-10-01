@@ -77,7 +77,7 @@ cloudresourcemanager.googleapis.com \
 This section describes the manual procedures for configuring the permissions necessary for
 your GCP service account to deploy to your GKE cluster. Automation is also
 provided for executing these procedures using [Terraform](https://www.terraform.io/docs/index.html)
-and [Helm](https://helm.sh) in the [Automated Permissions Configuration](#-automated-permissions-configuration)
+and [Helm](https://helm.sh) in the [Automated Permissions Configuration](#automated-permissions-configuration)
 section.
 
 #### GCP IAM Permissions
