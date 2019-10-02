@@ -21,11 +21,14 @@ rules:
   - apps
   - v1
   resources:
+  - apps
+  - deployments
   - containers
   - endpoints
   - services
   - pods
   verbs:
+  - delete
   - create
   - get
   - list
