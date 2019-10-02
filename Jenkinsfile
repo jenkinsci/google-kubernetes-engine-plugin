@@ -36,10 +36,10 @@ pipeline {
 	    	container('maven-kubectl') {
                     withCredentials([[$class: 'StringBinding', credentialsId: env.GKE_IT_CRED_ID, variable: 'GOOGLE_CREDENTIALS']]) {
 		        // build
-	    	        sh "mvn clean package"
+	    	        sh "mvn clean package -ntp"
 
 		        // run tests
-		        sh "mvn verify"
+		        sh "mvn verify -ntp"
                     }
                 }
             }
