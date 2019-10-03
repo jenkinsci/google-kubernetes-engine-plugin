@@ -280,6 +280,11 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
     }
   }
 
+  @Override
+  public BuildStepMonitor getRequiredMonitorService() {
+    return BuildStepMonitor.BUILD;
+  }
+
   /**
    * Adds a Kubernetes user label unique to this Jenkins plugin to the specified manifest,
    * (in-place) in order to enable Jenkins GKE/GCE non-identifying usage metrics. Behavior with
@@ -337,9 +342,17 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
         kubectl, manifestObjects, consoleLogger, verifyTimeoutInMinutes);
   }
 
-  @Override
-  public BuildStepMonitor getRequiredMonitorService() {
-    return BuildStepMonitor.BUILD;
+  /**
+   * Ensures the executing user has the permissions to be running this step.
+   *
+   * @throws AccessDeniedException If the user lacks the proper permissions.
+   */
+  private static void checkPermissions() {
+    Jenkins jenkins = Jenkins.getInstanceOrNull();
+    // This check ensures mocks don't break.
+    if (jenkins != null) {
+      Jenkins.get().checkPermission(Jenkins.RUN_SCRIPTS);
+    }
   }
 
   @Symbol("kubernetesEngineDeploy")
@@ -402,6 +415,7 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
     public FormValidation doCheckCredentialsId(
         @AncestorInPath Jenkins context,
         @QueryParameter("credentialsId") final String credentialsId) {
+      checkPermissions();
       if (credentialsId.isEmpty()) {
         return FormValidation.error(Messages.KubernetesEngineBuilder_NoCredential());
       }
@@ -420,6 +434,7 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
         @AncestorInPath Jenkins context,
         @QueryParameter("projectId") final String projectId,
         @QueryParameter("credentialsId") final String credentialsId) {
+      checkPermissions();
       ListBoxModel items = new ListBoxModel();
       items.add(EMPTY_NAME, EMPTY_VALUE);
       if (Strings.isNullOrEmpty(credentialsId)) {
@@ -476,6 +491,7 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
         @AncestorInPath Jenkins context,
         @QueryParameter("projectId") final String projectId,
         @QueryParameter("credentialsId") final String credentialsId) {
+      checkPermissions();
       if (Strings.isNullOrEmpty(credentialsId) && Strings.isNullOrEmpty(projectId)) {
         return FormValidation.error(Messages.KubernetesEngineBuilder_ProjectIDRequired());
       } else if (Strings.isNullOrEmpty(credentialsId)) {
@@ -514,6 +530,7 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
         @QueryParameter("cluster") final String cluster,
         @QueryParameter("credentialsId") final String credentialsId,
         @QueryParameter("projectId") final String projectId) {
+      checkPermissions();
       ListBoxModel items = new ListBoxModel();
       items.add(EMPTY_NAME, EMPTY_VALUE);
       if (Strings.isNullOrEmpty(credentialsId) || Strings.isNullOrEmpty(projectId)) {
@@ -554,6 +571,7 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
         @QueryParameter("cluster") final String cluster,
         @QueryParameter("credentialsId") final String credentialsId,
         @QueryParameter("projectId") final String projectId) {
+      checkPermissions();
       if (Strings.isNullOrEmpty(credentialsId) && Strings.isNullOrEmpty(cluster)) {
         return FormValidation.error(Messages.KubernetesEngineBuilder_ClusterRequired());
       } else if (Strings.isNullOrEmpty(credentialsId)) {
@@ -595,6 +613,7 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
     }
 
     public FormValidation doCheckNamespace(@QueryParameter("namespace") final String namespace) {
+      checkPermissions();
       /* Regex from
        * https://github.com/kubernetes/apimachinery/blob/7d08eb7a76fdbc79f7bc1b5fb061ae44f3324bfa/pkg/util/validation/validation.go#L110
        */
@@ -607,6 +626,7 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
 
     public FormValidation doCheckManifestPattern(
         @QueryParameter("manifestPattern") final String manifestPattern) {
+      checkPermissions();
       if (Strings.isNullOrEmpty(manifestPattern)) {
         return FormValidation.error(Messages.KubernetesEngineBuilder_ManifestRequired());
       }
@@ -615,6 +635,7 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
 
     public FormValidation doCheckVerifyTimeoutInMinutes(
         @QueryParameter("verifyTimeoutInMinutes") final String verifyTimeoutInMinutes) {
+      checkPermissions();
       if (Strings.isNullOrEmpty(verifyTimeoutInMinutes)) {
         return FormValidation.error(
             Messages.KubernetesEngineBuilder_VerifyTimeoutInMinutesRequired());
