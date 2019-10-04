@@ -38,6 +38,7 @@ import hudson.Extension;
 import hudson.FilePath;
 import hudson.Launcher;
 import hudson.model.AbstractProject;
+import hudson.model.Job;
 import hudson.model.Run;
 import hudson.model.TaskListener;
 import hudson.security.ACL;
@@ -351,7 +352,7 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
     Jenkins jenkins = Jenkins.getInstanceOrNull();
     // This check ensures mocks don't break.
     if (jenkins != null) {
-      Jenkins.get().checkPermission(Jenkins.RUN_SCRIPTS);
+      jenkins.checkPermission(Job.CONFIGURE);
     }
   }
 
