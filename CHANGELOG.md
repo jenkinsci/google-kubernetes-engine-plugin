@@ -29,6 +29,25 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 				 
  ### Fixed
 
+## [0.7.1] - 2019-10-09
+
+### Security
+- Added persmissions checking to the build step do functions.
+
+### Added
+- Added automation for publishing maven-kubectl GCR image.
+- Onboarding project into team CI server.
+- Inline link to usage documentation in Readme.
+
+### Changed
+
+### Removed
+
+### Fixed
+- Fixes robot-deployer clusterrole in helm chart.
+- Fixed automated cluster configuration docs and scripts.
+- Rename doc sections in docs for clarity.
+
 ## [0.7.0] - 2019-09-18
 ### Added
 - com.google.cloud.graphite:gcp-client:0.1.2 from
