@@ -45,13 +45,9 @@ plugin build that you will be testing.
 1. Click **OK**.
 
 1. Under **Source Code Management**:
-  * Select `Git`.
-
-  * For **Repository URL** enter `https://github.com/jenkinsci/google-kubernetes-engine-plugin.git`
-
-  * For the **Branch Specifier** enter `*/develop`
-
-  * Click **Save**.
-
+    * Select `Git`.
+    * For **Repository URL** enter `https://github.com/jenkinsci/google-kubernetes-engine-plugin.git`
+    * For the **Branch Specifier** enter `*/develop`
+    * Click **Save**.
 1. Follow the instructions at [GKE Build Step Configuration](Home.md#google-kubernetes-engine-build-step-configuration)
 to test. Enter [`docs/resources/manifest.yaml`](resources/manifest.yaml) in the Kubernetes Manifests field.
