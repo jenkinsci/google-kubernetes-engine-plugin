@@ -21,10 +21,10 @@ to publish deployments built within Jenkins to your Kubernetes clusters running 
 * Minimum Jenkins version: 2.164.2
 
 * Jenkins plugin dependencies:
-  
+
   **NOTE**: Unless otherwise specified, pre-installation of these plugins aren't required. Just
     note that if a conflicting version is present a class-loading error could occur.
-    
+
   * google-oauth-plugin: 0.7 (pre-installation required)
   * workflow-step-api: 2.19
   * pipeline-model-definition: 1.3.8 (pre-installation required for Pipeline DSL support)
@@ -53,19 +53,19 @@ servicemanagement.googleapis.com \
 cloudresourcemanager.googleapis.com \
     --project $PROJECT
 ```
-    
+
 ### Configure target GKE cluster
 
 1. If necessary, create your GKE cluster:
     ```bash
-    gcloud container clusters create $CLUSTER --zone $ZONE 
+    gcloud container clusters create $CLUSTER --zone $ZONE
     ```
-    
+
 1. Retrieve the KubeConfig for your cluster:
     ```bash
-    gcloud container clusters get-credentials $CLUSTER --zone $ZONE 
+    gcloud container clusters get-credentials $CLUSTER --zone $ZONE
     ```
-    
+
 1. If necessary, grant your GCP login account cluster-admin permissions necessary for creating cluster role bindings:
    ```bash
    kubectl create clusterrolebinding cluster-admin-binding --clusterrole=cluster-admin \
@@ -102,13 +102,13 @@ the file was created, you will upload it to Jenkins in a subsequent step:
     ```bash
     gcloud iam service-accounts keys create ~/jenkins-gke-key.json --iam-account $SA_EMAIL
     ```
-1. If using cloud shell, click the 3 vertical dots and **Download file**, then enter
-   "jenkins-gke-key.json".
-1. In Jenkins, click the Credentials button on the left side of the screen. Then click System.
-1. Click Global credentials then **Add credentials** on the left.
-1. In the Kind dropdown, select **Google Service Account from private key**.
-1. Enter your project name then select your JSON key that was created in the preceding steps.
-1. Click OK.
+    * If using cloud shell, click the 3 vertical dots and **Download file**, then enter "jenkins-gke-key.json".
+
+1. In Jenkins on the left side of the screen, click on **Credentials**, then **System**.
+1. Click **Global credentials** then **Add credentials** on the left.
+1. In the **Kind** dropdown, select `Google Service Account from private key`.
+1. Enter your project name, then select your JSON key that was created in the preceding steps.
+1. Click **OK**.
 
 #### GKE Cluster RBAC Permissions
 
@@ -119,7 +119,7 @@ Grant your GCP service account a restricted set of RBAC permissions allowing it 
     kubectl create -f rbac/robot-deployer.yaml
     ```
 
-1. Grant your GCP service account the robot-deployer role binding using [rbac/robot-deployer-bindings.yaml](rbac/robot-deployer-bindings.yaml)
+1. Grant your GCP service account the robot-deployer role binding using [rbac/robot-deployer-bindings.yaml](rbac/robot-deployer-bindings.yaml):
     ```bash
     envsubst < rbac/robot-deployer-bindings.yaml | kubectl create -f -
     ```
@@ -170,7 +170,7 @@ provided by the helm project for configuring helm/tiller on your GKE cluster.
   https://cloud.google.com/kubernetes-engine/docs/how-to/role-based-access-control)
 * [Configuring RBAC for GKE deployment](
   https://codeascraft.com/2018/06/05/deploying-to-google-kubernetes-engine/)
-  
+
 ## Usage
 
 ### Google Kubernetes Engine Build Step Configuration
@@ -178,27 +178,26 @@ provided by the helm project for configuring helm/tiller on your GKE cluster.
 Each GKE Build Step configuration can point to a different GKE cluster. Follow the steps below to
 create one.
 
-#### GKE Build Step Parameters
+##### GKE Build Step Parameters
 
 The GKE Build Step has the following parameters:
 
-1. credentialsId(string): The ID of the credentials that you uploaded earlier.
-1. projectId(string): The Project ID housing the GKE cluster to be published to.
-1. zone(string): [**Deprecated**] The Zone housing the GKE cluster to be published to.
-1. location(string): The Zone or Region housing the GKE cluster to be published to.
-1. clusterName(string): The name of the Cluster to be published to.
-1. manifestPattern(string): The file pattern of the Kubernetes manifest to be deployed.
-1. verifyDeployments(boolean): [Optional] Whether the plugin will verify deployments.
+1. `credentialsId(string)`: The ID of the credentials that you uploaded earlier.
+1. `projectId(string)`: The Project ID housing the GKE cluster to be published to.
+1. `zone(string)`: [**Deprecated**] The Zone housing the GKE cluster to be published to.
+1. `location(string)`: The Zone or Region housing the GKE cluster to be published to.
+1. `clusterName(string)`: The name of the Cluster to be published to.
+1. `manifestPattern(string)`: The file pattern of the Kubernetes manifest to be deployed.
+1. `verifyDeployments(boolean)`: [Optional] Whether the plugin will verify deployments.
 
 #### Jenkins Web UI
 
-1. Go to Jenkins home, and select the project to be published to GKE.
-1. Click the "Configure" button on the left nav-bar.
-1. At the bottom of the page there will be a button labeled "Add build step", click the button then
-click Google Kubernetes Engine.
-1. In the Service Account Credentials dropdown, select the credentials that you uploaded earlier.
-1. Select the Project ID housing the GKE cluster to be published to.
-1. Select the Cluster to be published to.
+1. On the Jenkins home page, select the project to be published to GKE.
+1. Click **Configure** from the left nav-bar.
+1. At the bottom of the page there will be a button labeled **Add build step**, click the button then select `Deploy to Google Kubernetes Engine`.
+1. In the **Service Account Credentials** dropdown, select the credentials that you uploaded earlier. This should autopopulate **Project ID** and **Cluster**, if not:
+  * Select the Project ID housing the GKE cluster to be published to.
+  * Select the Cluster to be published to.
 1. Enter the file path of the Kubernetes [manifest](
    https://kubernetes.io/docs/concepts/workloads/controllers/deployment/) within your project to be
    used for deployment.

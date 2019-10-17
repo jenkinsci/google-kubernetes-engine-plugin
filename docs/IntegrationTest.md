@@ -38,15 +38,23 @@ rm /tmp/cluster-it-setup.yaml
 1. Follow the instructions at [Source Build Installation](SourceBuildInstallation.md) to upload the
 plugin build that you will be testing.
 
-1. From the main jenkins page click **New Item**, then enter a name and choose
-**Freestyle project**.
+1. From the main Jenkins page click **New Item**, then enter a name and choose
+**Freestyle project**. Click **OK**.
 
-1. Under **Source Code Management**, select Git and enter this repository.:
-https://github.com/jenkinsci/google-kubernetes-engine-plugin.git
+1. Under **Source Code Management**:
 
-1. Enter Branch Specifier as develop
+  * Select Git
+
+  * Enter this URL for `Repository URL`:
+
+  ```
+  https://github.com/jenkinsci/google-kubernetes-engine-plugin.git
+  ```
+
+  * Enter `*/develop` for the **Branch Specifier**.
+
+  * Click **Save**.
 
 1. Follow the instructions at
 [GKE Build Step Configuration](Home.md#google-kubernetes-engine-build-step-configuration) to test.
 Enter [`docs/resources/manifest.yaml`](resources/manifest.yaml) in the Kubernetes Manifests field.
-
