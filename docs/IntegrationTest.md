@@ -47,9 +47,9 @@ plugin build that you will be testing.
 
   * Enter this URL for `Repository URL`:
 
-  ```
-  https://github.com/jenkinsci/google-kubernetes-engine-plugin.git
-  ```
+    ```
+    https://github.com/jenkinsci/google-kubernetes-engine-plugin.git
+    ```
 
   * Enter `*/develop` for the **Branch Specifier**.
 
