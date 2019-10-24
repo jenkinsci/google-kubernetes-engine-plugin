@@ -23,7 +23,7 @@
   </parent>
 
   <artifactId>google-kubernetes-engine</artifactId>
-  <version>0.7.2-SNAPSHOT</version>
+  <version>0.8.0-SNAPSHOT</version>
   <packaging>hpi</packaging>
 
   <name>Google Kubernetes Engine Plugin</name>
@@ -68,8 +68,11 @@
     <maven.compiler.source>1.8</maven.compiler.source>
     <maven.compiler.target>1.8</maven.compiler.target>
     <pipeline-model-definition.version>1.3.8</pipeline-model-definition.version>
-    <!-- TODO: Update to a newer api version when Jenkins core is not bundled with guava 11. -->
-    <google-api-client.version>1.24.1</google-api-client.version>
+    <google.guava.version>20.0</google.guava.version>
+    <gcp-plugin-core.version>0.2.0-SNAPSHOT</gcp-plugin-core.version>
+    <google-oauth-plugin.version>1.0.0-SNAPSHOT</google-oauth-plugin.version>
+    <hpi.compatibleSinceVersion>0.8.0</hpi.compatibleSinceVersion>
+    <skip.surefire.tests>${skipTests}</skip.surefire.tests>
   </properties>
 
   <dependencies>
@@ -122,7 +125,7 @@
     <dependency>
       <groupId>org.jenkins-ci.plugins</groupId>
       <artifactId>google-oauth-plugin</artifactId>
-      <version>0.9</version>
+      <version>${google-oauth-plugin.version}</version>
     </dependency>
     <dependency>
       <groupId>org.jenkins-ci</groupId>
@@ -149,22 +152,12 @@
     <dependency>
       <groupId>com.google.cloud.graphite</groupId>
       <artifactId>gcp-client</artifactId>
-      <version>0.1.2</version>
-    </dependency>
-    <dependency>
-      <groupId>com.google.api-client</groupId>
-      <artifactId>google-api-client</artifactId>
-      <version>${google-api-client.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>com.google.http-client</groupId>
-      <artifactId>google-http-client</artifactId>
-      <version>${google-api-client.version}</version>
+      <version>${gcp-plugin-core.version}</version>
     </dependency>
     <dependency>
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
-      <version>14.0.1</version>
+      <version>${google.guava.version}</version>
     </dependency>
     <dependency>
       <groupId>org.yaml</groupId>
@@ -175,11 +168,6 @@
       <groupId>com.jayway.jsonpath</groupId>
       <artifactId>json-path</artifactId>
       <version>2.4.0</version>
-    </dependency>
-    <dependency>
-      <groupId>com.google.code.gson</groupId>
-      <artifactId>gson</artifactId>
-      <version>2.8.5</version>
     </dependency>
     <dependency>
       <groupId>io.projectreactor</groupId>
@@ -307,6 +295,7 @@
         <configuration>
           <disableXmlReport>true</disableXmlReport>
           <useFile>false</useFile>
+          <skipITs>${skip.surefire.tests}</skipITs>
         </configuration>
       </plugin>
       <plugin>
