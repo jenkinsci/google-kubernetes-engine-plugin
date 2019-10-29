@@ -9,7 +9,6 @@ import com.cloudbees.plugins.credentials.SystemCredentialsProvider;
 import com.cloudbees.plugins.credentials.domains.Domain;
 import com.cloudbees.plugins.credentials.domains.DomainRequirement;
 import com.google.api.client.auth.oauth2.Credential;
-import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
 import com.google.common.collect.ImmutableList;
 import com.google.jenkins.plugins.credentials.oauth.GoogleRobotCredentials;
 import com.google.jenkins.plugins.k8sengine.client.ContainerScopeRequirement;
@@ -77,14 +76,14 @@ public class CredentialsUtilTest {
 
   @Test(expected = IOException.class)
   public void testGetAccessTokenIOException() throws IOException {
-    GoogleCredential googleCredential = Mockito.mock(GoogleCredential.class);
+    Credential googleCredential = Mockito.mock(Credential.class);
     Mockito.when(googleCredential.refreshToken()).thenThrow(IOException.class);
     CredentialsUtil.getAccessToken(googleCredential);
   }
 
   @Test
   public void testGetAccessTokenReturnsToken() throws IOException {
-    GoogleCredential googleCredential = Mockito.mock(GoogleCredential.class);
+    Credential googleCredential = Mockito.mock(Credential.class);
     Mockito.when(googleCredential.refreshToken()).thenReturn(true);
     Mockito.when(googleCredential.getAccessToken()).thenReturn(TEST_ACCESS_TOKEN);
     String accessToken = CredentialsUtil.getAccessToken(googleCredential);
@@ -125,7 +124,7 @@ public class CredentialsUtilTest {
 
   @Test(expected = NullPointerException.class)
   public void testGetAccessTokenWithNullGoogleCredential() throws IOException {
-    GoogleCredential googleCredential = null;
+    Credential googleCredential = null;
     CredentialsUtil.getAccessToken(googleCredential);
   }
 }
