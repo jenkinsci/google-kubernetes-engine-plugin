@@ -29,6 +29,21 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 				 
  ### Fixed
 
+## [0.8.0] - 2019-10-30
+
+### Changed
+- org.jenkinsci.plugins:google-oauth-plugin version changed: 0.9 to 1.0.0
+- com.google.cloud.graphite:gcp-client version changed: 0.1.3 to 0.2.0
+- com.google.oauth-client:google-oauth-client changed: 1.24.1 to 1.25.0
+- com.google.http-client:google-http-client version changed: 1.24.1 to 1.21.0
+- com.google.http-client:google-http-client-jackson2 version changed: 1.24.1 to 1.25.0
+- com.google.apis versions:
+  - google-api-services-cloudresourcemanager version changed: v1-rev547-1.24.1 to v1-rev547-1.25.0
+  - google-api-services-container version changed: v1-rev74-1.24.1 to v1-rev74-1.25.0
+
+### Removed
+- com.google.api-client:google-api-client direct references removed.
+
 ## [0.7.1] - 2019-10-09
 
 ### Security
