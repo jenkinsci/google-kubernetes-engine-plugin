@@ -23,7 +23,7 @@
   </parent>
 
   <artifactId>google-kubernetes-engine</artifactId>
-  <version>0.8.0</version>
+  <version>0.8.1-SNAPSHOT</version>
   <packaging>hpi</packaging>
 
   <name>Google Kubernetes Engine Plugin</name>
@@ -59,7 +59,7 @@
     <connection>scm:git:git://github.com/jenkinsci/${project.artifactId}-plugin.git</connection>
     <developerConnection>scm:git:git@github.com:jenkinsci/${project.artifactId}-plugin.git</developerConnection>
     <url>https://github.com/jenkinsci/${project.artifactId}-plugin</url>
-    <tag>google-kubernetes-engine-0.8.0</tag>
+    <tag>HEAD</tag>
   </scm>
 
   <properties>
