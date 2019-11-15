@@ -39,7 +39,7 @@ pipeline {
 	    	        sh "mvn clean package -ntp"
 
 		        // run tests
-		        sh "mvn verify -ntp"
+		        sh "mvn verify -ntp -DskipITs=false"
                     }
                 }
             }

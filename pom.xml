@@ -77,6 +77,7 @@
     <google-oauth-plugin.version>1.0.0</google-oauth-plugin.version>
     <hpi.compatibleSinceVersion>0.8.0</hpi.compatibleSinceVersion>
     <skip.surefire.tests>${skipTests}</skip.surefire.tests>
+    <skipITs>true</skipITs>
   </properties>
 
   <dependencies>
@@ -342,7 +343,7 @@
         <configuration>
           <disableXmlReport>true</disableXmlReport>
           <useFile>false</useFile>
-          <skipITs>${skip.surefire.tests}</skipITs>
+          <skipITs>${skipITs}</skipITs>
         </configuration>
       </plugin>
       <plugin>
