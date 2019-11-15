@@ -14,6 +14,9 @@
 
 # Google Kubernetes Engine Plugin for Jenkins
 
+[![Jenkins Plugin](https://img.shields.io/jenkins/plugin/v/google-kubernetes-engine.svg)](https://plugins.jenkins.io/google-kubernetes-engine)
+[![Jenkins Plugin Installs](https://img.shields.io/jenkins/plugin/i/google-kubernetes-engine.svg?color=blue)](https://plugins.jenkins.io/google-kubernetes-engine)
+
 The Google Kubernetes Engine (GKE) Plugin allows you to deploy build artifacts
 to Kubernetes clusters running in GKE with Jenkins.
 
