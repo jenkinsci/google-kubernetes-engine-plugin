@@ -28,6 +28,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import org.yaml.snakeyaml.Yaml;
+import org.yaml.snakeyaml.constructor.SafeConstructor;
 
 /**
  * Utility library for loading Kubernetes manifests files from a {@link FilePath} into a list of
@@ -36,7 +37,7 @@ import org.yaml.snakeyaml.Yaml;
 public class Manifests {
   private static final String DEFAULT_ENCODING = "UTF-8";
 
-  static Yaml yaml = new Yaml();
+  static Yaml yaml = new Yaml(new SafeConstructor());
   private List<ManifestObject> objects = new ArrayList<ManifestObject>();
 
   /** ManifestObject wrapper that encapsulates an object spec loaded from a supplied manifest. */
