@@ -29,6 +29,21 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 				 
  ### Fixed
 
+## [0.8.1] - 2020-02-07
+
+ ### Security
+ 
+ - Updated use of Snake YAML with SafeConstructor: https://bitbucket.org/asomov/snakeyaml/src/tip/src/test/java/examples/SafeConstructorExampleTest.java
+ 
+ ### Added
+  
+ ### Changed
+				
+ ### Removed
+				 
+ ### Fixed
+
+
 ## [0.8.0] - 2019-10-30
 
 ### Changed
