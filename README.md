@@ -60,7 +60,7 @@ Older versions of this plugin are still compatible with version 0.9 of the OAuth
 The GCP Jenkins community uses the **#gcp-jenkins** slack channel on
 [https://googlecloud-community.slack.com](https://googlecloud-community.slack.com)
 to ask questions and share feedback. Invitation link available here: 
-[http://bit.ly/gcp-slack](http://bit.ly/gcp-slack).
+[gcp-slack](https://cloud.google.com/community#home-support).
 
 ## Contributing
 
