@@ -208,10 +208,10 @@
       <version>v1-rev${container.revision}-${google.api.version}</version>
     </dependency>
     <dependency>
-        <groupId>io.jenkins.plugins</groupId>
-        <artifactId>snakeyaml-api</artifactId>
-        <version>1.27.0</version>
-        <type>hpi</type>
+      <groupId>io.jenkins.plugins</groupId>
+      <artifactId>snakeyaml-api</artifactId>
+      <version>1.27.0</version>
+      <type>hpi</type>
     <dependency>
       <groupId>com.jayway.jsonpath</groupId>
       <artifactId>json-path</artifactId>
