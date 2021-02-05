@@ -23,7 +23,7 @@
   </parent>
 
   <artifactId>google-kubernetes-engine</artifactId>
-  <version>0.8.4-SNAPSHOT</version>
+  <version>0.8.5-SNAPSHOT</version>
   <packaging>hpi</packaging>
 
   <name>Google Kubernetes Engine Plugin</name>
@@ -84,7 +84,7 @@
     <dependency>
       <groupId>commons-io</groupId>
       <artifactId>commons-io</artifactId>
-      <version>2.6</version>
+      <version>2.8.0</version>
     </dependency>
     <dependency>
       <groupId>org.jenkins-ci.plugins</groupId>
