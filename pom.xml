@@ -71,7 +71,7 @@
     <google.guava.version>24.1.1-jre</google.guava.version>
     <google.api.version>1.25.0</google.api.version>
     <google.http.version>1.21.0</google.http.version>
-    <cloudresourcemanager.revision>547</cloudresourcemanager.revision>
+    <cloudresourcemanager.revision>v3-rev20210215-1.31.0</cloudresourcemanager.revision>
     <container.revision>74</container.revision>
     <gcp-plugin-core.version>0.2.0</gcp-plugin-core.version>
     <google-oauth-plugin.version>1.0.0</google-oauth-plugin.version>
@@ -200,7 +200,7 @@
     <dependency>
       <groupId>com.google.apis</groupId>
       <artifactId>google-api-services-cloudresourcemanager</artifactId>
-      <version>v1-rev${cloudresourcemanager.revision}-${google.api.version}</version>
+      <version>v1-rev${cloudresourcemanager.revision}</version>
     </dependency>
     <dependency>
       <groupId>com.google.apis</groupId>
