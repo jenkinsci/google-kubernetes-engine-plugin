@@ -103,6 +103,9 @@ public class KubectlWrapper {
     try {
       // Set up the kubeconfig file for authentication
       tempDir = WorkspaceList.tempDir(workspace);
+      if (tempDir == null) {
+        throw new IOException("tempDir is null");
+      }
       tempDir.mkdirs();
       FilePath kubeConfigFile = tempDir.createTempFile(".kube", "config");
       String config = getKubeConfig().toYaml();
