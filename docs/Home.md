@@ -237,7 +237,7 @@ pipeline {
 ### Jenkins Environment Configuration
 
 <!--- TODO(stephenshank): Link to an image that adds kubectl to the existing jenkins agent image:
-      https://hub.docker.com/r/jenkinsci/jnlp-slave/ --->
+      https://hub.docker.com/r/jenkins/inbound-agent/ --->
 
 The GKE Jenkins plugin requires the [kubectl](
 https://kubernetes.io/docs/tasks/tools/install-kubectl/) binary to be installed within the Jenkins
