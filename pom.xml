@@ -228,7 +228,7 @@
     <dependency>
       <groupId>io.projectreactor.addons</groupId>
       <artifactId>reactor-extra</artifactId>
-      <version>3.2.2.RELEASE</version>
+      <version>3.4.2</version>
     </dependency>
     <!-- Required for InjectedTest. Git 4.4.5 for org.jvnet.hudson.test.PluginAutomaticTestBuilder$OtherTests.testPluginActive -->
     <dependency>
