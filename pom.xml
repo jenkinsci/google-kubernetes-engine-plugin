@@ -73,7 +73,7 @@
     <cloudresourcemanager.revision>572</cloudresourcemanager.revision>
     <container.revision>93</container.revision>
     <gcp-plugin-core.version>0.3.0</gcp-plugin-core.version>
-    <google-oauth-plugin.version>1.0.3</google-oauth-plugin.version>
+    <google-oauth-plugin.version>1.0.4</google-oauth-plugin.version>
   </properties>
 
   <dependencyManagement>
