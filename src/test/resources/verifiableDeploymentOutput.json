@@ -19,7 +19,7 @@
   },
   "spec": {
     "progressDeadlineSeconds": 600,
-    "replicas": 6,
+    "replicas": -.,
     "revisionHistoryLimit": 10,
     "selector": {
       "matchLabels": {
