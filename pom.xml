@@ -71,7 +71,7 @@
     <google.api.version>1.25.0</google.api.version>
     <google.http.version>1.39.0</google.http.version>
     <cloudresourcemanager.revision>572</cloudresourcemanager.revision>
-    <container.revision>93</container.revision>
+    <container.revision>v1-rev20210617-1.31.5</container.revision>
     <gcp-plugin-core.version>0.3.0</gcp-plugin-core.version>
     <google-oauth-plugin.version>1.0.3</google-oauth-plugin.version>
   </properties>
@@ -209,7 +209,7 @@
     <dependency>
       <groupId>com.google.apis</groupId>
       <artifactId>google-api-services-container</artifactId>
-      <version>v1-rev${container.revision}-${google.api.version}</version>
+      <version>v1-rev${container.revision}</version>
     </dependency>
     <dependency>
       <groupId>io.jenkins.plugins</groupId>
