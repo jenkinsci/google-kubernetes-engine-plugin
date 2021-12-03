@@ -20,9 +20,6 @@ import com.cloudbees.plugins.credentials.CredentialsMatchers;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.domains.DomainRequirement;
 import com.google.api.client.auth.oauth2.Credential;
-import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
-import com.google.common.collect.ImmutableList;
 import com.google.jenkins.plugins.credentials.oauth.GoogleRobotCredentials;
 import com.google.jenkins.plugins.k8sengine.client.ContainerScopeRequirement;
 import com.google.jenkins.plugins.k8sengine.client.Messages;
@@ -31,7 +28,11 @@ import hudson.model.ItemGroup;
 import hudson.security.ACL;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
 import jenkins.model.Jenkins;
+import org.apache.commons.lang.StringUtils;
 
 /** Provides a library of utility functions for credentials-related work. */
 public class CredentialsUtil {
@@ -46,13 +47,13 @@ public class CredentialsUtil {
    * @throws AbortException If there was an issue retrieving the Google Robot Credentials.
    */
   public static GoogleRobotCredentials getRobotCredentials(
-      ItemGroup itemGroup,
-      ImmutableList<DomainRequirement> domainRequirements,
-      String credentialsId)
+      ItemGroup itemGroup, List<DomainRequirement> domainRequirements, String credentialsId)
       throws AbortException {
-    Preconditions.checkNotNull(itemGroup);
-    Preconditions.checkNotNull(domainRequirements);
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(credentialsId));
+    Objects.requireNonNull(itemGroup);
+    Objects.requireNonNull(domainRequirements);
+    if (StringUtils.isBlank(credentialsId)) {
+      throw new IllegalArgumentException("credentialsId cannot be null");
+    }
 
     GoogleRobotCredentials robotCreds =
         CredentialsMatchers.firstOrNull(
@@ -96,10 +97,12 @@ public class CredentialsUtil {
    * @throws IOException If an error occurred fetching the access token.
    */
   static String getAccessToken(ItemGroup itemGroup, String credentialsId) throws IOException {
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(credentialsId));
-    Preconditions.checkNotNull(itemGroup);
+    if (StringUtils.isBlank(credentialsId)) {
+      throw new IllegalArgumentException("credentialsId cannot be null");
+    }
+    Objects.requireNonNull(itemGroup);
     GoogleRobotCredentials robotCreds =
-        getRobotCredentials(itemGroup, ImmutableList.of(), credentialsId);
+        getRobotCredentials(itemGroup, Collections.emptyList(), credentialsId);
 
     Credential googleCredential = getGoogleCredential(robotCreds);
     return getAccessToken(googleCredential);
@@ -124,7 +127,7 @@ public class CredentialsUtil {
    * @throws IOException If an error occured fetching the access token.
    */
   static String getAccessToken(Credential googleCredential) throws IOException {
-    Preconditions.checkNotNull(googleCredential);
+    Objects.requireNonNull(googleCredential);
 
     googleCredential.refreshToken();
     return googleCredential.getAccessToken();
@@ -141,11 +144,13 @@ public class CredentialsUtil {
    */
   static String getDefaultProjectId(ItemGroup itemGroup, String credentialsId)
       throws AbortException {
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(credentialsId));
-    Preconditions.checkNotNull(itemGroup);
+    if (StringUtils.isBlank(credentialsId)) {
+      throw new IllegalArgumentException("credentialsId cannot be null");
+    }
+    Objects.requireNonNull(itemGroup);
     GoogleRobotCredentials robotCreds =
-        getRobotCredentials(itemGroup, ImmutableList.of(), credentialsId);
-    return Strings.isNullOrEmpty(robotCreds.getProjectId()) ? "" : robotCreds.getProjectId();
+        getRobotCredentials(itemGroup, Collections.emptyList(), credentialsId);
+    return StringUtils.isBlank(robotCreds.getProjectId()) ? "" : robotCreds.getProjectId();
   }
 
   /**
@@ -156,7 +161,9 @@ public class CredentialsUtil {
    * @throws AbortException If an error occurred fetching the credential.
    */
   static String getDefaultProjectId(String credentialsId) throws AbortException {
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(credentialsId));
+    if (StringUtils.isBlank(credentialsId)) {
+      throw new IllegalArgumentException("credentialsId cannot be null");
+    }
     return getDefaultProjectId(Jenkins.get(), credentialsId);
   }
 }

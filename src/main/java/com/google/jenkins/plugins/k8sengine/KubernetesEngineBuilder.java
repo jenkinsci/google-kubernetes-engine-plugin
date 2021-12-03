@@ -26,11 +26,6 @@ import com.google.api.services.container.model.Cluster;
 import com.google.cloud.graphite.platforms.plugin.client.ClientFactory;
 import com.google.cloud.graphite.platforms.plugin.client.CloudResourceManagerClient;
 import com.google.cloud.graphite.platforms.plugin.client.ContainerClient;
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
 import com.google.jenkins.plugins.credentials.oauth.GoogleOAuth2Credentials;
 import com.google.jenkins.plugins.k8sengine.client.ClientUtil;
 import hudson.AbortException;
@@ -51,15 +46,19 @@ import hudson.util.ListBoxModel.Option;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.io.Serializable;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.annotation.Nonnull;
 import jenkins.model.Jenkins;
 import jenkins.tasks.SimpleBuildStep;
+import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -75,8 +74,9 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
   static final int DEFAULT_VERIFY_TIMEOUT_MINUTES = 5;
   static final String METRICS_LABEL_KEY = "app.kubernetes.io/managed-by";
   static final String METRICS_LABEL_VALUE = "graphite-jenkins-gke";
-  static final ImmutableSet<String> METRICS_TARGET_TYPES =
-      ImmutableSet.of("Deployment", "Service", "ReplicaSet");
+  static final Set<String> METRICS_TARGET_TYPES =
+      Collections.unmodifiableSet(
+          new HashSet<>(Arrays.asList("Deployment", "Service", "ReplicaSet")));
 
   private String credentialsId;
   private String projectId;
@@ -102,7 +102,9 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
 
   @DataBoundSetter
   public void setCredentialsId(String credentialsId) {
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(credentialsId));
+    if (StringUtils.isBlank(credentialsId)) {
+      throw new IllegalArgumentException("credentialsId cannot be null");
+    }
     this.credentialsId = credentialsId;
   }
 
@@ -112,7 +114,9 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
 
   @DataBoundSetter
   public void setProjectId(String projectId) {
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(projectId));
+    if (StringUtils.isBlank(projectId)) {
+      throw new IllegalArgumentException("projectId cannot be null");
+    }
     this.projectId = projectId;
   }
 
@@ -135,12 +139,14 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
   @DataBoundSetter
   public void setLocation(String location) {
     setupLocation();
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(location));
+    if (StringUtils.isBlank(location)) {
+      throw new IllegalArgumentException("location cannot be null");
+    }
     this.location = location;
   }
 
   private void setupLocation() {
-    if (Strings.isNullOrEmpty(this.location)) {
+    if (StringUtils.isBlank(this.location)) {
       this.location = this.zone;
       this.zone = null;
     }
@@ -152,7 +158,9 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
 
   @DataBoundSetter
   public void setClusterName(String clusterName) {
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(clusterName));
+    if (StringUtils.isBlank(clusterName)) {
+      throw new IllegalArgumentException("clusterName cannot be null");
+    }
     this.clusterName = clusterName;
   }
 
@@ -163,7 +171,9 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
 
   @DataBoundSetter
   public void setCluster(String cluster) {
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(cluster));
+    if (StringUtils.isBlank(cluster)) {
+      throw new IllegalArgumentException("cluster cannot be null");
+    }
     String[] values = ClusterUtil.valuesFromNameAndLocation(cluster);
     setClusterName(values[0]);
     setLocation(values[1]);
@@ -184,7 +194,9 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
 
   @DataBoundSetter
   public void setManifestPattern(String manifestPattern) {
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(manifestPattern));
+    if (StringUtils.isBlank(manifestPattern)) {
+      throw new IllegalArgumentException("manifestPattern cannot be null");
+    }
     this.manifestPattern = manifestPattern;
   }
 
@@ -224,7 +236,6 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
     this.verboseLogging = verboseLogging;
   }
 
-  @VisibleForTesting
   void pushAfterBuildStep(KubeConfigAfterBuildStep afterBuildStep) {
     if (afterBuildStepStack == null) {
       afterBuildStepStack = new LinkedList<>();
@@ -264,7 +275,7 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
 
     FilePath manifestFile = workspace.child(manifestPattern);
     addMetricsLabel(manifestFile);
-    kubectl.runKubectlCommand("apply", ImmutableList.of("-f", manifestFile.getRemote()));
+    kubectl.runKubectlCommand("apply", Arrays.asList("-f", manifestFile.getRemote()));
     try {
       if (verifyDeployments && !verify(kubectl, manifestPattern, workspace, listener.getLogger())) {
         throw new AbortException(Messages.KubernetesEngineBuilder_KubernetesObjectsNotVerified());
@@ -295,7 +306,6 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
    * @throws IOException If an error occurred while reading/writing the manifest file.
    * @throws InterruptedException If an error occurred while parsing/dumping YAML.
    */
-  @VisibleForTesting
   static void addMetricsLabel(FilePath manifestFile) throws InterruptedException, IOException {
     Manifests manifests = Manifests.fromFile(manifestFile);
     for (Manifests.ManifestObject manifest :
@@ -334,7 +344,8 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
 
     // Filter by the kinds of manifests being verified.
     List<Manifests.ManifestObject> manifestObjects =
-        manifests.getObjectManifestsOfKinds(ImmutableSet.of(KubernetesVerifiers.DEPLOYMENT_KIND));
+        manifests.getObjectManifestsOfKinds(
+            Collections.singleton(KubernetesVerifiers.DEPLOYMENT_KIND));
 
     consoleLogger.println(
         Messages.KubernetesEngineBuilder_VerifyingNObjects(manifestObjects.size()));
@@ -374,7 +385,6 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
       return true;
     }
 
-    @VisibleForTesting
     ClientFactory getClientFactory(Jenkins context, String credentialsId) throws AbortException {
       if (this.clientFactory == null || updateCredentialsId(credentialsId)) {
         this.clientFactory = ClientUtil.getClientFactory(context, credentialsId);
@@ -382,7 +392,6 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
       return this.clientFactory;
     }
 
-    @VisibleForTesting
     String getDefaultProjectId(Jenkins context, String credentialsId) throws AbortException {
       if (this.defaultProjectId == null || updateCredentialsId(credentialsId)) {
         this.defaultProjectId = CredentialsUtil.getDefaultProjectId(context, credentialsId);
@@ -438,7 +447,7 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
       checkPermissions();
       ListBoxModel items = new ListBoxModel();
       items.add(EMPTY_NAME, EMPTY_VALUE);
-      if (Strings.isNullOrEmpty(credentialsId)) {
+      if (StringUtils.isBlank(credentialsId)) {
         return items;
       }
 
@@ -466,12 +475,12 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
             .filter(p -> !p.getProjectId().equals(defaultProjectId))
             .forEach(p -> items.add(p.getProjectId()));
 
-        if (Strings.isNullOrEmpty(defaultProjectId)) {
+        if (StringUtils.isBlank(defaultProjectId)) {
           selectOption(items, projectId);
           return items;
         }
 
-        if (projects.size() == items.size() && Strings.isNullOrEmpty(projectId)) {
+        if (projects.size() == items.size() && StringUtils.isBlank(projectId)) {
           items.add(new Option(defaultProjectId, defaultProjectId, true));
         } else {
           // Add defaultProjectId anyway, but select the appropriate projectID based on
@@ -493,9 +502,9 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
         @QueryParameter("projectId") final String projectId,
         @QueryParameter("credentialsId") final String credentialsId) {
       checkPermissions();
-      if (Strings.isNullOrEmpty(credentialsId) && Strings.isNullOrEmpty(projectId)) {
+      if (StringUtils.isBlank(credentialsId) && StringUtils.isBlank(projectId)) {
         return FormValidation.error(Messages.KubernetesEngineBuilder_ProjectIDRequired());
-      } else if (Strings.isNullOrEmpty(credentialsId)) {
+      } else if (StringUtils.isBlank(credentialsId)) {
         return FormValidation.error(Messages.KubernetesEngineBuilder_ProjectCredentialIDRequired());
       }
 
@@ -509,7 +518,7 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
       try {
         CloudResourceManagerClient client = clientFactory.cloudResourceManagerClient();
         List<Project> projects = client.listProjects();
-        if (Strings.isNullOrEmpty(projectId)) {
+        if (StringUtils.isBlank(projectId)) {
           return FormValidation.error(Messages.KubernetesEngineBuilder_ProjectIDRequired());
         }
 
@@ -534,7 +543,7 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
       checkPermissions();
       ListBoxModel items = new ListBoxModel();
       items.add(EMPTY_NAME, EMPTY_VALUE);
-      if (Strings.isNullOrEmpty(credentialsId) || Strings.isNullOrEmpty(projectId)) {
+      if (StringUtils.isBlank(credentialsId) || StringUtils.isBlank(projectId)) {
         return items;
       }
 
@@ -573,9 +582,9 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
         @QueryParameter("credentialsId") final String credentialsId,
         @QueryParameter("projectId") final String projectId) {
       checkPermissions();
-      if (Strings.isNullOrEmpty(credentialsId) && Strings.isNullOrEmpty(cluster)) {
+      if (StringUtils.isBlank(credentialsId) && StringUtils.isBlank(cluster)) {
         return FormValidation.error(Messages.KubernetesEngineBuilder_ClusterRequired());
-      } else if (Strings.isNullOrEmpty(credentialsId)) {
+      } else if (StringUtils.isBlank(credentialsId)) {
         return FormValidation.error(Messages.KubernetesEngineBuilder_ClusterCredentialIDRequired());
       }
 
@@ -586,16 +595,16 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
         return FormValidation.error(Messages.KubernetesEngineBuilder_CredentialAuthFailed());
       }
 
-      if (Strings.isNullOrEmpty(projectId) && Strings.isNullOrEmpty(cluster)) {
+      if (StringUtils.isBlank(projectId) && StringUtils.isBlank(cluster)) {
         return FormValidation.error(Messages.KubernetesEngineBuilder_ClusterRequired());
-      } else if (Strings.isNullOrEmpty(projectId)) {
+      } else if (StringUtils.isBlank(projectId)) {
         return FormValidation.error(Messages.KubernetesEngineBuilder_ClusterProjectIDRequired());
       }
 
       try {
         ContainerClient client = clientFactory.containerClient();
         List<Cluster> clusters = client.listAllClusters(projectId);
-        if (Strings.isNullOrEmpty(cluster)) {
+        if (StringUtils.isBlank(cluster)) {
           return FormValidation.error(Messages.KubernetesEngineBuilder_ClusterRequired());
         } else if (clusters.size() == 0) {
           return FormValidation.error(Messages.KubernetesEngineBuilder_NoClusterInProject());
@@ -618,8 +627,7 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
       /* Regex from
        * https://github.com/kubernetes/apimachinery/blob/7d08eb7a76fdbc79f7bc1b5fb061ae44f3324bfa/pkg/util/validation/validation.go#L110
        */
-      if (!Strings.isNullOrEmpty(namespace)
-          && !namespace.matches("[a-z0-9]([-a-z0-9]*[a-z0-9])?")) {
+      if (!StringUtils.isBlank(namespace) && !namespace.matches("[a-z0-9]([-a-z0-9]*[a-z0-9])?")) {
         return FormValidation.error(Messages.KubernetesEngineBuilder_NamespaceInvalid());
       }
       return FormValidation.ok();
@@ -628,7 +636,7 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
     public FormValidation doCheckManifestPattern(
         @QueryParameter("manifestPattern") final String manifestPattern) {
       checkPermissions();
-      if (Strings.isNullOrEmpty(manifestPattern)) {
+      if (StringUtils.isBlank(manifestPattern)) {
         return FormValidation.error(Messages.KubernetesEngineBuilder_ManifestRequired());
       }
       return FormValidation.ok();
@@ -637,7 +645,7 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
     public FormValidation doCheckVerifyTimeoutInMinutes(
         @QueryParameter("verifyTimeoutInMinutes") final String verifyTimeoutInMinutes) {
       checkPermissions();
-      if (Strings.isNullOrEmpty(verifyTimeoutInMinutes)) {
+      if (StringUtils.isBlank(verifyTimeoutInMinutes)) {
         return FormValidation.error(
             Messages.KubernetesEngineBuilder_VerifyTimeoutInMinutesRequired());
       }
@@ -653,14 +661,14 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
 
   private static void selectOption(ListBoxModel listBoxModel, String optionValue) {
     Optional<Option> item;
-    if (!Strings.isNullOrEmpty(optionValue)) {
+    if (!StringUtils.isBlank(optionValue)) {
       item = listBoxModel.stream().filter(option -> optionValue.equals(option.value)).findFirst();
       if (item.isPresent()) {
         item.get().selected = true;
         return;
       }
     }
-    item = listBoxModel.stream().filter(option -> !Strings.isNullOrEmpty(option.value)).findFirst();
+    item = listBoxModel.stream().filter(option -> !StringUtils.isBlank(option.value)).findFirst();
     item.ifPresent(i -> i.selected = true);
   }
 

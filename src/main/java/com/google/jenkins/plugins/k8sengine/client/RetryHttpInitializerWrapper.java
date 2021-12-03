@@ -25,8 +25,8 @@ import com.google.api.client.http.HttpResponse;
 import com.google.api.client.http.HttpUnsuccessfulResponseHandler;
 import com.google.api.client.util.ExponentialBackOff;
 import com.google.api.client.util.Sleeper;
-import com.google.common.base.Preconditions;
 import java.io.IOException;
+import java.util.Objects;
 import java.util.logging.Logger;
 
 /**
@@ -61,7 +61,7 @@ public class RetryHttpInitializerWrapper implements HttpRequestInitializer {
    * @param sleeper a user-supplied Sleeper
    */
   RetryHttpInitializerWrapper(Credential wrappedCredential, Sleeper sleeper) {
-    this.wrappedCredential = Preconditions.checkNotNull(wrappedCredential);
+    this.wrappedCredential = Objects.requireNonNull(wrappedCredential);
     this.sleeper = sleeper;
   }
 

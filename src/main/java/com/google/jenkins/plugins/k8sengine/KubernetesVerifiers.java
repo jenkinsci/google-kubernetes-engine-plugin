@@ -14,12 +14,12 @@
 
 package com.google.jenkins.plugins.k8sengine;
 
-import com.google.common.base.Preconditions;
 import com.jayway.jsonpath.JsonPath;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.logging.Logger;
 
 /**
@@ -152,8 +152,10 @@ public class KubernetesVerifiers {
      *     replicas.
      */
     public VerificationResult verify(KubectlWrapper kubectl, Manifests.ManifestObject object) {
-      Preconditions.checkArgument(object.getName().isPresent());
-      String name = object.getName().get();
+      String name =
+          object
+              .getName()
+              .orElseThrow(() -> new IllegalArgumentException("manifest name cannot be null"));
       LOGGER.info(String.format("Verifying deployment, %s", name));
       StringBuilder log = new StringBuilder();
       Object json = null;
@@ -221,7 +223,7 @@ public class KubernetesVerifiers {
    *     together with relevant log that is dependent on the type of Kubernetes object.
    */
   public static VerificationResult verify(KubectlWrapper kubectl, Manifests.ManifestObject object) {
-    Preconditions.checkNotNull(object);
+    Objects.requireNonNull(object);
     return getVerifier(object.getApiVersion(), object.getKind()).verify(kubectl, object);
   }
 

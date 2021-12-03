@@ -7,14 +7,13 @@ import static org.mockito.ArgumentMatchers.any;
 import com.cloudbees.plugins.credentials.CredentialsStore;
 import com.cloudbees.plugins.credentials.SystemCredentialsProvider;
 import com.cloudbees.plugins.credentials.domains.Domain;
-import com.cloudbees.plugins.credentials.domains.DomainRequirement;
 import com.google.api.client.auth.oauth2.Credential;
-import com.google.common.collect.ImmutableList;
 import com.google.jenkins.plugins.credentials.oauth.GoogleRobotCredentials;
 import com.google.jenkins.plugins.k8sengine.client.ContainerScopeRequirement;
 import hudson.AbortException;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
+import java.util.Collections;
 import jenkins.model.Jenkins;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -46,13 +45,13 @@ public class CredentialsUtilTest {
   public void testGetRobotCredentialsReturnsFirstCredential() throws IOException {
     assertNotNull(
         CredentialsUtil.getRobotCredentials(
-            jenkins.get(), ImmutableList.<DomainRequirement>of(), TEST_CREDENTIALS_ID));
+            jenkins.get(), Collections.emptyList(), TEST_CREDENTIALS_ID));
   }
 
   @Test(expected = AbortException.class)
   public void testGetRobotCredentialsInvalidCredentialsIdAbortException() throws AbortException {
     CredentialsUtil.getRobotCredentials(
-        jenkins.get(), ImmutableList.<DomainRequirement>of(), TEST_INVALID_CREDENTIALS_ID);
+        jenkins.get(), Collections.emptyList(), TEST_INVALID_CREDENTIALS_ID);
   }
 
   @Test(expected = AbortException.class)
@@ -93,8 +92,7 @@ public class CredentialsUtilTest {
 
   @Test(expected = NullPointerException.class)
   public void testGetRobotCredentialsWithEmptyItemGroup() throws AbortException {
-    CredentialsUtil.getRobotCredentials(
-        null, ImmutableList.<DomainRequirement>of(), TEST_CREDENTIALS_ID);
+    CredentialsUtil.getRobotCredentials(null, Collections.emptyList(), TEST_CREDENTIALS_ID);
   }
 
   @Test(expected = NullPointerException.class)
@@ -104,12 +102,12 @@ public class CredentialsUtilTest {
 
   @Test(expected = IllegalArgumentException.class)
   public void testGetRobotCredentialsWithNullCredentialsId() throws AbortException {
-    CredentialsUtil.getRobotCredentials(jenkins.get(), ImmutableList.<DomainRequirement>of(), null);
+    CredentialsUtil.getRobotCredentials(jenkins.get(), Collections.emptyList(), null);
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void testGetRobotCredentialsWithEmptyCredentialsId() throws AbortException {
-    CredentialsUtil.getRobotCredentials(jenkins.get(), ImmutableList.<DomainRequirement>of(), "");
+    CredentialsUtil.getRobotCredentials(jenkins.get(), Collections.emptyList(), "");
   }
 
   @Test(expected = IllegalArgumentException.class)

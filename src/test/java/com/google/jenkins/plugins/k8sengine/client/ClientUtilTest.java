@@ -16,8 +16,8 @@
 
 package com.google.jenkins.plugins.k8sengine.client;
 
-import com.google.common.collect.ImmutableList;
 import hudson.AbortException;
+import java.util.Collections;
 import java.util.Optional;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -32,7 +32,8 @@ public class ClientUtilTest {
 
   @Test(expected = NullPointerException.class)
   public void testGetClientFactoryNullJenkins() throws AbortException {
-    ClientUtil.getClientFactory(null, ImmutableList.of(), TEST_CREDENTIALS_ID, Optional.empty());
+    ClientUtil.getClientFactory(
+        null, Collections.emptyList(), TEST_CREDENTIALS_ID, Optional.empty());
   }
 
   @Test(expected = NullPointerException.class)
@@ -47,7 +48,8 @@ public class ClientUtilTest {
 
   @Test(expected = IllegalArgumentException.class)
   public void testGetClientFactoryNullCredentialsId() throws AbortException {
-    ClientUtil.getClientFactory(jenkinsRule.jenkins, ImmutableList.of(), null, Optional.empty());
+    ClientUtil.getClientFactory(
+        jenkinsRule.jenkins, Collections.emptyList(), null, Optional.empty());
   }
 
   @Test(expected = IllegalArgumentException.class)
@@ -57,7 +59,7 @@ public class ClientUtilTest {
 
   @Test(expected = IllegalArgumentException.class)
   public void testGetClientFactoryEmptyCredentialsId() throws AbortException {
-    ClientUtil.getClientFactory(jenkinsRule.jenkins, ImmutableList.of(), "", Optional.empty());
+    ClientUtil.getClientFactory(jenkinsRule.jenkins, Collections.emptyList(), "", Optional.empty());
   }
 
   @Test(expected = IllegalArgumentException.class)
@@ -69,7 +71,7 @@ public class ClientUtilTest {
   public void testGetClientFactoryFailsWithInvalidCredentialsId() throws Throwable {
     try {
       ClientUtil.getClientFactory(
-          jenkinsRule.jenkins, ImmutableList.of(), "fake", Optional.empty());
+          jenkinsRule.jenkins, Collections.emptyList(), "fake", Optional.empty());
     } catch (AbortException e) {
       throw e.getCause();
     }
@@ -86,6 +88,7 @@ public class ClientUtilTest {
 
   @Test(expected = NullPointerException.class)
   public void testGetClientFactoryTransportNull() throws AbortException {
-    ClientUtil.getClientFactory(jenkinsRule.jenkins, ImmutableList.of(), TEST_CREDENTIALS_ID, null);
+    ClientUtil.getClientFactory(
+        jenkinsRule.jenkins, Collections.emptyList(), TEST_CREDENTIALS_ID, null);
   }
 }

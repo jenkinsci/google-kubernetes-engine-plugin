@@ -17,9 +17,8 @@
 package com.google.jenkins.plugins.k8sengine;
 
 import com.google.api.services.container.model.Cluster;
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
+import java.util.Objects;
+import org.apache.commons.lang.StringUtils;
 
 /** Utility functions for converting between {@link Cluster}s and their String representations. */
 class ClusterUtil {
@@ -30,7 +29,7 @@ class ClusterUtil {
    * @return A String of the form "name (location)" based on the given cluster's properties.
    */
   static String toNameAndLocation(Cluster cluster) {
-    Preconditions.checkNotNull(cluster);
+    Objects.requireNonNull(cluster);
     return toNameAndLocation(cluster.getName(), cluster.getLocation());
   }
 
@@ -42,8 +41,12 @@ class ClusterUtil {
    * @return A String of the form "name (location)".
    */
   static String toNameAndLocation(String name, String location) {
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(name));
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(location));
+    if (StringUtils.isBlank(name)) {
+      throw new IllegalArgumentException("name cannot be null");
+    }
+    if (StringUtils.isBlank(location)) {
+      throw new IllegalArgumentException("location cannot be null");
+    }
     return String.format("%s (%s)", name, location);
   }
 
@@ -55,9 +58,10 @@ class ClusterUtil {
    * @param nameAndLocation A non-empty String of the form "name (location)"
    * @return A cluster with the name and location properties from the provided nameAndLocation.
    */
-  @VisibleForTesting
   static Cluster fromNameAndLocation(String nameAndLocation) {
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(nameAndLocation));
+    if (StringUtils.isBlank(nameAndLocation)) {
+      throw new IllegalArgumentException("nameAndLocation cannot be null");
+    }
     String[] values = valuesFromNameAndLocation(nameAndLocation);
     return new Cluster().setName(values[0]).setLocation(values[1]);
   }
@@ -69,7 +73,9 @@ class ClusterUtil {
    * @return The String array {name, location} from the provided value.
    */
   static String[] valuesFromNameAndLocation(String nameAndLocation) {
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(nameAndLocation));
+    if (StringUtils.isBlank(nameAndLocation)) {
+      throw new IllegalArgumentException("nameAndLocation cannot be null");
+    }
     String[] clusters = nameAndLocation.split(" [(]");
     if (clusters.length != 2) {
       throw new IllegalArgumentException("nameAndLocation should be of the form 'name (location)'");

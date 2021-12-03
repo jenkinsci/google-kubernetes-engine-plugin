@@ -33,6 +33,8 @@ import hudson.util.ListBoxModel;
 import hudson.util.ListBoxModel.Option;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import jenkins.model.Jenkins;
@@ -60,11 +62,11 @@ public class KubernetesEngineBuilderTest {
   @Test
   public void testDoFillProjectIdItemsErrorMessageWithAbortException() throws IOException {
     DescriptorImpl descriptor =
-        setUpProjectDescriptor(ImmutableList.of(), "", new AbortException(), null);
+        setUpProjectDescriptor(Collections.emptyList(), "", new AbortException(), null);
     ListBoxModel expected =
         initExpected(
-            ImmutableList.of(Messages.KubernetesEngineBuilder_CredentialAuthFailed()),
-            ImmutableList.of(EMPTY_VALUE));
+            Collections.singletonList(Messages.KubernetesEngineBuilder_CredentialAuthFailed()),
+            Collections.singletonList(EMPTY_VALUE));
     ListBoxModel result = descriptor.doFillProjectIdItems(jenkins, null, TEST_CREDENTIALS_ID);
     assertNotNull(result);
     assertListBoxModelEquals(expected, result);
@@ -73,11 +75,11 @@ public class KubernetesEngineBuilderTest {
   @Test
   public void testDoFillProjectIdItemsErrorMessageWithIOException() throws IOException {
     DescriptorImpl descriptor =
-        setUpProjectDescriptor(ImmutableList.of(), "", null, new IOException());
+        setUpProjectDescriptor(Collections.emptyList(), "", null, new IOException());
     ListBoxModel expected =
         initExpected(
-            ImmutableList.of(Messages.KubernetesEngineBuilder_ProjectIDFillError()),
-            ImmutableList.of(EMPTY_VALUE));
+            Collections.singletonList(Messages.KubernetesEngineBuilder_ProjectIDFillError()),
+            Collections.singletonList(EMPTY_VALUE));
     ListBoxModel result = descriptor.doFillProjectIdItems(jenkins, null, TEST_CREDENTIALS_ID);
     assertNotNull(result);
     assertListBoxModelEquals(expected, result);
@@ -85,9 +87,9 @@ public class KubernetesEngineBuilderTest {
 
   @Test
   public void testDoFillProjectIdItemsEmptyWithEmptyCredentialsId() throws IOException {
-    DescriptorImpl descriptor = setUpProjectDescriptor(ImmutableList.of(), "", null, null);
+    DescriptorImpl descriptor = setUpProjectDescriptor(Collections.emptyList(), "", null, null);
     ListBoxModel expected =
-        initExpected(ImmutableList.of(EMPTY_NAME), ImmutableList.of(EMPTY_VALUE));
+        initExpected(Collections.singletonList(EMPTY_NAME), Collections.singletonList(EMPTY_VALUE));
     ListBoxModel result = descriptor.doFillProjectIdItems(jenkins, null, null);
     assertNotNull(result);
     assertListBoxModelEquals(expected, result);
@@ -97,12 +99,12 @@ public class KubernetesEngineBuilderTest {
   public void testDoFillProjectIdItemsWithValidCredentialsId() throws IOException {
     DescriptorImpl descriptor =
         setUpProjectDescriptor(
-            ImmutableList.of(OTHER_PROJECT_ID, TEST_PROJECT_ID), TEST_PROJECT_ID, null, null);
+            Arrays.asList(OTHER_PROJECT_ID, TEST_PROJECT_ID), TEST_PROJECT_ID, null, null);
 
     ListBoxModel expected =
         initExpected(
-            ImmutableList.of(EMPTY_NAME, OTHER_PROJECT_ID, TEST_PROJECT_ID),
-            ImmutableList.of(EMPTY_VALUE, OTHER_PROJECT_ID, TEST_PROJECT_ID));
+            Arrays.asList(EMPTY_NAME, OTHER_PROJECT_ID, TEST_PROJECT_ID),
+            Arrays.asList(EMPTY_VALUE, OTHER_PROJECT_ID, TEST_PROJECT_ID));
     ListBoxModel result = descriptor.doFillProjectIdItems(jenkins, null, TEST_CREDENTIALS_ID);
     assertNotNull(result);
     assertListBoxModelEquals(expected, result);
@@ -114,11 +116,11 @@ public class KubernetesEngineBuilderTest {
       throws IOException {
     DescriptorImpl descriptor =
         setUpProjectDescriptor(
-            ImmutableList.of(OTHER_PROJECT_ID, TEST_PROJECT_ID), TEST_PROJECT_ID, null, null);
+            Arrays.asList(OTHER_PROJECT_ID, TEST_PROJECT_ID), TEST_PROJECT_ID, null, null);
     ListBoxModel expected =
         initExpected(
-            ImmutableList.of(EMPTY_NAME, OTHER_PROJECT_ID, TEST_PROJECT_ID),
-            ImmutableList.of(EMPTY_VALUE, OTHER_PROJECT_ID, TEST_PROJECT_ID));
+            Arrays.asList(EMPTY_NAME, OTHER_PROJECT_ID, TEST_PROJECT_ID),
+            Arrays.asList(EMPTY_VALUE, OTHER_PROJECT_ID, TEST_PROJECT_ID));
     ListBoxModel result =
         descriptor.doFillProjectIdItems(jenkins, OTHER_PROJECT_ID, TEST_CREDENTIALS_ID);
     assertListBoxModelEquals(expected, result);
@@ -129,11 +131,11 @@ public class KubernetesEngineBuilderTest {
   public void testDoFillProjectIdItemsWithValidCredentialsIdAndPreviousValueAndEmptyDefault()
       throws IOException {
     DescriptorImpl descriptor =
-        setUpProjectDescriptor(ImmutableList.of(OTHER_PROJECT_ID, TEST_PROJECT_ID), "", null, null);
+        setUpProjectDescriptor(Arrays.asList(OTHER_PROJECT_ID, TEST_PROJECT_ID), "", null, null);
     ListBoxModel expected =
         initExpected(
-            ImmutableList.of(EMPTY_NAME, OTHER_PROJECT_ID, TEST_PROJECT_ID),
-            ImmutableList.of(EMPTY_VALUE, OTHER_PROJECT_ID, TEST_PROJECT_ID));
+            Arrays.asList(EMPTY_NAME, OTHER_PROJECT_ID, TEST_PROJECT_ID),
+            Arrays.asList(EMPTY_VALUE, OTHER_PROJECT_ID, TEST_PROJECT_ID));
     ListBoxModel result =
         descriptor.doFillProjectIdItems(jenkins, OTHER_PROJECT_ID, TEST_CREDENTIALS_ID);
     assertListBoxModelEquals(expected, result);
@@ -144,11 +146,12 @@ public class KubernetesEngineBuilderTest {
   public void testDoFillProjectIdItemsWithValidCredentialsIdMissingDefaultProject()
       throws IOException {
     DescriptorImpl descriptor =
-        setUpProjectDescriptor(ImmutableList.of(OTHER_PROJECT_ID), TEST_PROJECT_ID, null, null);
+        setUpProjectDescriptor(
+            Collections.singletonList(OTHER_PROJECT_ID), TEST_PROJECT_ID, null, null);
     ListBoxModel expected =
         initExpected(
-            ImmutableList.of(EMPTY_NAME, OTHER_PROJECT_ID, TEST_PROJECT_ID),
-            ImmutableList.of(EMPTY_VALUE, OTHER_PROJECT_ID, TEST_PROJECT_ID));
+            Arrays.asList(EMPTY_NAME, OTHER_PROJECT_ID, TEST_PROJECT_ID),
+            Arrays.asList(EMPTY_VALUE, OTHER_PROJECT_ID, TEST_PROJECT_ID));
     ListBoxModel result = descriptor.doFillProjectIdItems(jenkins, null, TEST_CREDENTIALS_ID);
     assertListBoxModelEquals(expected, result);
     assertValueSelected(result, OTHER_PROJECT_ID);
@@ -158,11 +161,11 @@ public class KubernetesEngineBuilderTest {
   public void testDoFillProjectIdItemsWithValidCredentialsAndEmptyProject() throws IOException {
     DescriptorImpl descriptor =
         setUpProjectDescriptor(
-            ImmutableList.of(OTHER_PROJECT_ID, TEST_PROJECT_ID), TEST_PROJECT_ID, null, null);
+            Arrays.asList(OTHER_PROJECT_ID, TEST_PROJECT_ID), TEST_PROJECT_ID, null, null);
     ListBoxModel expected =
         initExpected(
-            ImmutableList.of(EMPTY_NAME, OTHER_PROJECT_ID, TEST_PROJECT_ID),
-            ImmutableList.of(EMPTY_VALUE, OTHER_PROJECT_ID, TEST_PROJECT_ID));
+            Arrays.asList(EMPTY_NAME, OTHER_PROJECT_ID, TEST_PROJECT_ID),
+            Arrays.asList(EMPTY_VALUE, OTHER_PROJECT_ID, TEST_PROJECT_ID));
     ListBoxModel result =
         descriptor.doFillProjectIdItems(jenkins, OTHER_PROJECT_ID, TEST_CREDENTIALS_ID);
     assertListBoxModelEquals(expected, result);
@@ -171,7 +174,7 @@ public class KubernetesEngineBuilderTest {
 
   @Test
   public void testDoCheckProjectIdMessageWithEmptyProjectID() throws IOException {
-    DescriptorImpl descriptor = setUpProjectDescriptor(ImmutableList.of(), "", null, null);
+    DescriptorImpl descriptor = setUpProjectDescriptor(Collections.emptyList(), "", null, null);
     FormValidation result = descriptor.doCheckProjectId(jenkins, null, TEST_CREDENTIALS_ID);
     assertNotNull(result);
     assertEquals(Messages.KubernetesEngineBuilder_ProjectIDRequired(), result.getMessage());
@@ -179,7 +182,7 @@ public class KubernetesEngineBuilderTest {
 
   @Test
   public void testDoCheckProjectIdMessageWithEmptyCredentialsID() throws IOException {
-    DescriptorImpl descriptor = setUpProjectDescriptor(ImmutableList.of(), "", null, null);
+    DescriptorImpl descriptor = setUpProjectDescriptor(Collections.emptyList(), "", null, null);
     FormValidation result = descriptor.doCheckProjectId(jenkins, TEST_PROJECT_ID, null);
     assertNotNull(result);
     assertEquals(
@@ -189,7 +192,7 @@ public class KubernetesEngineBuilderTest {
   @Test
   public void testDoCheckProjectIdMessageWithAbortException() throws IOException {
     DescriptorImpl descriptor =
-        setUpProjectDescriptor(ImmutableList.of(), "", new AbortException(), null);
+        setUpProjectDescriptor(Collections.emptyList(), "", new AbortException(), null);
     FormValidation result =
         descriptor.doCheckProjectId(jenkins, TEST_PROJECT_ID, TEST_CREDENTIALS_ID);
     assertNotNull(result);
@@ -199,7 +202,7 @@ public class KubernetesEngineBuilderTest {
   @Test
   public void testDoCheckProjectIdMessageWithIOException() throws IOException {
     DescriptorImpl descriptor =
-        setUpProjectDescriptor(ImmutableList.of(), "", null, new IOException());
+        setUpProjectDescriptor(Collections.emptyList(), "", null, new IOException());
     FormValidation result =
         descriptor.doCheckProjectId(jenkins, TEST_PROJECT_ID, TEST_CREDENTIALS_ID);
     assertNotNull(result);
@@ -210,7 +213,7 @@ public class KubernetesEngineBuilderTest {
   @Test
   public void testDoCheckProjectIdMessageWithAbortExceptionAndEmptyProjectId() throws IOException {
     DescriptorImpl descriptor =
-        setUpProjectDescriptor(ImmutableList.of(), "", new AbortException(), null);
+        setUpProjectDescriptor(Collections.emptyList(), "", new AbortException(), null);
     FormValidation result = descriptor.doCheckProjectId(jenkins, null, TEST_CREDENTIALS_ID);
     assertNotNull(result);
     assertEquals(Messages.KubernetesEngineBuilder_CredentialAuthFailed(), result.getMessage());
@@ -219,7 +222,7 @@ public class KubernetesEngineBuilderTest {
   @Test
   public void testDoCheckProjectIdMessageWithIOExceptionAndEmptyProjectId() throws IOException {
     DescriptorImpl descriptor =
-        setUpProjectDescriptor(ImmutableList.of(), "", null, new IOException());
+        setUpProjectDescriptor(Collections.emptyList(), "", null, new IOException());
     FormValidation result = descriptor.doCheckProjectId(jenkins, null, TEST_CREDENTIALS_ID);
     assertNotNull(result);
     assertEquals(
@@ -228,7 +231,7 @@ public class KubernetesEngineBuilderTest {
 
   @Test
   public void testDoCheckProjectIdMessageWithNoProjects() throws IOException {
-    DescriptorImpl descriptor = setUpProjectDescriptor(ImmutableList.of(), "", null, null);
+    DescriptorImpl descriptor = setUpProjectDescriptor(Collections.emptyList(), "", null, null);
     FormValidation result =
         descriptor.doCheckProjectId(jenkins, TEST_PROJECT_ID, TEST_CREDENTIALS_ID);
     assertNotNull(result);
@@ -239,7 +242,7 @@ public class KubernetesEngineBuilderTest {
   @Test
   public void testDoCheckProjectIdMessageWithWrongProjects() throws IOException {
     DescriptorImpl descriptor =
-        setUpProjectDescriptor(ImmutableList.of(OTHER_PROJECT_ID), "", null, null);
+        setUpProjectDescriptor(Collections.singletonList(OTHER_PROJECT_ID), "", null, null);
     FormValidation result =
         descriptor.doCheckProjectId(jenkins, TEST_PROJECT_ID, TEST_CREDENTIALS_ID);
     assertNotNull(result);
@@ -250,7 +253,7 @@ public class KubernetesEngineBuilderTest {
   @Test
   public void testDoCheckProjectIdMessageWithValidProject() throws IOException {
     DescriptorImpl descriptor =
-        setUpProjectDescriptor(ImmutableList.of(OTHER_PROJECT_ID, TEST_PROJECT_ID), "", null, null);
+        setUpProjectDescriptor(Arrays.asList(OTHER_PROJECT_ID, TEST_PROJECT_ID), "", null, null);
     FormValidation result =
         descriptor.doCheckProjectId(jenkins, TEST_PROJECT_ID, TEST_CREDENTIALS_ID);
     assertNotNull(result);

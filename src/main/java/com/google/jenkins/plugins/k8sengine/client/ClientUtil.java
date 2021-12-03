@@ -7,15 +7,16 @@ import com.cloudbees.plugins.credentials.domains.DomainRequirement;
 import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.client.http.HttpTransport;
 import com.google.cloud.graphite.platforms.plugin.client.ClientFactory;
-import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
-import com.google.common.collect.ImmutableList;
 import com.google.jenkins.plugins.credentials.oauth.GoogleRobotCredentials;
 import hudson.AbortException;
 import hudson.model.ItemGroup;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
+import org.apache.commons.lang.StringUtils;
 
 /** Utilities for using the gcp-plugin-core clients. */
 public class ClientUtil {
@@ -35,14 +36,16 @@ public class ClientUtil {
    */
   public static ClientFactory getClientFactory(
       ItemGroup itemGroup,
-      ImmutableList<DomainRequirement> domainRequirements,
+      List<DomainRequirement> domainRequirements,
       String credentialsId,
       Optional<HttpTransport> transport)
       throws AbortException {
-    Preconditions.checkNotNull(itemGroup);
-    Preconditions.checkNotNull(domainRequirements);
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(credentialsId));
-    Preconditions.checkNotNull(transport);
+    Objects.requireNonNull(itemGroup);
+    Objects.requireNonNull(domainRequirements);
+    if (StringUtils.isBlank(credentialsId)) {
+      throw new IllegalArgumentException("credentialsId cannot be null");
+    }
+    Objects.requireNonNull(transport);
 
     ClientFactory clientFactory;
     try {
@@ -68,6 +71,6 @@ public class ClientUtil {
    */
   public static ClientFactory getClientFactory(ItemGroup itemGroup, String credentialsId)
       throws AbortException {
-    return getClientFactory(itemGroup, ImmutableList.of(), credentialsId, Optional.empty());
+    return getClientFactory(itemGroup, Collections.emptyList(), credentialsId, Optional.empty());
   }
 }

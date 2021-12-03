@@ -15,13 +15,14 @@
 package com.google.jenkins.plugins.k8sengine;
 
 import com.google.api.services.container.model.Cluster;
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import java.io.IOException;
 import java.io.Writer;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import org.apache.commons.lang.StringUtils;
 import org.yaml.snakeyaml.Yaml;
 
 /**
@@ -35,38 +36,41 @@ public class KubeConfig {
   private static final String API_VERSION = "v1";
   private static final String CONFIG_KIND = "Config";
 
-  private ImmutableList<Object> contexts;
-  private ImmutableList<Object> clusters;
-  private ImmutableList<Object> users;
+  private List<Object> contexts;
+  private List<Object> clusters;
+  private List<Object> users;
   private String currentContext;
 
   private KubeConfig() {}
 
   /** @return This config's contexts. */
-  public ImmutableList<Object> getContexts() {
+  public List<Object> getContexts() {
     return contexts;
   }
 
-  private void setContexts(ImmutableList<Object> contexts) {
-    this.contexts = Preconditions.checkNotNull(contexts);
+  private void setContexts(List<Object> contexts) {
+    Objects.requireNonNull(contexts);
+    this.contexts = contexts;
   }
 
   /** @return This config's clusters. */
-  public ImmutableList<Object> getClusters() {
+  public List<Object> getClusters() {
     return clusters;
   }
 
-  private void setClusters(ImmutableList<Object> clusters) {
-    this.clusters = Preconditions.checkNotNull(clusters);
+  private void setClusters(List<Object> clusters) {
+    Objects.requireNonNull(clusters);
+    this.clusters = clusters;
   }
 
   /** @return This config's users. */
-  public ImmutableList<Object> getUsers() {
+  public List<Object> getUsers() {
     return users;
   }
 
-  private void setUsers(ImmutableList<Object> users) {
-    this.users = Preconditions.checkNotNull(users);
+  private void setUsers(List<Object> users) {
+    Objects.requireNonNull(users);
+    this.users = users;
   }
 
   /** @return This config's current context. */
@@ -75,7 +79,9 @@ public class KubeConfig {
   }
 
   private void setCurrentContext(String currentContext) {
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(currentContext));
+    if (StringUtils.isEmpty(currentContext)) {
+      throw new IllegalArgumentException("current context cannot be empty");
+    }
     this.currentContext = currentContext;
   }
 
@@ -91,7 +97,7 @@ public class KubeConfig {
   public String toYaml() throws IOException {
     return new Yaml()
         .dumpAsMap(
-            new ImmutableMap.Builder<String, Object>()
+            new MapBuilder()
                 .put("apiVersion", API_VERSION)
                 .put("kind", CONFIG_KIND)
                 .put("current-context", getCurrentContext())
@@ -114,23 +120,25 @@ public class KubeConfig {
       return this;
     }
 
-    public Builder users(ImmutableList<Object> users) {
+    public Builder users(List<Object> users) {
       config.setUsers(users);
       return this;
     }
 
-    public Builder contexts(ImmutableList<Object> contexts) {
+    public Builder contexts(List<Object> contexts) {
       config.setContexts(contexts);
       return this;
     }
 
-    public Builder clusters(ImmutableList<Object> clusters) {
+    public Builder clusters(List<Object> clusters) {
       config.setClusters(clusters);
       return this;
     }
 
     public KubeConfig build() {
-      Preconditions.checkArgument(!Strings.isNullOrEmpty(config.getCurrentContext()));
+      if (StringUtils.isBlank(config.getCurrentContext())) {
+        throw new IllegalArgumentException("current context cannot be empty");
+      }
       return config;
     }
   }
@@ -144,40 +152,48 @@ public class KubeConfig {
    * @return A {@link KubeConfig} from the specified {@link Cluster}.
    */
   public static KubeConfig fromCluster(String projectId, Cluster cluster, String accessToken) {
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(projectId));
-    Preconditions.checkNotNull(cluster);
+    if (StringUtils.isBlank(projectId)) {
+      throw new IllegalArgumentException("projectId cannot be empty");
+    }
+    Objects.requireNonNull(cluster);
 
     final String currentContext =
         contextString(projectId, cluster.getLocation(), cluster.getName());
     return new KubeConfig.Builder()
         .currentContext(currentContext)
-        .contexts(ImmutableList.<Object>of(context(currentContext)))
-        .users(ImmutableList.<Object>of(user(currentContext, cluster, accessToken)))
-        .clusters(ImmutableList.<Object>of(cluster(currentContext, cluster)))
+        .contexts(Collections.singletonList(context(currentContext)))
+        .users(Collections.singletonList(user(currentContext, cluster, accessToken)))
+        .clusters(Collections.singletonList(cluster(currentContext, cluster)))
         .build();
   }
 
-  @VisibleForTesting
   static String contextString(String project, String location, String cluster) {
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(project));
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(location));
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(cluster));
+    if (StringUtils.isBlank(project)) {
+      throw new IllegalArgumentException("project cannot be empty");
+    }
+    if (StringUtils.isBlank(location)) {
+      throw new IllegalArgumentException("location cannot be empty");
+    }
+    if (StringUtils.isBlank(cluster)) {
+      throw new IllegalArgumentException("cluster cannot be empty");
+    }
     return String.format(KUBECONTEXT_FORMAT, project, location, cluster);
   }
 
-  @VisibleForTesting
   static String clusterServer(Cluster cluster) {
-    Preconditions.checkNotNull(cluster);
+    Objects.requireNonNull(cluster);
     return String.format(KUBESERVER_FORMAT, cluster.getEndpoint());
   }
 
-  private static ImmutableMap<String, Object> context(String currentContext) {
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(currentContext));
-    return new ImmutableMap.Builder<String, Object>()
+  private static Map<String, Object> context(String currentContext) {
+    if (StringUtils.isBlank(currentContext)) {
+      throw new IllegalArgumentException("currentContext cannot be empty");
+    }
+    return new MapBuilder()
         .put("name", currentContext)
         .put(
             "context",
-            new ImmutableMap.Builder<String, Object>()
+            new MapBuilder()
                 .put("cluster", currentContext)
                 .put("user", currentContext)
                 .put("namespace", "default")
@@ -185,30 +201,50 @@ public class KubeConfig {
         .build();
   }
 
-  private static ImmutableMap<String, Object> user(
+  private static Map<String, Object> user(
       String currentContext, Cluster cluster, String accessToken) {
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(currentContext));
-    Preconditions.checkNotNull(cluster);
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(accessToken));
+    if (StringUtils.isEmpty(currentContext)) {
+      throw new IllegalArgumentException("current context cannot be empty");
+    }
+    Objects.requireNonNull(cluster);
+    if (StringUtils.isEmpty(accessToken)) {
+      throw new IllegalArgumentException("accessToken cannot be empty");
+    }
 
-    return new ImmutableMap.Builder<String, Object>()
+    return new MapBuilder()
         .put("name", currentContext)
-        .put("user", new ImmutableMap.Builder<String, Object>().put("token", accessToken).build())
+        .put("user", new MapBuilder().put("token", accessToken).map)
         .build();
   }
 
-  private static ImmutableMap<String, Object> cluster(String currentContext, Cluster cluster) {
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(currentContext));
-    Preconditions.checkNotNull(cluster);
-    return new ImmutableMap.Builder<String, Object>()
+  private static Map<String, Object> cluster(String currentContext, Cluster cluster) {
+    if (StringUtils.isEmpty(currentContext)) {
+      throw new IllegalArgumentException("current context cannot be empty");
+    }
+    Objects.requireNonNull(cluster);
+    return new MapBuilder()
         .put("name", currentContext)
         .put(
             "cluster",
-            new ImmutableMap.Builder<String, Object>()
+            new MapBuilder()
                 .put("server", clusterServer(cluster))
                 .put(
                     "certificate-authority-data", cluster.getMasterAuth().getClusterCaCertificate())
                 .build())
         .build();
+  }
+
+  private static class MapBuilder<String, Object> {
+
+    private Map<String, Object> map = new HashMap<>();
+
+    MapBuilder<String, Object> put(String k, Object v) {
+      map.put(k, v);
+      return this;
+    }
+
+    Map<String, Object> build() {
+      return Collections.unmodifiableMap(map);
+    }
   }
 }

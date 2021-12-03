@@ -14,8 +14,6 @@
 
 package com.google.jenkins.plugins.k8sengine;
 
-import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableList;
 import com.jayway.jsonpath.Configuration;
 import com.jayway.jsonpath.InvalidJsonException;
 import hudson.FilePath;
@@ -24,8 +22,12 @@ import hudson.slaves.WorkspaceList;
 import hudson.util.ArgumentListBuilder;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -96,7 +98,7 @@ public class KubectlWrapper {
    * @throws InterruptedException If an error occured while executing the command.
    * @return result From kubectl command.
    */
-  public String runKubectlCommand(String command, ImmutableList<String> args)
+  public String runKubectlCommand(String command, List<String> args)
       throws IOException, InterruptedException {
     String output = "";
     FilePath tempDir = null;
@@ -189,7 +191,7 @@ public class KubectlWrapper {
    * @throws InterruptedException If an error occurred while executing the command.
    */
   public Object getObject(String kind, String name) throws IOException, InterruptedException {
-    String json = runKubectlCommand("get", ImmutableList.<String>of(kind, name, "-o", "json"));
+    String json = runKubectlCommand("get", Arrays.asList(kind, name, "-o", "json"));
     return Configuration.defaultConfiguration().jsonProvider().parse(json);
   }
 
@@ -205,17 +207,17 @@ public class KubectlWrapper {
    * @throws InvalidJsonException If an error occurred parsing the JSON return value.
    */
   @SuppressWarnings("unchecked")
-  public ImmutableList<Object> getObjectsThatMatchLabels(String kind, Map<String, String> labels)
+  public List<Object> getObjectsThatMatchLabels(String kind, Map<String, String> labels)
       throws IOException, InterruptedException, InvalidJsonException {
     String labelsArg =
         labels.keySet().stream()
             .map((k) -> String.format("%s=%s", k, labels.get(k)))
             .collect(Collectors.joining(","));
-    String json = runKubectlCommand("get", ImmutableList.<String>of(kind + "s", labelsArg));
+    String json = runKubectlCommand("get", Arrays.asList(kind + "s", labelsArg));
     Map<String, Object> result =
         (Map<String, Object>) Configuration.defaultConfiguration().jsonProvider().parse(json);
     List<Object> items = (List<Object>) result.get("items");
-    return ImmutableList.copyOf(items);
+    return Collections.unmodifiableList(new ArrayList<>(items));
   }
 
   /** Builder for {@link KubectlWrapper}. */
@@ -277,10 +279,10 @@ public class KubectlWrapper {
      * @return A new {@link KubectlWrapper}.
      */
     public KubectlWrapper build() {
-      Preconditions.checkNotNull(wrapper.getLauncher());
-      Preconditions.checkNotNull(wrapper.getKubeConfig());
-      Preconditions.checkNotNull(wrapper.getWorkspace());
-      Preconditions.checkNotNull(wrapper.getNamespace());
+      Objects.requireNonNull(wrapper.getLauncher());
+      Objects.requireNonNull(wrapper.getKubeConfig());
+      Objects.requireNonNull(wrapper.getWorkspace());
+      Objects.requireNonNull(wrapper.getNamespace());
       return wrapper;
     }
   }
