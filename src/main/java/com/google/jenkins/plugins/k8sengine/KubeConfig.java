@@ -97,7 +97,7 @@ public class KubeConfig {
   public String toYaml() throws IOException {
     return new Yaml()
         .dumpAsMap(
-            new MapBuilder()
+            new MapBuilder<String, Object>()
                 .put("apiVersion", API_VERSION)
                 .put("kind", CONFIG_KIND)
                 .put("current-context", getCurrentContext())
@@ -189,11 +189,11 @@ public class KubeConfig {
     if (StringUtils.isBlank(currentContext)) {
       throw new IllegalArgumentException("currentContext cannot be empty");
     }
-    return new MapBuilder()
+    return new MapBuilder<String, Object>()
         .put("name", currentContext)
         .put(
             "context",
-            new MapBuilder()
+            new MapBuilder<String, Object>()
                 .put("cluster", currentContext)
                 .put("user", currentContext)
                 .put("namespace", "default")
@@ -211,9 +211,9 @@ public class KubeConfig {
       throw new IllegalArgumentException("accessToken cannot be empty");
     }
 
-    return new MapBuilder()
+    return new MapBuilder<String, Object>()
         .put("name", currentContext)
-        .put("user", new MapBuilder().put("token", accessToken).map)
+        .put("user", new MapBuilder<String, Object>().put("token", accessToken).map)
         .build();
   }
 
@@ -222,11 +222,11 @@ public class KubeConfig {
       throw new IllegalArgumentException("current context cannot be empty");
     }
     Objects.requireNonNull(cluster);
-    return new MapBuilder()
+    return new MapBuilder<String, Object>()
         .put("name", currentContext)
         .put(
             "cluster",
-            new MapBuilder()
+            new MapBuilder<String, Object>()
                 .put("server", clusterServer(cluster))
                 .put(
                     "certificate-authority-data", cluster.getMasterAuth().getClusterCaCertificate())
