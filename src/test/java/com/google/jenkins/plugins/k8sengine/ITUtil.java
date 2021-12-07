@@ -19,7 +19,6 @@ package com.google.jenkins.plugins.k8sengine;
 import static org.junit.Assert.assertNotNull;
 
 import com.cloudbees.plugins.credentials.SecretBytes;
-import com.google.common.io.ByteStreams;
 import com.google.jenkins.plugins.credentials.oauth.JsonServiceAccountConfig;
 import com.google.jenkins.plugins.credentials.oauth.ServiceAccountConfig;
 import hudson.FilePath;
@@ -31,6 +30,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 import java.util.logging.Logger;
+import org.apache.commons.io.IOUtils;
 import org.junit.rules.TemporaryFolder;
 
 /** Provides a library of utility functions for integration tests. */
@@ -86,7 +86,7 @@ public class ITUtil {
    * @throws IOException If an error occurred during loading.
    */
   static String loadResource(Class testClass, String name) throws IOException {
-    return new String(ByteStreams.toByteArray(testClass.getResourceAsStream(name)));
+    return IOUtils.toString(testClass.getResourceAsStream(name), StandardCharsets.UTF_8);
   }
 
   /**

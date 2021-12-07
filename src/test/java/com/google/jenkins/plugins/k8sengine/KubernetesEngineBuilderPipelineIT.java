@@ -30,7 +30,6 @@ import com.cloudbees.plugins.credentials.SystemCredentialsProvider;
 import com.cloudbees.plugins.credentials.domains.Domain;
 import com.google.api.services.container.model.Cluster;
 import com.google.cloud.graphite.platforms.plugin.client.ContainerClient;
-import com.google.common.collect.ImmutableList;
 import com.google.jenkins.plugins.credentials.oauth.GoogleRobotPrivateKeyCredentials;
 import com.google.jenkins.plugins.credentials.oauth.ServiceAccountConfig;
 import com.google.jenkins.plugins.k8sengine.client.ClientUtil;
@@ -39,6 +38,7 @@ import hudson.FilePath;
 import hudson.Launcher;
 import hudson.model.Result;
 import hudson.slaves.EnvironmentVariablesNodeProperty;
+import java.util.Arrays;
 import java.util.logging.Logger;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
@@ -238,6 +238,6 @@ public class KubernetesEngineBuilderPipelineIT {
             .namespace(namespace)
             .build();
     FilePath manifestFile = workspace.child(manifestPattern);
-    kubectl.runKubectlCommand("delete", ImmutableList.<String>of(kind, name));
+    kubectl.runKubectlCommand("delete", Arrays.asList(kind, name));
   }
 }

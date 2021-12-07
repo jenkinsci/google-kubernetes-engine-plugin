@@ -24,10 +24,10 @@ import com.cloudbees.plugins.credentials.CredentialsStore;
 import com.cloudbees.plugins.credentials.SystemCredentialsProvider;
 import com.cloudbees.plugins.credentials.domains.Domain;
 import com.google.cloud.graphite.platforms.plugin.client.ClientFactory;
-import com.google.common.collect.ImmutableList;
 import com.google.jenkins.plugins.credentials.oauth.GoogleRobotPrivateKeyCredentials;
 import com.google.jenkins.plugins.credentials.oauth.ServiceAccountConfig;
 import hudson.AbortException;
+import java.util.Collections;
 import java.util.Optional;
 import java.util.logging.Logger;
 import org.junit.BeforeClass;
@@ -61,7 +61,7 @@ public class ClientUtilIT {
   public void testGetClientFactoryValidCreds() throws AbortException {
     ClientFactory factory =
         ClientUtil.getClientFactory(
-            jenkinsRule.jenkins, ImmutableList.of(), credentialsId, Optional.empty());
+            jenkinsRule.jenkins, Collections.emptyList(), credentialsId, Optional.empty());
     assertNotNull(factory);
     assertNotNull(factory.containerClient());
   }
