@@ -15,11 +15,11 @@
 package com.google.jenkins.plugins.k8sengine;
 
 import com.google.api.services.container.model.Cluster;
+import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.io.Writer;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import org.apache.commons.lang.StringUtils;
@@ -36,39 +36,39 @@ public class KubeConfig {
   private static final String API_VERSION = "v1";
   private static final String CONFIG_KIND = "Config";
 
-  private List<Object> contexts;
-  private List<Object> clusters;
-  private List<Object> users;
+  private ImmutableList<Object> contexts;
+  private ImmutableList<Object> clusters;
+  private ImmutableList<Object> users;
   private String currentContext;
 
   private KubeConfig() {}
 
   /** @return This config's contexts. */
-  public List<Object> getContexts() {
+  public ImmutableList<Object> getContexts() {
     return contexts;
   }
 
-  private void setContexts(List<Object> contexts) {
+  private void setContexts(ImmutableList<Object> contexts) {
     Objects.requireNonNull(contexts);
     this.contexts = contexts;
   }
 
   /** @return This config's clusters. */
-  public List<Object> getClusters() {
+  public ImmutableList<Object> getClusters() {
     return clusters;
   }
 
-  private void setClusters(List<Object> clusters) {
+  private void setClusters(ImmutableList<Object> clusters) {
     Objects.requireNonNull(clusters);
     this.clusters = clusters;
   }
 
   /** @return This config's users. */
-  public List<Object> getUsers() {
+  public ImmutableList<Object> getUsers() {
     return users;
   }
 
-  private void setUsers(List<Object> users) {
+  private void setUsers(ImmutableList<Object> users) {
     Objects.requireNonNull(users);
     this.users = users;
   }
@@ -120,17 +120,17 @@ public class KubeConfig {
       return this;
     }
 
-    public Builder users(List<Object> users) {
+    public Builder users(ImmutableList<Object> users) {
       config.setUsers(users);
       return this;
     }
 
-    public Builder contexts(List<Object> contexts) {
+    public Builder contexts(ImmutableList<Object> contexts) {
       config.setContexts(contexts);
       return this;
     }
 
-    public Builder clusters(List<Object> clusters) {
+    public Builder clusters(ImmutableList<Object> clusters) {
       config.setClusters(clusters);
       return this;
     }
@@ -161,9 +161,9 @@ public class KubeConfig {
         contextString(projectId, cluster.getLocation(), cluster.getName());
     return new KubeConfig.Builder()
         .currentContext(currentContext)
-        .contexts(Collections.singletonList(context(currentContext)))
-        .users(Collections.singletonList(user(currentContext, cluster, accessToken)))
-        .clusters(Collections.singletonList(cluster(currentContext, cluster)))
+        .contexts(ImmutableList.of(context(currentContext)))
+        .users(ImmutableList.of(user(currentContext, cluster, accessToken)))
+        .clusters(ImmutableList.of(cluster(currentContext, cluster)))
         .build();
   }
 
