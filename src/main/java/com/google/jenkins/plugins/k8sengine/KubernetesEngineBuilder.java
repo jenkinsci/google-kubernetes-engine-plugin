@@ -60,6 +60,8 @@ import jenkins.model.Jenkins;
 import jenkins.tasks.SimpleBuildStep;
 import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.Symbol;
+import org.kohsuke.accmod.Restricted;
+import org.kohsuke.accmod.restrictions.NoExternalUse;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
@@ -236,6 +238,7 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
     this.verboseLogging = verboseLogging;
   }
 
+  @Restricted(NoExternalUse.class) // for testing only
   void pushAfterBuildStep(KubeConfigAfterBuildStep afterBuildStep) {
     if (afterBuildStepStack == null) {
       afterBuildStepStack = new LinkedList<>();
@@ -306,6 +309,7 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
    * @throws IOException If an error occurred while reading/writing the manifest file.
    * @throws InterruptedException If an error occurred while parsing/dumping YAML.
    */
+  @Restricted(NoExternalUse.class) // for testing only
   static void addMetricsLabel(FilePath manifestFile) throws InterruptedException, IOException {
     Manifests manifests = Manifests.fromFile(manifestFile);
     for (Manifests.ManifestObject manifest :
@@ -385,6 +389,7 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
       return true;
     }
 
+    @Restricted(NoExternalUse.class) // for testing only
     ClientFactory getClientFactory(Jenkins context, String credentialsId) throws AbortException {
       if (this.clientFactory == null || updateCredentialsId(credentialsId)) {
         this.clientFactory = ClientUtil.getClientFactory(context, credentialsId);
@@ -392,6 +397,7 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
       return this.clientFactory;
     }
 
+    @Restricted(NoExternalUse.class) // for testing only
     String getDefaultProjectId(Jenkins context, String credentialsId) throws AbortException {
       if (this.defaultProjectId == null || updateCredentialsId(credentialsId)) {
         this.defaultProjectId = CredentialsUtil.getDefaultProjectId(context, credentialsId);

@@ -19,6 +19,8 @@ package com.google.jenkins.plugins.k8sengine;
 import com.google.api.services.container.model.Cluster;
 import java.util.Objects;
 import org.apache.commons.lang.StringUtils;
+import org.kohsuke.accmod.Restricted;
+import org.kohsuke.accmod.restrictions.NoExternalUse;
 
 /** Utility functions for converting between {@link Cluster}s and their String representations. */
 class ClusterUtil {
@@ -58,6 +60,7 @@ class ClusterUtil {
    * @param nameAndLocation A non-empty String of the form "name (location)"
    * @return A cluster with the name and location properties from the provided nameAndLocation.
    */
+  @Restricted(NoExternalUse.class) // for testing only
   static Cluster fromNameAndLocation(String nameAndLocation) {
     if (StringUtils.isBlank(nameAndLocation)) {
       throw new IllegalArgumentException("nameAndLocation cannot be null");

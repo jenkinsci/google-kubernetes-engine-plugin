@@ -23,6 +23,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import org.apache.commons.lang.StringUtils;
+import org.kohsuke.accmod.Restricted;
+import org.kohsuke.accmod.restrictions.NoExternalUse;
 import org.yaml.snakeyaml.Yaml;
 
 /**
@@ -167,6 +169,7 @@ public class KubeConfig {
         .build();
   }
 
+  @Restricted(NoExternalUse.class) // for testing only
   static String contextString(String project, String location, String cluster) {
     if (StringUtils.isBlank(project)) {
       throw new IllegalArgumentException("project cannot be empty");
@@ -180,6 +183,7 @@ public class KubeConfig {
     return String.format(KUBECONTEXT_FORMAT, project, location, cluster);
   }
 
+  @Restricted(NoExternalUse.class) // for testing only
   static String clusterServer(Cluster cluster) {
     Objects.requireNonNull(cluster);
     return String.format(KUBESERVER_FORMAT, cluster.getEndpoint());
