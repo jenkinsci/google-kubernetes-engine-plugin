@@ -64,7 +64,7 @@
 
   <properties>
     <!-- It needs to be .6 at least because of SnakeYaml -->
-    <jenkins.version>2.263.4</jenkins.version>
+    <jenkins.version>2.332.1</jenkins.version>
     <java.level>8</java.level>
     <java.level.test>8</java.level.test>
     <google.api.version>1.25.0</google.api.version>
@@ -72,17 +72,22 @@
     <cloudresourcemanager.revision>572</cloudresourcemanager.revision>
     <container.revision>93</container.revision>
     <gcp-plugin-core.version>0.3.0</gcp-plugin-core.version>
-    <google-oauth-plugin.version>1.0.3</google-oauth-plugin.version>
+    <google-oauth-plugin.version>1.0.6</google-oauth-plugin.version>
   </properties>
 
   <dependencyManagement>
     <dependencies>
       <dependency>
         <groupId>io.jenkins.tools.bom</groupId>
-        <artifactId>bom-2.204.x</artifactId>
-        <version>18</version>
+        <artifactId>bom-2.332.x</artifactId>
+        <version>1289.v5c4b_1c43511b_</version>
         <type>pom</type>
         <scope>import</scope>
+      </dependency>
+      <dependency><!-- Mismatch pulled from ATH and pipeline-model-definition -->
+        <groupId>net.sf.jopt-simple</groupId>
+        <artifactId>jopt-simple</artifactId>
+        <version>5.0.4</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
@@ -111,7 +116,7 @@
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
       <artifactId>jackson-core</artifactId>
-      <version>2.12.2</version>
+      <version>2.13.2</version>
     </dependency>
     <dependency>
       <groupId>org.jenkins-ci.plugins.workflow</groupId>
@@ -204,24 +209,17 @@
     <dependency>
       <groupId>com.jayway.jsonpath</groupId>
       <artifactId>json-path</artifactId>
-      <version>2.5.0</version>
+      <version>2.7.0</version>
     </dependency>
     <dependency>
       <groupId>io.projectreactor</groupId>
       <artifactId>reactor-core</artifactId>
-      <version>3.4.3</version>
+      <version>3.4.17</version>
     </dependency>
     <dependency>
       <groupId>io.projectreactor.addons</groupId>
       <artifactId>reactor-extra</artifactId>
-      <version>3.4.2</version>
-    </dependency>
-    <!-- Required for InjectedTest. Git 4.4.5 for org.jvnet.hudson.test.PluginAutomaticTestBuilder$OtherTests.testPluginActive -->
-    <dependency>
-      <groupId>org.jenkins-ci.plugins</groupId>
-      <artifactId>matrix-project</artifactId>
-      <version>1.18</version>
-      <scope>test</scope>
+      <version>3.4.8</version>
     </dependency>
   </dependencies>
 
