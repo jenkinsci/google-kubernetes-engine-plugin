@@ -68,7 +68,7 @@
     <java.level>8</java.level>
     <java.level.test>8</java.level.test>
     <google.guava.version>30.1-jre</google.guava.version>
-    <google.api.version>1.25.0</google.api.version>
+    <google.api.version>1.34.1</google.api.version>
     <google.http.version>1.39.0</google.http.version>
     <cloudresourcemanager.revision>572</cloudresourcemanager.revision>
     <container.revision>93</container.revision>
