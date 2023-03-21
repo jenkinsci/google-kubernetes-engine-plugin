@@ -66,7 +66,7 @@
     <revision>0.8.8</revision>
     <changelist>-SNAPSHOT</changelist>
     <gitHubRepo>jenkinsci/google-kubernetes-engine-plugin</gitHubRepo>
-    <jenkins.version>2.346.1</jenkins.version>
+    <jenkins.version>2.361</jenkins.version>
     <google.guava.version>30.1-jre</google.guava.version>
     <google.api.version>1.25.0</google.api.version>
     <google.http.version>1.42.2</google.http.version>
