@@ -73,7 +73,7 @@
     <cloudresourcemanager.revision>572</cloudresourcemanager.revision>
     <container.revision>93</container.revision>
     <gcp-plugin-core.version>0.3.0</gcp-plugin-core.version>
-    <google-oauth-plugin.version>1.0.8-rc251.d290e26c7b_fb_</google-oauth-plugin.version>
+    <google-oauth-plugin.version>1.0.8</google-oauth-plugin.version>
   </properties>
 
   <dependencyManagement>
@@ -246,10 +246,6 @@
     <repository>
       <id>repo.jenkins-ci.org</id>
       <url>https://repo.jenkins-ci.org/public/</url>
-    </repository>
-    <repository>
-      <id>incrementals.jenkins-ci.org</id>
-      <url>https://repo.jenkins-ci.org/incrementals</url>
     </repository>
   </repositories>
   <pluginRepositories>
