@@ -18,12 +18,12 @@
   <parent>
     <groupId>org.jenkins-ci.plugins</groupId>
     <artifactId>plugin</artifactId>
-    <version>4.16</version>
+    <version>4.45</version>
     <relativePath/>
   </parent>
 
   <artifactId>google-kubernetes-engine</artifactId>
-  <version>0.8.8-SNAPSHOT</version>
+  <version>${revision}${changelist}</version>
   <packaging>hpi</packaging>
 
   <name>Google Kubernetes Engine Plugin</name>
@@ -56,32 +56,32 @@
   </developers>
 
   <scm>
-    <connection>scm:git:https://github.com/jenkinsci/${project.artifactId}-plugin.git</connection>
-    <developerConnection>scm:git:git@github.com:jenkinsci/${project.artifactId}-plugin.git</developerConnection>
-    <url>https://github.com/jenkinsci/${project.artifactId}-plugin</url>
-    <tag>HEAD</tag>
+    <connection>scm:git:https://github.com/${gitHubRepo}.git</connection>
+    <developerConnection>scm:git:git@github.com:${gitHubRepo}.git</developerConnection>
+    <url>https://github.com/${gitHubRepo}</url>
+    <tag>${scmTag}</tag>
   </scm>
 
   <properties>
-    <!-- It needs to be .6 at least because of SnakeYaml -->
-    <jenkins.version>2.263.4</jenkins.version>
-    <java.level>8</java.level>
-    <java.level.test>8</java.level.test>
+    <revision>0.8.8</revision>
+    <changelist>-SNAPSHOT</changelist>
+    <gitHubRepo>jenkinsci/google-kubernetes-engine-plugin</gitHubRepo>
+    <jenkins.version>2.346.1</jenkins.version>
     <google.guava.version>30.1-jre</google.guava.version>
     <google.api.version>1.25.0</google.api.version>
-    <google.http.version>1.39.0</google.http.version>
+    <google.http.version>1.42.2</google.http.version>
     <cloudresourcemanager.revision>572</cloudresourcemanager.revision>
     <container.revision>93</container.revision>
     <gcp-plugin-core.version>0.3.0</gcp-plugin-core.version>
-    <google-oauth-plugin.version>1.0.3</google-oauth-plugin.version>
+    <google-oauth-plugin.version>1.0.8</google-oauth-plugin.version>
   </properties>
 
   <dependencyManagement>
     <dependencies>
       <dependency>
         <groupId>io.jenkins.tools.bom</groupId>
-        <artifactId>bom-2.204.x</artifactId>
-        <version>18</version>
+        <artifactId>bom-2.346.x</artifactId>
+        <version>1643.v1cffef51df73</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
@@ -110,9 +110,13 @@
       <version>3.12.0</version>
     </dependency>
     <dependency>
+      <groupId>org.jenkins-ci.plugins</groupId>
+      <artifactId>apache-httpcomponents-client-4-api</artifactId>
+    </dependency>
+    <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
       <artifactId>jackson-core</artifactId>
-      <version>2.12.2</version>
+      <version>2.13.3</version>
     </dependency>
     <dependency>
       <groupId>org.jenkins-ci.plugins.workflow</groupId>
@@ -182,7 +186,7 @@
     <dependency>
       <groupId>com.google.http-client</groupId>
       <artifactId>google-http-client-jackson2</artifactId>
-      <version>${google.api.version}</version>
+      <version>1.35.0</version>
       <exclusions>
         <exclusion>
           <groupId>com.google.http-client</groupId>
@@ -193,7 +197,7 @@
     <dependency>
       <groupId>com.google.oauth-client</groupId>
       <artifactId>google-oauth-client</artifactId>
-      <version>${google.api.version}</version>
+      <version>1.34.1</version>
       <exclusions>
         <exclusion>
           <groupId>com.google.http-client</groupId>
@@ -234,7 +238,6 @@
     <dependency>
       <groupId>org.jenkins-ci.plugins</groupId>
       <artifactId>matrix-project</artifactId>
-      <version>1.18</version>
       <scope>test</scope>
     </dependency>
   </dependencies>
