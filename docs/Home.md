@@ -184,11 +184,12 @@ The GKE Build Step has the following parameters:
 
 1. `credentialsId(string)`: The ID of the credentials that you uploaded earlier.
 1. `projectId(string)`: The Project ID housing the GKE cluster to be published to.
-1. `zone(string)`: [**Deprecated**] The Zone housing the GKE cluster to be published to.
 1. `location(string)`: The Zone or Region housing the GKE cluster to be published to.
 1. `clusterName(string)`: The name of the Cluster to be published to.
+1. `namespace(string)`: The namespace Kubernetes objects are deployed to.
 1. `manifestPattern(string)`: The file pattern of the Kubernetes manifest to be deployed.
-1. `verifyDeployments(boolean)`: [Optional] Whether the plugin will verify deployments.
+1. `verifyDeployments(boolean)`: [Optional] Whether the plugin will verify deployments. Default is `true`.
+1. `verifyTimeoutInMinutes(integer)`: [Optional] Time in minutes to wait for deployments to verify. Default is 5 minutes.
 
 #### Jenkins Web UI
 
@@ -215,6 +216,7 @@ pipeline {
         PROJECT_ID = '<YOUR_PROJECT_ID>'
         CLUSTER_NAME = '<YOUR_CLUSTER_NAME>'
         LOCATION = '<YOUR_CLUSTER_LOCATION>'
+        NAMESPACE = '<YOUR_KUBERNETES_NAMESPACE>'
         CREDENTIALS_ID = '<YOUR_CREDENTIAS_ID>'
     }
     stages {
@@ -226,8 +228,10 @@ pipeline {
                 clusterName: env.CLUSTER_NAME,
                 location: env.LOCATION,
                 manifestPattern: 'manifest.yaml',
+                namespace: env.NAMESPACE,
                 credentialsId: env.CREDENTIALS_ID,
-                verifyDeployments: true])
+                verifyDeployments: true,
+                verifyTimeoutInMinutes: 5])
             }
         }
     }
