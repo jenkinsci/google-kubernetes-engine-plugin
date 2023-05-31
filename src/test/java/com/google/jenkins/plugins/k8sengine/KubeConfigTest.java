@@ -36,6 +36,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.yaml.snakeyaml.LoaderOptions;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.SafeConstructor;
 
@@ -108,7 +109,7 @@ public class KubeConfigTest {
   }
 
   private static boolean yamlEquals(String expectedYaml, String testYaml) throws IOException {
-    Yaml yaml = new Yaml(new SafeConstructor());
+    Yaml yaml = new Yaml(new SafeConstructor(new LoaderOptions()));
     Map<String, Object> testConfig = yaml.load(new BufferedReader(new StringReader(testYaml)));
     Map<String, Object> expectedConfig =
         yaml.load(new BufferedReader(new StringReader(expectedYaml)));
