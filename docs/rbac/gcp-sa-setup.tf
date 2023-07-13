@@ -1,15 +1,15 @@
 variable project {
-  type        = "string"
+  type        = string
   description = "The GCP project to be configured."
 }
 
 variable region {
-  type        = "string"
+  type        = string
   description = "The GCP region."
 }
 
 variable sa_name {
-  type        = "string"
+  type        = string
   description = "The name of the service account to be created."
 }
 
