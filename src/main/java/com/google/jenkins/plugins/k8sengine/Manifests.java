@@ -27,6 +27,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import org.yaml.snakeyaml.LoaderOptions;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.SafeConstructor;
 
@@ -37,7 +38,7 @@ import org.yaml.snakeyaml.constructor.SafeConstructor;
 public class Manifests {
   private static final String DEFAULT_ENCODING = "UTF-8";
 
-  static Yaml yaml = new Yaml(new SafeConstructor());
+  static Yaml yaml = new Yaml(new SafeConstructor(new LoaderOptions()));
   private List<ManifestObject> objects = new ArrayList<ManifestObject>();
 
   /** ManifestObject wrapper that encapsulates an object spec loaded from a supplied manifest. */
