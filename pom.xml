@@ -23,7 +23,7 @@
   </parent>
 
   <artifactId>google-kubernetes-engine</artifactId>
-  <version>0.8.10-SNAPSHOT</version>
+  <version>${revision}${changelist}</version>
   <packaging>hpi</packaging>
 
   <name>Google Kubernetes Engine Plugin</name>
@@ -63,7 +63,7 @@
   </scm>
 
   <properties>
-    <revision>0.8.8</revision>
+    <revision>0.8.10</revision>
     <changelist>-SNAPSHOT</changelist>
     <gitHubRepo>jenkinsci/google-kubernetes-engine-plugin</gitHubRepo>
     <jenkins.version>2.346.1</jenkins.version>
