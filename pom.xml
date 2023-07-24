@@ -23,7 +23,7 @@
   </parent>
 
   <artifactId>google-kubernetes-engine</artifactId>
-  <version>${revision}${changelist}</version>
+  <version>${revision}.${changelist}</version>
   <packaging>hpi</packaging>
 
   <name>Google Kubernetes Engine Plugin</name>
