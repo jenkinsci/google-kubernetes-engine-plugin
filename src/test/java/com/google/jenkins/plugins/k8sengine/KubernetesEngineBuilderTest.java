@@ -85,7 +85,7 @@ public class KubernetesEngineBuilderTest {
 
   @Test
   public void testDoFillProjectIdItemsEmptyWithEmptyCredentialsId() throws IOException {
-    DescriptorImpl descriptor = setUpProjectDescriptor(ImmutableList.of(), "", null, null);
+    DescriptorImpl descriptor = setUpProjectDescriptor3(ImmutableList.of(), "", null, null);
     ListBoxModel expected =
         initExpected(ImmutableList.of(EMPTY_NAME), ImmutableList.of(EMPTY_VALUE));
     ListBoxModel result = descriptor.doFillProjectIdItems(jenkins, null, null);
@@ -171,7 +171,7 @@ public class KubernetesEngineBuilderTest {
 
   @Test
   public void testDoCheckProjectIdMessageWithEmptyProjectID() throws IOException {
-    DescriptorImpl descriptor = setUpProjectDescriptor(ImmutableList.of(), "", null, null);
+    DescriptorImpl descriptor = setUpProjectDescriptor2(ImmutableList.of(), "", null, null);
     FormValidation result = descriptor.doCheckProjectId(jenkins, null, TEST_CREDENTIALS_ID);
     assertNotNull(result);
     assertEquals(Messages.KubernetesEngineBuilder_ProjectIDRequired(), result.getMessage());
@@ -179,7 +179,7 @@ public class KubernetesEngineBuilderTest {
 
   @Test
   public void testDoCheckProjectIdMessageWithEmptyCredentialsID() throws IOException {
-    DescriptorImpl descriptor = setUpProjectDescriptor(ImmutableList.of(), "", null, null);
+    DescriptorImpl descriptor = setUpProjectDescriptor3(ImmutableList.of(), "", null, null);
     FormValidation result = descriptor.doCheckProjectId(jenkins, TEST_PROJECT_ID, null);
     assertNotNull(result);
     assertEquals(
@@ -199,7 +199,7 @@ public class KubernetesEngineBuilderTest {
   @Test
   public void testDoCheckProjectIdMessageWithIOException() throws IOException {
     DescriptorImpl descriptor =
-        setUpProjectDescriptor(ImmutableList.of(), "", null, new IOException());
+        setUpProjectDescriptor2(ImmutableList.of(), "", null, new IOException());
     FormValidation result =
         descriptor.doCheckProjectId(jenkins, TEST_PROJECT_ID, TEST_CREDENTIALS_ID);
     assertNotNull(result);
@@ -219,7 +219,7 @@ public class KubernetesEngineBuilderTest {
   @Test
   public void testDoCheckProjectIdMessageWithIOExceptionAndEmptyProjectId() throws IOException {
     DescriptorImpl descriptor =
-        setUpProjectDescriptor(ImmutableList.of(), "", null, new IOException());
+        setUpProjectDescriptor2(ImmutableList.of(), "", null, new IOException());
     FormValidation result = descriptor.doCheckProjectId(jenkins, null, TEST_CREDENTIALS_ID);
     assertNotNull(result);
     assertEquals(
@@ -228,7 +228,7 @@ public class KubernetesEngineBuilderTest {
 
   @Test
   public void testDoCheckProjectIdMessageWithNoProjects() throws IOException {
-    DescriptorImpl descriptor = setUpProjectDescriptor(ImmutableList.of(), "", null, null);
+    DescriptorImpl descriptor = setUpProjectDescriptor2(ImmutableList.of(), "", null, null);
     FormValidation result =
         descriptor.doCheckProjectId(jenkins, TEST_PROJECT_ID, TEST_CREDENTIALS_ID);
     assertNotNull(result);
@@ -239,7 +239,7 @@ public class KubernetesEngineBuilderTest {
   @Test
   public void testDoCheckProjectIdMessageWithWrongProjects() throws IOException {
     DescriptorImpl descriptor =
-        setUpProjectDescriptor(ImmutableList.of(OTHER_PROJECT_ID), "", null, null);
+        setUpProjectDescriptor2(ImmutableList.of(OTHER_PROJECT_ID), "", null, null);
     FormValidation result =
         descriptor.doCheckProjectId(jenkins, TEST_PROJECT_ID, TEST_CREDENTIALS_ID);
     assertNotNull(result);
@@ -250,7 +250,8 @@ public class KubernetesEngineBuilderTest {
   @Test
   public void testDoCheckProjectIdMessageWithValidProject() throws IOException {
     DescriptorImpl descriptor =
-        setUpProjectDescriptor(ImmutableList.of(OTHER_PROJECT_ID, TEST_PROJECT_ID), "", null, null);
+        setUpProjectDescriptor2(
+            ImmutableList.of(OTHER_PROJECT_ID, TEST_PROJECT_ID), "", null, null);
     FormValidation result =
         descriptor.doCheckProjectId(jenkins, TEST_PROJECT_ID, TEST_CREDENTIALS_ID);
     assertNotNull(result);
@@ -343,5 +344,61 @@ public class KubernetesEngineBuilderTest {
     Optional<Option> expectedOption =
         result.stream().filter(i -> expectedValue.equals(i.value)).findFirst();
     expectedOption.ifPresent(option -> assertTrue(option.selected));
+  }
+
+  private DescriptorImpl setUpProjectDescriptor2(
+      List<String> initialProjects,
+      String defaultProjectId,
+      AbortException abortException,
+      IOException ioException)
+      throws IOException {
+    DescriptorImpl descriptor = Mockito.spy(DescriptorImpl.class);
+    if (abortException != null) {
+      Mockito.doThrow(abortException)
+          .when(descriptor)
+          .getClientFactory(any(Jenkins.class), anyString());
+      return descriptor;
+    }
+    ClientFactory clientFactory = Mockito.mock(ClientFactory.class);
+    Mockito.doReturn(clientFactory)
+        .when(descriptor)
+        .getClientFactory(any(Jenkins.class), anyString());
+    CloudResourceManagerClient cloudResourceManagerClient =
+        Mockito.mock(CloudResourceManagerClient.class);
+    Mockito.when(clientFactory.cloudResourceManagerClient()).thenReturn(cloudResourceManagerClient);
+    if (ioException != null) {
+      Mockito.when(cloudResourceManagerClient.listProjects()).thenThrow(ioException);
+      return descriptor;
+    }
+    List<Project> projects = new ArrayList<>();
+    initialProjects.forEach(p -> projects.add(new Project().setProjectId(p)));
+    Mockito.when(cloudResourceManagerClient.listProjects())
+        .thenReturn(ImmutableList.copyOf(projects));
+    return descriptor;
+  }
+
+  private DescriptorImpl setUpProjectDescriptor3(
+      List<String> initialProjects,
+      String defaultProjectId,
+      AbortException abortException,
+      IOException ioException)
+      throws IOException {
+    DescriptorImpl descriptor = Mockito.spy(DescriptorImpl.class);
+    if (abortException != null) {
+      Mockito.doThrow(abortException)
+          .when(descriptor)
+          .getClientFactory(any(Jenkins.class), anyString());
+      return descriptor;
+    }
+    ClientFactory clientFactory = Mockito.mock(ClientFactory.class);
+    CloudResourceManagerClient cloudResourceManagerClient =
+        Mockito.mock(CloudResourceManagerClient.class);
+    if (ioException != null) {
+      Mockito.when(cloudResourceManagerClient.listProjects()).thenThrow(ioException);
+      return descriptor;
+    }
+    List<Project> projects = new ArrayList<>();
+    initialProjects.forEach(p -> projects.add(new Project().setProjectId(p)));
+    return descriptor;
   }
 }
