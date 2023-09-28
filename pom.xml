@@ -66,14 +66,13 @@
     <revision>0</revision>
     <changelist>999999-SNAPSHOT</changelist>
     <gitHubRepo>jenkinsci/google-kubernetes-engine-plugin</gitHubRepo>
-    <jenkins.version>2.361.4</jenkins.version>
+    <jenkins.version>2.387.3</jenkins.version>
     <google.guava.version>32.1.2-jre</google.guava.version>
     <google.api.version>1.25.0</google.api.version>
     <google.http.version>1.42.2</google.http.version>
     <cloudresourcemanager.revision>572</cloudresourcemanager.revision>
     <container.revision>93</container.revision>
     <gcp-plugin-core.version>0.3.0</gcp-plugin-core.version>
-    <google-oauth-plugin.version>1.0.8</google-oauth-plugin.version>
   </properties>
 
   <dependencyManagement>
@@ -85,8 +84,8 @@
       </dependency>
       <dependency>
         <groupId>io.jenkins.tools.bom</groupId>
-        <artifactId>bom-2.361.x</artifactId>
-        <version>2102.v854b_fec19c92</version>
+        <artifactId>bom-2.387.x</artifactId>
+        <version>2465.va_e76ed7b_3061</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
@@ -108,11 +107,6 @@
     <dependency>
       <groupId>org.jenkins-ci.plugins</groupId>
       <artifactId>display-url-api</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.commons</groupId>
-      <artifactId>commons-lang3</artifactId>
-      <version>3.12.0</version>
     </dependency>
     <dependency>
       <groupId>org.jenkins-ci.plugins</groupId>
@@ -138,7 +132,6 @@
     <dependency>
       <groupId>org.jenkins-ci.plugins</groupId>
       <artifactId>google-oauth-plugin</artifactId>
-      <version>${google-oauth-plugin.version}</version>
     </dependency>
     <dependency>
       <groupId>org.jenkins-ci</groupId>
