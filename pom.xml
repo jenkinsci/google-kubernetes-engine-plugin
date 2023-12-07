@@ -67,7 +67,6 @@
     <changelist>999999-SNAPSHOT</changelist>
     <gitHubRepo>jenkinsci/google-kubernetes-engine-plugin</gitHubRepo>
     <jenkins.version>2.387.3</jenkins.version>
-    <google.guava.version>32.1.2-jre</google.guava.version>
     <google.api.version>1.25.0</google.api.version>
     <google.http.version>1.42.2</google.http.version>
     <cloudresourcemanager.revision>572</cloudresourcemanager.revision>
@@ -157,19 +156,6 @@
       <version>${gcp-plugin-core.version}</version>
     </dependency>
     <dependency>
-      <groupId>com.google.guava</groupId>
-      <artifactId>guava</artifactId>
-      <version>${google.guava.version}</version>
-      <exclusions>
-        <!-- We use the one from git:4.4.5: 2.3.4. Newer than
-             the one here: 2.1.3 -->
-        <exclusion>
-          <groupId>com.google.errorprone</groupId>
-          <artifactId>error_prone_annotations</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-    <dependency>
       <groupId>com.google.http-client</groupId>
       <artifactId>google-http-client</artifactId>
       <version>${google.http.version}</version>
@@ -177,6 +163,10 @@
         <exclusion>
           <groupId>org.apache.httpcomponents</groupId>
           <artifactId>httpclient</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>com.google.guava</groupId>
+          <artifactId>guava</artifactId>
         </exclusion>
       </exclusions>
     </dependency>
@@ -199,6 +189,10 @@
         <exclusion>
           <groupId>com.google.http-client</groupId>
           <artifactId>google-http-client</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>com.google.guava</groupId>
+          <artifactId>guava</artifactId>
         </exclusion>
       </exclusions>
     </dependency>
