@@ -14,13 +14,13 @@
 
 package com.google.jenkins.plugins.k8sengine;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.PrintStream;
 import java.time.Duration;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
-import javax.annotation.Nonnull;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 import reactor.core.scheduler.Schedulers;
@@ -96,9 +96,9 @@ public class VerificationTask {
    * @return If the {@link Manifests.ManifestObject}'s were successfully verified.
    */
   public static boolean verifyObjects(
-      @Nonnull KubectlWrapper kubectl,
-      @Nonnull List<Manifests.ManifestObject> manifestObjects,
-      @Nonnull PrintStream consoleLogger,
+      @NonNull KubectlWrapper kubectl,
+      @NonNull List<Manifests.ManifestObject> manifestObjects,
+      @NonNull PrintStream consoleLogger,
       int timeoutInMinutes) {
     List<VerificationTask> verificationTasks =
         manifestObjects.stream()

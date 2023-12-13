@@ -87,10 +87,6 @@
   </dependencyManagement>
   <dependencies>
     <dependency>
-      <groupId>commons-io</groupId>
-      <artifactId>commons-io</artifactId>
-    </dependency>
-    <dependency>
       <groupId>org.jenkins-ci.plugins</groupId>
       <artifactId>credentials</artifactId>
     </dependency>
@@ -132,10 +128,6 @@
       <artifactId>google-oauth-plugin</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.jenkins-ci</groupId>
-      <artifactId>annotation-indexer</artifactId>
-    </dependency>
-    <dependency>
       <groupId>org.mockito</groupId>
       <artifactId>mockito-core</artifactId>
       <scope>test</scope>
@@ -170,6 +162,11 @@
           <artifactId>httpclient</artifactId>
         </exclusion>
         <exclusion>
+          <groupId>com.google.code.findbugs</groupId>
+          <artifactId>jsr305</artifactId>
+        </exclusion>
+        <!-- Provided by core -->
+        <exclusion>
           <groupId>com.google.guava</groupId>
           <artifactId>guava</artifactId>
         </exclusion>
@@ -188,6 +185,7 @@
           <groupId>com.google.http-client</groupId>
           <artifactId>google-http-client</artifactId>
         </exclusion>
+        <!-- Provided by core -->
         <exclusion>
           <groupId>com.google.guava</groupId>
           <artifactId>guava</artifactId>
