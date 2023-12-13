@@ -33,6 +33,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.jenkins.plugins.credentials.oauth.GoogleOAuth2Credentials;
 import com.google.jenkins.plugins.k8sengine.client.ClientUtil;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.AbortException;
 import hudson.Extension;
 import hudson.FilePath;
@@ -57,7 +58,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.annotation.Nonnull;
 import jenkins.model.Jenkins;
 import jenkins.tasks.SimpleBuildStep;
 import org.jenkinsci.Symbol;
@@ -236,10 +236,10 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
   /** {@inheritDoc} */
   @Override
   public void perform(
-      @Nonnull Run<?, ?> run,
-      @Nonnull FilePath workspace,
-      @Nonnull Launcher launcher,
-      @Nonnull TaskListener listener)
+      @NonNull Run<?, ?> run,
+      @NonNull FilePath workspace,
+      @NonNull Launcher launcher,
+      @NonNull TaskListener listener)
       throws InterruptedException, IOException {
     LOGGER.log(
         Level.INFO,
@@ -363,7 +363,7 @@ public class KubernetesEngineBuilder extends Builder implements SimpleBuildStep,
     private String defaultProjectId;
     private String credentialsId;
 
-    @Nonnull
+    @NonNull
     @Override
     public String getDisplayName() {
       return Messages.KubernetesEngineBuilder_DisplayName();
