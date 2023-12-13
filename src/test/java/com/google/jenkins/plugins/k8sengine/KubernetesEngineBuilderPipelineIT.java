@@ -50,194 +50,172 @@ import org.jvnet.hudson.test.JenkinsRule;
 
 /** Tests the {@link KubernetesEngineBuilder} for use-cases involving the Jenkins Pipeline DSL. */
 public class KubernetesEngineBuilderPipelineIT {
-  private static final Logger LOGGER =
-      Logger.getLogger(KubernetesEngineBuilderPipelineIT.class.getName());
-  private static final String TEST_DEPLOYMENT_MANIFEST = "testDeployment.yml";
-  @ClassRule public static JenkinsRule jenkinsRule = new JenkinsRule();
-  private static EnvVars envVars;
-  private static String clusterName;
-  private static String projectId;
-  private static String testLocation;
-  private static String credentialsId;
-  private static ContainerClient client;
+    private static final Logger LOGGER = Logger.getLogger(KubernetesEngineBuilderPipelineIT.class.getName());
+    private static final String TEST_DEPLOYMENT_MANIFEST = "testDeployment.yml";
 
-  @BeforeClass
-  public static void init() throws Exception {
-    LOGGER.info("Initializing KubernetesEngineBuilderPipelineIT");
+    @ClassRule
+    public static JenkinsRule jenkinsRule = new JenkinsRule();
 
-    projectId = System.getenv("GOOGLE_PROJECT_ID");
-    assertNotNull("GOOGLE_PROJECT_ID env var must be set", projectId);
+    private static EnvVars envVars;
+    private static String clusterName;
+    private static String projectId;
+    private static String testLocation;
+    private static String credentialsId;
+    private static ContainerClient client;
 
-    testLocation = getLocation();
+    @BeforeClass
+    public static void init() throws Exception {
+        LOGGER.info("Initializing KubernetesEngineBuilderPipelineIT");
 
-    clusterName = System.getenv("GOOGLE_GKE_CLUSTER");
-    assertNotNull("GOOGLE_GKE_CLUSTER env var must be set", clusterName);
+        projectId = System.getenv("GOOGLE_PROJECT_ID");
+        assertNotNull("GOOGLE_PROJECT_ID env var must be set", projectId);
 
-    LOGGER.info("Creating credentials");
-    ServiceAccountConfig sac = getServiceAccountConfig();
-    credentialsId = projectId;
-    Credentials c = (Credentials) new GoogleRobotPrivateKeyCredentials(credentialsId, sac, null);
-    CredentialsStore store =
-        new SystemCredentialsProvider.ProviderImpl().getStore(jenkinsRule.jenkins);
-    store.addCredentials(Domain.global(), c);
+        testLocation = getLocation();
 
-    client = ClientUtil.getClientFactory(jenkinsRule.jenkins, credentialsId).containerClient();
+        clusterName = System.getenv("GOOGLE_GKE_CLUSTER");
+        assertNotNull("GOOGLE_GKE_CLUSTER env var must be set", clusterName);
 
-    EnvironmentVariablesNodeProperty prop = new EnvironmentVariablesNodeProperty();
-    envVars = prop.getEnvVars();
-    envVars.put("PROJECT_ID", projectId);
-    envVars.put("CLUSTER_NAME", clusterName);
-    envVars.put("CREDENTIALS_ID", credentialsId);
-    envVars.put("LOCATION", testLocation);
-    jenkinsRule.jenkins.getGlobalNodeProperties().add(prop);
-  }
+        LOGGER.info("Creating credentials");
+        ServiceAccountConfig sac = getServiceAccountConfig();
+        credentialsId = projectId;
+        Credentials c = (Credentials) new GoogleRobotPrivateKeyCredentials(credentialsId, sac, null);
+        CredentialsStore store = new SystemCredentialsProvider.ProviderImpl().getStore(jenkinsRule.jenkins);
+        store.addCredentials(Domain.global(), c);
 
-  @Test
-  public void testWorkspaceDeclarativePipelineDeploysProperly() throws Exception {
-    envVars.put("MANIFEST_PATTERN", TEST_DEPLOYMENT_MANIFEST);
-    envVars.put("NAMESPACE", "default");
-    WorkflowJob testProject =
-        jenkinsRule.createProject(WorkflowJob.class, formatRandomName("test"));
-    testProject.setDefinition(
-        new CpsFlowDefinition(
-            loadResource(getClass(), "workspaceDeclarativePipeline.groovy"), true));
-    copyTestFileToDir(
-        getClass(),
-        jenkinsRule.jenkins.getWorkspaceFor(testProject).getRemote(),
-        TEST_DEPLOYMENT_MANIFEST);
+        client = ClientUtil.getClientFactory(jenkinsRule.jenkins, credentialsId).containerClient();
 
-    WorkflowRun run = testProject.scheduleBuild2(0).waitForStart();
-    assertNotNull(run);
-    jenkinsRule.assertBuildStatusSuccess(jenkinsRule.waitForCompletion(run));
-    dumpLog(LOGGER, run);
+        EnvironmentVariablesNodeProperty prop = new EnvironmentVariablesNodeProperty();
+        envVars = prop.getEnvVars();
+        envVars.put("PROJECT_ID", projectId);
+        envVars.put("CLUSTER_NAME", clusterName);
+        envVars.put("CREDENTIALS_ID", credentialsId);
+        envVars.put("LOCATION", testLocation);
+        jenkinsRule.jenkins.getGlobalNodeProperties().add(prop);
+    }
 
-    kubectlDelete(
-        jenkinsRule.createLocalLauncher(),
-        jenkinsRule.jenkins.getWorkspaceFor(testProject),
-        TEST_DEPLOYMENT_MANIFEST,
-        "deployment",
-        "nginx-deployment",
-        "default");
-  }
+    @Test
+    public void testWorkspaceDeclarativePipelineDeploysProperly() throws Exception {
+        envVars.put("MANIFEST_PATTERN", TEST_DEPLOYMENT_MANIFEST);
+        envVars.put("NAMESPACE", "default");
+        WorkflowJob testProject = jenkinsRule.createProject(WorkflowJob.class, formatRandomName("test"));
+        testProject.setDefinition(
+                new CpsFlowDefinition(loadResource(getClass(), "workspaceDeclarativePipeline.groovy"), true));
+        copyTestFileToDir(
+                getClass(), jenkinsRule.jenkins.getWorkspaceFor(testProject).getRemote(), TEST_DEPLOYMENT_MANIFEST);
 
-  @Test
-  public void testGitDeclarativePipelineDeploysProperly() throws Exception {
-    envVars.put("GIT_URL", "https://github.com/jenkinsci/google-kubernetes-engine-plugin.git");
-    envVars.put("MANIFEST_PATTERN", "docs/resources/manifest.yaml");
-    envVars.put("NAMESPACE", "default");
-    WorkflowJob testProject =
-        jenkinsRule.createProject(WorkflowJob.class, formatRandomName("test"));
-    testProject.setDefinition(
-        new CpsFlowDefinition(loadResource(getClass(), "gitDeclarativePipeline.groovy"), true));
+        WorkflowRun run = testProject.scheduleBuild2(0).waitForStart();
+        assertNotNull(run);
+        jenkinsRule.assertBuildStatusSuccess(jenkinsRule.waitForCompletion(run));
+        dumpLog(LOGGER, run);
 
-    WorkflowRun run = testProject.scheduleBuild2(0).waitForStart();
-    assertNotNull(run);
-    jenkinsRule.assertBuildStatusSuccess(jenkinsRule.waitForCompletion(run));
-    dumpLog(LOGGER, run);
+        kubectlDelete(
+                jenkinsRule.createLocalLauncher(),
+                jenkinsRule.jenkins.getWorkspaceFor(testProject),
+                TEST_DEPLOYMENT_MANIFEST,
+                "deployment",
+                "nginx-deployment",
+                "default");
+    }
 
-    kubectlDelete(
-        jenkinsRule.createLocalLauncher(),
-        jenkinsRule.jenkins.getWorkspaceFor(testProject),
-        "docs/resources/manifest.yaml",
-        "deployment",
-        "nginx-deployment",
-        "default");
-  }
+    @Test
+    public void testGitDeclarativePipelineDeploysProperly() throws Exception {
+        envVars.put("GIT_URL", "https://github.com/jenkinsci/google-kubernetes-engine-plugin.git");
+        envVars.put("MANIFEST_PATTERN", "docs/resources/manifest.yaml");
+        envVars.put("NAMESPACE", "default");
+        WorkflowJob testProject = jenkinsRule.createProject(WorkflowJob.class, formatRandomName("test"));
+        testProject.setDefinition(
+                new CpsFlowDefinition(loadResource(getClass(), "gitDeclarativePipeline.groovy"), true));
 
-  @Test
-  public void testMalformedDeclarativePipelineFails() throws Exception {
-    envVars.put("MANIFEST_PATTERN", TEST_DEPLOYMENT_MANIFEST);
-    envVars.put("NAMESPACE", "default");
-    WorkflowJob testProject =
-        jenkinsRule.createProject(WorkflowJob.class, formatRandomName("test"));
-    testProject.setDefinition(
-        new CpsFlowDefinition(
-            loadResource(getClass(), "malformedDeclarativePipeline.groovy"), true));
-    copyTestFileToDir(
-        getClass(),
-        jenkinsRule.jenkins.getWorkspaceFor(testProject).getRemote(),
-        TEST_DEPLOYMENT_MANIFEST);
+        WorkflowRun run = testProject.scheduleBuild2(0).waitForStart();
+        assertNotNull(run);
+        jenkinsRule.assertBuildStatusSuccess(jenkinsRule.waitForCompletion(run));
+        dumpLog(LOGGER, run);
 
-    WorkflowRun run = testProject.scheduleBuild2(0).waitForStart();
-    assertNotNull(run);
-    jenkinsRule.assertBuildStatus(Result.FAILURE, jenkinsRule.waitForCompletion(run));
-    dumpLog(LOGGER, run);
-  }
+        kubectlDelete(
+                jenkinsRule.createLocalLauncher(),
+                jenkinsRule.jenkins.getWorkspaceFor(testProject),
+                "docs/resources/manifest.yaml",
+                "deployment",
+                "nginx-deployment",
+                "default");
+    }
 
-  @Test
-  public void testNoNamespaceDeclarativePipelineDeploysProperly() throws Exception {
-    envVars.put("MANIFEST_PATTERN", TEST_DEPLOYMENT_MANIFEST);
-    WorkflowJob testProject =
-        jenkinsRule.createProject(WorkflowJob.class, formatRandomName("test"));
-    testProject.setDefinition(
-        new CpsFlowDefinition(
-            loadResource(getClass(), "noNamespaceDeclarativePipeline.groovy"), true));
-    copyTestFileToDir(
-        getClass(),
-        jenkinsRule.jenkins.getWorkspaceFor(testProject).getRemote(),
-        TEST_DEPLOYMENT_MANIFEST);
+    @Test
+    public void testMalformedDeclarativePipelineFails() throws Exception {
+        envVars.put("MANIFEST_PATTERN", TEST_DEPLOYMENT_MANIFEST);
+        envVars.put("NAMESPACE", "default");
+        WorkflowJob testProject = jenkinsRule.createProject(WorkflowJob.class, formatRandomName("test"));
+        testProject.setDefinition(
+                new CpsFlowDefinition(loadResource(getClass(), "malformedDeclarativePipeline.groovy"), true));
+        copyTestFileToDir(
+                getClass(), jenkinsRule.jenkins.getWorkspaceFor(testProject).getRemote(), TEST_DEPLOYMENT_MANIFEST);
 
-    WorkflowRun run = testProject.scheduleBuild2(0).waitForStart();
-    assertNotNull(run);
-    jenkinsRule.assertBuildStatus(Result.SUCCESS, jenkinsRule.waitForCompletion(run));
-    dumpLog(LOGGER, run);
+        WorkflowRun run = testProject.scheduleBuild2(0).waitForStart();
+        assertNotNull(run);
+        jenkinsRule.assertBuildStatus(Result.FAILURE, jenkinsRule.waitForCompletion(run));
+        dumpLog(LOGGER, run);
+    }
 
-    kubectlDelete(
-        jenkinsRule.createLocalLauncher(),
-        jenkinsRule.jenkins.getWorkspaceFor(testProject),
-        TEST_DEPLOYMENT_MANIFEST,
-        "deployment",
-        "nginx-deployment",
-        "");
-  }
+    @Test
+    public void testNoNamespaceDeclarativePipelineDeploysProperly() throws Exception {
+        envVars.put("MANIFEST_PATTERN", TEST_DEPLOYMENT_MANIFEST);
+        WorkflowJob testProject = jenkinsRule.createProject(WorkflowJob.class, formatRandomName("test"));
+        testProject.setDefinition(
+                new CpsFlowDefinition(loadResource(getClass(), "noNamespaceDeclarativePipeline.groovy"), true));
+        copyTestFileToDir(
+                getClass(), jenkinsRule.jenkins.getWorkspaceFor(testProject).getRemote(), TEST_DEPLOYMENT_MANIFEST);
 
-  @Test
-  public void testCustomNamespaceDeclarativePipelineDeploysProperly() throws Exception {
-    envVars.put("MANIFEST_PATTERN", TEST_DEPLOYMENT_MANIFEST);
-    envVars.put("NAMESPACE", "test");
-    WorkflowJob testProject =
-        jenkinsRule.createProject(WorkflowJob.class, formatRandomName("test"));
-    testProject.setDefinition(
-        new CpsFlowDefinition(
-            loadResource(getClass(), "workspaceDeclarativePipeline.groovy"), true));
-    copyTestFileToDir(
-        getClass(),
-        jenkinsRule.jenkins.getWorkspaceFor(testProject).getRemote(),
-        TEST_DEPLOYMENT_MANIFEST);
+        WorkflowRun run = testProject.scheduleBuild2(0).waitForStart();
+        assertNotNull(run);
+        jenkinsRule.assertBuildStatus(Result.SUCCESS, jenkinsRule.waitForCompletion(run));
+        dumpLog(LOGGER, run);
 
-    WorkflowRun run = testProject.scheduleBuild2(0).waitForStart();
-    assertNotNull(run);
-    jenkinsRule.assertBuildStatus(Result.SUCCESS, jenkinsRule.waitForCompletion(run));
-    dumpLog(LOGGER, run);
+        kubectlDelete(
+                jenkinsRule.createLocalLauncher(),
+                jenkinsRule.jenkins.getWorkspaceFor(testProject),
+                TEST_DEPLOYMENT_MANIFEST,
+                "deployment",
+                "nginx-deployment",
+                "");
+    }
 
-    kubectlDelete(
-        jenkinsRule.createLocalLauncher(),
-        jenkinsRule.jenkins.getWorkspaceFor(testProject),
-        TEST_DEPLOYMENT_MANIFEST,
-        "deployment",
-        "nginx-deployment",
-        "test");
-  }
+    @Test
+    public void testCustomNamespaceDeclarativePipelineDeploysProperly() throws Exception {
+        envVars.put("MANIFEST_PATTERN", TEST_DEPLOYMENT_MANIFEST);
+        envVars.put("NAMESPACE", "test");
+        WorkflowJob testProject = jenkinsRule.createProject(WorkflowJob.class, formatRandomName("test"));
+        testProject.setDefinition(
+                new CpsFlowDefinition(loadResource(getClass(), "workspaceDeclarativePipeline.groovy"), true));
+        copyTestFileToDir(
+                getClass(), jenkinsRule.jenkins.getWorkspaceFor(testProject).getRemote(), TEST_DEPLOYMENT_MANIFEST);
 
-  private static void kubectlDelete(
-      Launcher launcher,
-      FilePath workspace,
-      String manifestPattern,
-      String kind,
-      String name,
-      String namespace)
-      throws Exception {
-    Cluster cluster = client.getCluster(projectId, testLocation, clusterName);
-    KubeConfig kubeConfig =
-        KubeConfig.fromCluster(projectId, cluster, CredentialsUtil.getAccessToken(credentialsId));
-    KubectlWrapper kubectl =
-        new KubectlWrapper.Builder()
-            .workspace(workspace)
-            .launcher(launcher)
-            .kubeConfig(kubeConfig)
-            .namespace(namespace)
-            .build();
-    FilePath manifestFile = workspace.child(manifestPattern);
-    kubectl.runKubectlCommand("delete", ImmutableList.<String>of(kind, name));
-  }
+        WorkflowRun run = testProject.scheduleBuild2(0).waitForStart();
+        assertNotNull(run);
+        jenkinsRule.assertBuildStatus(Result.SUCCESS, jenkinsRule.waitForCompletion(run));
+        dumpLog(LOGGER, run);
+
+        kubectlDelete(
+                jenkinsRule.createLocalLauncher(),
+                jenkinsRule.jenkins.getWorkspaceFor(testProject),
+                TEST_DEPLOYMENT_MANIFEST,
+                "deployment",
+                "nginx-deployment",
+                "test");
+    }
+
+    private static void kubectlDelete(
+            Launcher launcher, FilePath workspace, String manifestPattern, String kind, String name, String namespace)
+            throws Exception {
+        Cluster cluster = client.getCluster(projectId, testLocation, clusterName);
+        KubeConfig kubeConfig =
+                KubeConfig.fromCluster(projectId, cluster, CredentialsUtil.getAccessToken(credentialsId));
+        KubectlWrapper kubectl = new KubectlWrapper.Builder()
+                .workspace(workspace)
+                .launcher(launcher)
+                .kubeConfig(kubeConfig)
+                .namespace(namespace)
+                .build();
+        FilePath manifestFile = workspace.child(manifestPattern);
+        kubectl.runKubectlCommand("delete", ImmutableList.<String>of(kind, name));
+    }
 }

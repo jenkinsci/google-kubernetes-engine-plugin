@@ -36,252 +36,244 @@ import java.util.stream.Collectors;
  * method is added: <a href="https://github.com/kubernetes/enhancements/issues/555">issue#555</a>.
  */
 public class KubectlWrapper {
-  private static final Logger LOGGER = Logger.getLogger(KubectlWrapper.class.getName());
-  private static final String CHARSET = "UTF-8";
+    private static final Logger LOGGER = Logger.getLogger(KubectlWrapper.class.getName());
+    private static final String CHARSET = "UTF-8";
 
-  private KubeConfig kubeConfig;
-  private Launcher launcher;
-  private FilePath workspace;
-  private String namespace;
-  private boolean verboseLogging;
+    private KubeConfig kubeConfig;
+    private Launcher launcher;
+    private FilePath workspace;
+    private String namespace;
+    private boolean verboseLogging;
 
-  private KubectlWrapper() {}
+    private KubectlWrapper() {}
 
-  private KubeConfig getKubeConfig() {
-    return kubeConfig;
-  }
+    private KubeConfig getKubeConfig() {
+        return kubeConfig;
+    }
 
-  private void setKubeConfig(KubeConfig kubeConfig) {
-    this.kubeConfig = kubeConfig;
-  }
+    private void setKubeConfig(KubeConfig kubeConfig) {
+        this.kubeConfig = kubeConfig;
+    }
 
-  private void setLauncher(Launcher launcher) {
-    this.launcher = launcher;
-  }
+    private void setLauncher(Launcher launcher) {
+        this.launcher = launcher;
+    }
 
-  private Launcher getLauncher() {
-    return launcher;
-  }
+    private Launcher getLauncher() {
+        return launcher;
+    }
 
-  private void setWorkspace(FilePath workspace) {
-    this.workspace = workspace;
-  }
+    private void setWorkspace(FilePath workspace) {
+        this.workspace = workspace;
+    }
 
-  private FilePath getWorkspace() {
-    return workspace;
-  }
+    private FilePath getWorkspace() {
+        return workspace;
+    }
 
-  private void setNamespace(String namespace) {
-    this.namespace = namespace == null ? "" : namespace;
-  }
+    private void setNamespace(String namespace) {
+        this.namespace = namespace == null ? "" : namespace;
+    }
 
-  private String getNamespace() {
-    return this.namespace;
-  }
+    private String getNamespace() {
+        return this.namespace;
+    }
 
-  private void setVerboseLogging(boolean verboseLogging) {
-    this.verboseLogging = verboseLogging;
-  }
+    private void setVerboseLogging(boolean verboseLogging) {
+        this.verboseLogging = verboseLogging;
+    }
 
-  private boolean isVerboseLogging() {
-    return verboseLogging;
-  }
+    private boolean isVerboseLogging() {
+        return verboseLogging;
+    }
 
-  /**
-   * Runs the specified kubectl command.
-   *
-   * @param command The kubectl command to be run.
-   * @param args Arguments for the command.
-   * @throws IOException If an error occurred while executing the command.
-   * @throws InterruptedException If an error occured while executing the command.
-   * @return result From kubectl command.
-   */
-  public String runKubectlCommand(String command, ImmutableList<String> args)
-      throws IOException, InterruptedException {
-    String output = "";
-    FilePath tempDir = null;
-    try {
-      // Set up the kubeconfig file for authentication
-      tempDir = WorkspaceList.tempDir(workspace);
-      if (tempDir == null) {
-        throw new IOException("tempDir is null");
-      }
-      tempDir.mkdirs();
-      FilePath kubeConfigFile = tempDir.createTempFile(".kube", "config");
-      String config = getKubeConfig().toYaml();
+    /**
+     * Runs the specified kubectl command.
+     *
+     * @param command The kubectl command to be run.
+     * @param args Arguments for the command.
+     * @throws IOException If an error occurred while executing the command.
+     * @throws InterruptedException If an error occured while executing the command.
+     * @return result From kubectl command.
+     */
+    public String runKubectlCommand(String command, ImmutableList<String> args)
+            throws IOException, InterruptedException {
+        String output = "";
+        FilePath tempDir = null;
+        try {
+            // Set up the kubeconfig file for authentication
+            tempDir = WorkspaceList.tempDir(workspace);
+            if (tempDir == null) {
+                throw new IOException("tempDir is null");
+            }
+            tempDir.mkdirs();
+            FilePath kubeConfigFile = tempDir.createTempFile(".kube", "config");
+            String config = getKubeConfig().toYaml();
 
-      // Setup the kubeconfig
-      kubeConfigFile.write(config, /* encoding */ null);
-      launchAndJoinCommand(
-          getLauncher(),
-          new ArgumentListBuilder()
-              .add("kubectl")
-              .add("--kubeconfig")
-              .add(kubeConfigFile.getRemote())
-              .add("config")
-              .add("use-context")
-              .add(kubeConfig.getCurrentContext())
-              .toList(),
-          verboseLogging);
+            // Setup the kubeconfig
+            kubeConfigFile.write(config, /* encoding */ null);
+            launchAndJoinCommand(
+                    getLauncher(),
+                    new ArgumentListBuilder()
+                            .add("kubectl")
+                            .add("--kubeconfig")
+                            .add(kubeConfigFile.getRemote())
+                            .add("config")
+                            .add("use-context")
+                            .add(kubeConfig.getCurrentContext())
+                            .toList(),
+                    verboseLogging);
 
-      // Run the kubectl command
-      ArgumentListBuilder kubectlCmdBuilder =
-          new ArgumentListBuilder()
-              .add("kubectl")
-              .add("--kubeconfig")
-              .add(kubeConfigFile.getRemote())
-              .add(command);
-      if (!namespace.isEmpty()) {
-        kubectlCmdBuilder.add("--namespace").add(namespace);
-      }
-      args.forEach(kubectlCmdBuilder::add);
-      output = launchAndJoinCommand(getLauncher(), kubectlCmdBuilder.toList(), verboseLogging);
-    } catch (IOException | InterruptedException e) {
-      LOGGER.log(
-          Level.SEVERE,
-          String.format("Failed to execute kubectl command: %s, args: %s", command, args),
-          e);
-      throw e;
-    } finally {
-      try {
-        if (tempDir != null) {
-          tempDir.deleteRecursive();
+            // Run the kubectl command
+            ArgumentListBuilder kubectlCmdBuilder = new ArgumentListBuilder()
+                    .add("kubectl")
+                    .add("--kubeconfig")
+                    .add(kubeConfigFile.getRemote())
+                    .add(command);
+            if (!namespace.isEmpty()) {
+                kubectlCmdBuilder.add("--namespace").add(namespace);
+            }
+            args.forEach(kubectlCmdBuilder::add);
+            output = launchAndJoinCommand(getLauncher(), kubectlCmdBuilder.toList(), verboseLogging);
+        } catch (IOException | InterruptedException e) {
+            LOGGER.log(
+                    Level.SEVERE, String.format("Failed to execute kubectl command: %s, args: %s", command, args), e);
+            throw e;
+        } finally {
+            try {
+                if (tempDir != null) {
+                    tempDir.deleteRecursive();
+                }
+            } catch (Exception ee) {
+                LOGGER.log(Level.WARNING, String.format("Failed to delete dir: %s", tempDir), ee);
+            }
         }
-      } catch (Exception ee) {
-        LOGGER.log(Level.WARNING, String.format("Failed to delete dir: %s", tempDir), ee);
-      }
+
+        return output;
     }
 
-    return output;
-  }
+    private static String launchAndJoinCommand(Launcher launcher, List<String> args, boolean verboseLogging)
+            throws IOException, InterruptedException {
+        ByteArrayOutputStream cmdLogStream = new ByteArrayOutputStream();
+        int status = launcher.launch()
+                .cmds(args)
+                .stderr(cmdLogStream)
+                .stdout(cmdLogStream)
+                .quiet(!verboseLogging)
+                .join();
+        if (status != 0) {
+            String logs = cmdLogStream.toString(CHARSET);
+            LOGGER.log(Level.SEVERE, String.format("kubectl command log: %s", logs));
+            throw new IOException(
+                    String.format("Failed to launch command args: %s, status: %s. Logs: %s", args, status, logs));
+        }
 
-  private static String launchAndJoinCommand(
-      Launcher launcher, List<String> args, boolean verboseLogging)
-      throws IOException, InterruptedException {
-    ByteArrayOutputStream cmdLogStream = new ByteArrayOutputStream();
-    int status =
-        launcher
-            .launch()
-            .cmds(args)
-            .stderr(cmdLogStream)
-            .stdout(cmdLogStream)
-            .quiet(!verboseLogging)
-            .join();
-    if (status != 0) {
-      String logs = cmdLogStream.toString(CHARSET);
-      LOGGER.log(Level.SEVERE, String.format("kubectl command log: %s", logs));
-      throw new IOException(
-          String.format(
-              "Failed to launch command args: %s, status: %s. Logs: %s", args, status, logs));
-    }
-
-    return cmdLogStream.toString(CHARSET);
-  }
-
-  /**
-   * Using the kubectl CLI tool as the API client for the caller, this method unmarshalls the JSON
-   * output of the CLI to a JSON Object.
-   *
-   * @param kind The kind of Kubernetes Object.
-   * @param name The name of the Kubernetes Object.
-   * @return The JSON object unmarshalled from the kubectl get command's output.
-   * @throws IOException If an error occurred while executing the command.
-   * @throws InterruptedException If an error occurred while executing the command.
-   */
-  public Object getObject(String kind, String name) throws IOException, InterruptedException {
-    String json = runKubectlCommand("get", ImmutableList.<String>of(kind, name, "-o", "json"));
-    return Configuration.defaultConfiguration().jsonProvider().parse(json);
-  }
-
-  /**
-   * Using the kubectl CLI tool as the API client for the caller, this method unmarshalls the JSON
-   * output of objects matching the supplied labels.
-   *
-   * @param kind The kind of Kubernetes Object.
-   * @param labels The key-value labels set represented as a map.
-   * @return A list of JSON Objects unmarshalled from the kubectl get command's output.
-   * @throws IOException If an error occurred while executing the command.
-   * @throws InterruptedException If an error occurred while executing the command.
-   * @throws InvalidJsonException If an error occurred parsing the JSON return value.
-   */
-  @SuppressWarnings("unchecked")
-  public ImmutableList<Object> getObjectsThatMatchLabels(String kind, Map<String, String> labels)
-      throws IOException, InterruptedException, InvalidJsonException {
-    String labelsArg =
-        labels.keySet().stream()
-            .map((k) -> String.format("%s=%s", k, labels.get(k)))
-            .collect(Collectors.joining(","));
-    String json = runKubectlCommand("get", ImmutableList.<String>of(kind + "s", labelsArg));
-    Map<String, Object> result =
-        (Map<String, Object>) Configuration.defaultConfiguration().jsonProvider().parse(json);
-    List<Object> items = (List<Object>) result.get("items");
-    return ImmutableList.copyOf(items);
-  }
-
-  /** Builder for {@link KubectlWrapper}. */
-  public static class Builder {
-    private KubectlWrapper wrapper = new KubectlWrapper();
-
-    /**
-     * Sets the {@link Launcher} to be used by the wrapper.
-     *
-     * @param launcher The {@link Launcher} to be set.
-     * @return A reference to the {@link Builder}.
-     */
-    public Builder launcher(Launcher launcher) {
-      wrapper.setLauncher(launcher);
-      return this;
+        return cmdLogStream.toString(CHARSET);
     }
 
     /**
-     * Sets the {@link KubeConfig} to be used by the wrapper.
+     * Using the kubectl CLI tool as the API client for the caller, this method unmarshalls the JSON
+     * output of the CLI to a JSON Object.
      *
-     * @param kubeConfig The {@link KubeConfig} to be set.
-     * @return A reference to the {@link Builder}.
+     * @param kind The kind of Kubernetes Object.
+     * @param name The name of the Kubernetes Object.
+     * @return The JSON object unmarshalled from the kubectl get command's output.
+     * @throws IOException If an error occurred while executing the command.
+     * @throws InterruptedException If an error occurred while executing the command.
      */
-    public Builder kubeConfig(KubeConfig kubeConfig) {
-      wrapper.setKubeConfig(kubeConfig);
-      return this;
+    public Object getObject(String kind, String name) throws IOException, InterruptedException {
+        String json = runKubectlCommand("get", ImmutableList.<String>of(kind, name, "-o", "json"));
+        return Configuration.defaultConfiguration().jsonProvider().parse(json);
     }
 
     /**
-     * Sets the workspace to be used by the wrapper.
+     * Using the kubectl CLI tool as the API client for the caller, this method unmarshalls the JSON
+     * output of objects matching the supplied labels.
      *
-     * @param workspace The workspace to be set.
-     * @return A reference to the {@link Builder}.
+     * @param kind The kind of Kubernetes Object.
+     * @param labels The key-value labels set represented as a map.
+     * @return A list of JSON Objects unmarshalled from the kubectl get command's output.
+     * @throws IOException If an error occurred while executing the command.
+     * @throws InterruptedException If an error occurred while executing the command.
+     * @throws InvalidJsonException If an error occurred parsing the JSON return value.
      */
-    public Builder workspace(FilePath workspace) {
-      wrapper.setWorkspace(workspace);
-      return this;
+    @SuppressWarnings("unchecked")
+    public ImmutableList<Object> getObjectsThatMatchLabels(String kind, Map<String, String> labels)
+            throws IOException, InterruptedException, InvalidJsonException {
+        String labelsArg = labels.keySet().stream()
+                .map((k) -> String.format("%s=%s", k, labels.get(k)))
+                .collect(Collectors.joining(","));
+        String json = runKubectlCommand("get", ImmutableList.<String>of(kind + "s", labelsArg));
+        Map<String, Object> result = (Map<String, Object>)
+                Configuration.defaultConfiguration().jsonProvider().parse(json);
+        List<Object> items = (List<Object>) result.get("items");
+        return ImmutableList.copyOf(items);
     }
 
-    /**
-     * Sets the namespace to be used by the wrapper.
-     *
-     * @param namespace The namespace to be set.
-     * @return A reference to the {@link Builder}.
-     */
-    public Builder namespace(String namespace) {
-      wrapper.setNamespace(namespace);
-      return this;
-    }
+    /** Builder for {@link KubectlWrapper}. */
+    public static class Builder {
+        private KubectlWrapper wrapper = new KubectlWrapper();
 
-    Builder verboseLogging(boolean verboseLogging) {
-      wrapper.setVerboseLogging(verboseLogging);
-      return this;
-    }
+        /**
+         * Sets the {@link Launcher} to be used by the wrapper.
+         *
+         * @param launcher The {@link Launcher} to be set.
+         * @return A reference to the {@link Builder}.
+         */
+        public Builder launcher(Launcher launcher) {
+            wrapper.setLauncher(launcher);
+            return this;
+        }
 
-    /**
-     * Builds a new {@link KubectlWrapper}.
-     *
-     * @return A new {@link KubectlWrapper}.
-     */
-    public KubectlWrapper build() {
-      Preconditions.checkNotNull(wrapper.getLauncher());
-      Preconditions.checkNotNull(wrapper.getKubeConfig());
-      Preconditions.checkNotNull(wrapper.getWorkspace());
-      Preconditions.checkNotNull(wrapper.getNamespace());
-      return wrapper;
+        /**
+         * Sets the {@link KubeConfig} to be used by the wrapper.
+         *
+         * @param kubeConfig The {@link KubeConfig} to be set.
+         * @return A reference to the {@link Builder}.
+         */
+        public Builder kubeConfig(KubeConfig kubeConfig) {
+            wrapper.setKubeConfig(kubeConfig);
+            return this;
+        }
+
+        /**
+         * Sets the workspace to be used by the wrapper.
+         *
+         * @param workspace The workspace to be set.
+         * @return A reference to the {@link Builder}.
+         */
+        public Builder workspace(FilePath workspace) {
+            wrapper.setWorkspace(workspace);
+            return this;
+        }
+
+        /**
+         * Sets the namespace to be used by the wrapper.
+         *
+         * @param namespace The namespace to be set.
+         * @return A reference to the {@link Builder}.
+         */
+        public Builder namespace(String namespace) {
+            wrapper.setNamespace(namespace);
+            return this;
+        }
+
+        Builder verboseLogging(boolean verboseLogging) {
+            wrapper.setVerboseLogging(verboseLogging);
+            return this;
+        }
+
+        /**
+         * Builds a new {@link KubectlWrapper}.
+         *
+         * @return A new {@link KubectlWrapper}.
+         */
+        public KubectlWrapper build() {
+            Preconditions.checkNotNull(wrapper.getLauncher());
+            Preconditions.checkNotNull(wrapper.getKubeConfig());
+            Preconditions.checkNotNull(wrapper.getWorkspace());
+            Preconditions.checkNotNull(wrapper.getNamespace());
+            return wrapper;
+        }
     }
-  }
 }
