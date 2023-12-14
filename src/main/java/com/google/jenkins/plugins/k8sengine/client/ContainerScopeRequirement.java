@@ -23,12 +23,12 @@ import java.util.List;
 
 /** Defines the scope requirements for the GKE "Container" API. */
 public class ContainerScopeRequirement extends GoogleOAuth2ScopeRequirement {
-  @Override
-  public Collection<String> getScopes() {
-    List<String> scopes = new ArrayList<>();
-    scopes.addAll(ContainerScopes.all());
-    // E-mail scope for k8s to associate the GCP service account with the e-mail address
-    scopes.add("https://www.googleapis.com/auth/userinfo.email");
-    return scopes;
-  }
+    @Override
+    public Collection<String> getScopes() {
+        List<String> scopes = new ArrayList<>();
+        scopes.addAll(ContainerScopes.all());
+        // E-mail scope for k8s to associate the GCP service account with the e-mail address
+        scopes.add("https://www.googleapis.com/auth/userinfo.email");
+        return scopes;
+    }
 }

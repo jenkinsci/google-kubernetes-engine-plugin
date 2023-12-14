@@ -32,110 +32,104 @@ import reactor.retry.Repeat;
  * Kubernetes cluster.
  */
 public class VerificationTask {
-  private static final int VERIFICATION_DELAY = 5;
+    private static final int VERIFICATION_DELAY = 5;
 
-  private KubectlWrapper kubectl;
-  private Manifests.ManifestObject manifestObject;
-  private KubernetesVerifiers.VerificationResult currentResult;
-  private PrintStream consoleLogger; // Jenkins console
+    private KubectlWrapper kubectl;
+    private Manifests.ManifestObject manifestObject;
+    private KubernetesVerifiers.VerificationResult currentResult;
+    private PrintStream consoleLogger; // Jenkins console
 
-  private static Logger LOGGER = Logger.getLogger(VerificationTask.class.getName());
+    private static Logger LOGGER = Logger.getLogger(VerificationTask.class.getName());
 
-  /**
-   * Constructs new {@link VerificationTask}.
-   *
-   * @param kubectl The KubectlWrapper for issuing kubectl commands.
-   * @param manifestObject The wrapper for the Kubernetes object to verify.
-   * @param consoleLogger The console output {@link PrintStream}.
-   */
-  private VerificationTask(
-      KubectlWrapper kubectl, Manifests.ManifestObject manifestObject, PrintStream consoleLogger) {
-    this.kubectl = kubectl;
-    this.manifestObject = manifestObject;
-    this.consoleLogger = consoleLogger;
-  }
-
-  /**
-   * Check whether there is a result and whether it indicates that verification succeeded.
-   *
-   * @return If this task has successfully verified the {@link Manifests.ManifestObject} was applied
-   *     to the Kubernetes cluster.
-   */
-  private boolean isVerified() {
-    return currentResult != null && currentResult.isVerified();
-  }
-
-  /** @return The {@link KubernetesVerifiers.VerificationResult}. */
-  public KubernetesVerifiers.VerificationResult getVerificationResult() {
-    return currentResult;
-  }
-
-  /**
-   * Verifies its {@link Manifests.ManifestObject} using the kubectl cli.
-   *
-   * @return Self-reference after performing verify.
-   */
-  private VerificationTask verify() {
-    consoleLogger.println(String.format("Verifying: %s ", manifestObject.describe()));
-    currentResult = KubernetesVerifiers.verify(kubectl, manifestObject);
-    if (isVerified()) {
-      consoleLogger.println(currentResult.toString());
+    /**
+     * Constructs new {@link VerificationTask}.
+     *
+     * @param kubectl The KubectlWrapper for issuing kubectl commands.
+     * @param manifestObject The wrapper for the Kubernetes object to verify.
+     * @param consoleLogger The console output {@link PrintStream}.
+     */
+    private VerificationTask(
+            KubectlWrapper kubectl, Manifests.ManifestObject manifestObject, PrintStream consoleLogger) {
+        this.kubectl = kubectl;
+        this.manifestObject = manifestObject;
+        this.consoleLogger = consoleLogger;
     }
 
-    return this;
-  }
+    /**
+     * Check whether there is a result and whether it indicates that verification succeeded.
+     *
+     * @return If this task has successfully verified the {@link Manifests.ManifestObject} was applied
+     *     to the Kubernetes cluster.
+     */
+    private boolean isVerified() {
+        return currentResult != null && currentResult.isVerified();
+    }
 
-  /**
-   * The caller's entrypoint for verifying that a list of {@link Manifests.ManifestObject}'s were
-   * applied to the Kubernetes cluster.
-   *
-   * @param kubectl KubectlWrapper object for issuing commands to Kubernetes cluster.
-   * @param manifestObjects List of {@link Manifests.ManifestObject}'s to verify.
-   * @param consoleLogger {@link PrintStream} for outputting results (intended to be user facing).
-   * @param timeoutInMinutes Stop retrying verification after this many minutes.
-   * @return If the {@link Manifests.ManifestObject}'s were successfully verified.
-   */
-  public static boolean verifyObjects(
-      @NonNull KubectlWrapper kubectl,
-      @NonNull List<Manifests.ManifestObject> manifestObjects,
-      @NonNull PrintStream consoleLogger,
-      int timeoutInMinutes) {
-    List<VerificationTask> verificationTasks =
-        manifestObjects.stream()
-            .map((manifestObject) -> new VerificationTask(kubectl, manifestObject, consoleLogger))
-            .collect(Collectors.toList());
+    /** @return The {@link KubernetesVerifiers.VerificationResult}. */
+    public KubernetesVerifiers.VerificationResult getVerificationResult() {
+        return currentResult;
+    }
 
-    Repeat.onlyIf(
-            (ctx) ->
-                !verificationTasks.stream()
-                    .map((task) -> task.isVerified()) // only repeat if we aren't all done
-                    .reduce(true, (acc, done) -> acc && done))
-        .backoff(Backoff.fixed(Duration.ofSeconds(VERIFICATION_DELAY)))
-        .timeout(Duration.ofMinutes(timeoutInMinutes))
-        // apply this repeat to the list of  VerificationTask's
-        .apply((Publisher<VerificationTask>) Flux.fromIterable(verificationTasks))
-        .filter(
-            (task) -> !task.isVerified()) // Don't try to verify objects that are already verified
-        .map((task) -> task.verify())
-        .subscribeOn(Schedulers.elastic()) // parallelize the verification
-        .doOnError(
-            (error) -> {
-              LOGGER.log(Level.SEVERE, "Unexpected error in verifyObjects()", error);
-              error.printStackTrace(consoleLogger); // report error
-            })
-        .blockLast(); // wait for all this to finish
+    /**
+     * Verifies its {@link Manifests.ManifestObject} using the kubectl cli.
+     *
+     * @return Self-reference after performing verify.
+     */
+    private VerificationTask verify() {
+        consoleLogger.println(String.format("Verifying: %s ", manifestObject.describe()));
+        currentResult = KubernetesVerifiers.verify(kubectl, manifestObject);
+        if (isVerified()) {
+            consoleLogger.println(currentResult.toString());
+        }
 
-    List<KubernetesVerifiers.VerificationResult> finalResults =
-        verificationTasks.stream()
-            .map((task) -> task.getVerificationResult())
-            .collect(Collectors.toList());
+        return this;
+    }
 
-    List<KubernetesVerifiers.VerificationResult> errorResults =
-        finalResults.stream().filter((result) -> !result.isVerified()).collect(Collectors.toList());
+    /**
+     * The caller's entrypoint for verifying that a list of {@link Manifests.ManifestObject}'s were
+     * applied to the Kubernetes cluster.
+     *
+     * @param kubectl KubectlWrapper object for issuing commands to Kubernetes cluster.
+     * @param manifestObjects List of {@link Manifests.ManifestObject}'s to verify.
+     * @param consoleLogger {@link PrintStream} for outputting results (intended to be user facing).
+     * @param timeoutInMinutes Stop retrying verification after this many minutes.
+     * @return If the {@link Manifests.ManifestObject}'s were successfully verified.
+     */
+    public static boolean verifyObjects(
+            @NonNull KubectlWrapper kubectl,
+            @NonNull List<Manifests.ManifestObject> manifestObjects,
+            @NonNull PrintStream consoleLogger,
+            int timeoutInMinutes) {
+        List<VerificationTask> verificationTasks = manifestObjects.stream()
+                .map((manifestObject) -> new VerificationTask(kubectl, manifestObject, consoleLogger))
+                .collect(Collectors.toList());
 
-    errorResults.forEach((it) -> consoleLogger.println(it.toString()));
-    LOGGER.info(String.format("%d error results", errorResults.size()));
+        Repeat.onlyIf((ctx) -> !verificationTasks.stream()
+                        .map((task) -> task.isVerified()) // only repeat if we aren't all done
+                        .reduce(true, (acc, done) -> acc && done))
+                .backoff(Backoff.fixed(Duration.ofSeconds(VERIFICATION_DELAY)))
+                .timeout(Duration.ofMinutes(timeoutInMinutes))
+                // apply this repeat to the list of  VerificationTask's
+                .apply((Publisher<VerificationTask>) Flux.fromIterable(verificationTasks))
+                .filter((task) -> !task.isVerified()) // Don't try to verify objects that are already verified
+                .map((task) -> task.verify())
+                .subscribeOn(Schedulers.elastic()) // parallelize the verification
+                .doOnError((error) -> {
+                    LOGGER.log(Level.SEVERE, "Unexpected error in verifyObjects()", error);
+                    error.printStackTrace(consoleLogger); // report error
+                })
+                .blockLast(); // wait for all this to finish
 
-    return errorResults.size() == 0;
-  }
+        List<KubernetesVerifiers.VerificationResult> finalResults = verificationTasks.stream()
+                .map((task) -> task.getVerificationResult())
+                .collect(Collectors.toList());
+
+        List<KubernetesVerifiers.VerificationResult> errorResults =
+                finalResults.stream().filter((result) -> !result.isVerified()).collect(Collectors.toList());
+
+        errorResults.forEach((it) -> consoleLogger.println(it.toString()));
+        LOGGER.info(String.format("%d error results", errorResults.size()));
+
+        return errorResults.size() == 0;
+    }
 }
