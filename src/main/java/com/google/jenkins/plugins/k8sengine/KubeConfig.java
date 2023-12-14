@@ -30,185 +30,187 @@ import org.yaml.snakeyaml.Yaml;
  * supports a server-side method for this functionality: b/120097899.
  */
 public class KubeConfig {
-  private static final String KUBECONTEXT_FORMAT = "gke_%s_%s_%s";
-  private static final String KUBESERVER_FORMAT = "https://%s";
-  private static final String API_VERSION = "v1";
-  private static final String CONFIG_KIND = "Config";
+    private static final String KUBECONTEXT_FORMAT = "gke_%s_%s_%s";
+    private static final String KUBESERVER_FORMAT = "https://%s";
+    private static final String API_VERSION = "v1";
+    private static final String CONFIG_KIND = "Config";
 
-  private ImmutableList<Object> contexts;
-  private ImmutableList<Object> clusters;
-  private ImmutableList<Object> users;
-  private String currentContext;
+    private ImmutableList<Object> contexts;
+    private ImmutableList<Object> clusters;
+    private ImmutableList<Object> users;
+    private String currentContext;
 
-  private KubeConfig() {}
+    private KubeConfig() {}
 
-  /** @return This config's contexts. */
-  public ImmutableList<Object> getContexts() {
-    return contexts;
-  }
-
-  private void setContexts(ImmutableList<Object> contexts) {
-    this.contexts = Preconditions.checkNotNull(contexts);
-  }
-
-  /** @return This config's clusters. */
-  public ImmutableList<Object> getClusters() {
-    return clusters;
-  }
-
-  private void setClusters(ImmutableList<Object> clusters) {
-    this.clusters = Preconditions.checkNotNull(clusters);
-  }
-
-  /** @return This config's users. */
-  public ImmutableList<Object> getUsers() {
-    return users;
-  }
-
-  private void setUsers(ImmutableList<Object> users) {
-    this.users = Preconditions.checkNotNull(users);
-  }
-
-  /** @return This config's current context. */
-  public String getCurrentContext() {
-    return currentContext;
-  }
-
-  private void setCurrentContext(String currentContext) {
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(currentContext));
-    this.currentContext = currentContext;
-  }
-
-  /**
-   * Write a Yaml dump of this {@link KubeConfig}'s data to the specified {@link Writer}.
-   * NOTE(craigatgoogle): The logic here is taken directly from the `gcloud containers clutsers
-   * get-credentials` command's implementation: <a
-   * href="https://github.com/google-cloud-sdk/google-cloud-sdk/blob/2cc7b066a0621fe5d78ac9e69157de56a142e126/lib/surface/container/clusters/get_credentials.py#L87">link</a>.
-   *
-   * @return A string containing a Yaml dump of this {@link KubeConfig}.
-   * @throws IOException If an error was encountered while exporting to Yaml.
-   */
-  public String toYaml() throws IOException {
-    return new Yaml()
-        .dumpAsMap(
-            new ImmutableMap.Builder<String, Object>()
-                .put("apiVersion", API_VERSION)
-                .put("kind", CONFIG_KIND)
-                .put("current-context", getCurrentContext())
-                .put("clusters", getClusters())
-                .put("contexts", getContexts())
-                .put("users", getUsers())
-                .build());
-  }
-
-  /** Builder for {@link KubeConfig}. */
-  public static class Builder {
-    private KubeConfig config;
-
-    public Builder() {
-      config = new KubeConfig();
+    /** @return This config's contexts. */
+    public ImmutableList<Object> getContexts() {
+        return contexts;
     }
 
-    public Builder currentContext(String currentContext) {
-      config.setCurrentContext(currentContext);
-      return this;
+    private void setContexts(ImmutableList<Object> contexts) {
+        this.contexts = Preconditions.checkNotNull(contexts);
     }
 
-    public Builder users(ImmutableList<Object> users) {
-      config.setUsers(users);
-      return this;
+    /** @return This config's clusters. */
+    public ImmutableList<Object> getClusters() {
+        return clusters;
     }
 
-    public Builder contexts(ImmutableList<Object> contexts) {
-      config.setContexts(contexts);
-      return this;
+    private void setClusters(ImmutableList<Object> clusters) {
+        this.clusters = Preconditions.checkNotNull(clusters);
     }
 
-    public Builder clusters(ImmutableList<Object> clusters) {
-      config.setClusters(clusters);
-      return this;
+    /** @return This config's users. */
+    public ImmutableList<Object> getUsers() {
+        return users;
     }
 
-    public KubeConfig build() {
-      Preconditions.checkArgument(!Strings.isNullOrEmpty(config.getCurrentContext()));
-      return config;
+    private void setUsers(ImmutableList<Object> users) {
+        this.users = Preconditions.checkNotNull(users);
     }
-  }
 
-  /**
-   * Creates a {@link KubeConfig} from the specified {@link Cluster}.
-   *
-   * @param projectId The ID of the project the cluster resides in.
-   * @param cluster The cluster data will be drawn from.
-   * @param accessToken Access token for GKE API access.
-   * @return A {@link KubeConfig} from the specified {@link Cluster}.
-   */
-  public static KubeConfig fromCluster(String projectId, Cluster cluster, String accessToken) {
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(projectId));
-    Preconditions.checkNotNull(cluster);
+    /** @return This config's current context. */
+    public String getCurrentContext() {
+        return currentContext;
+    }
 
-    final String currentContext =
-        contextString(projectId, cluster.getLocation(), cluster.getName());
-    return new KubeConfig.Builder()
-        .currentContext(currentContext)
-        .contexts(ImmutableList.<Object>of(context(currentContext)))
-        .users(ImmutableList.<Object>of(user(currentContext, cluster, accessToken)))
-        .clusters(ImmutableList.<Object>of(cluster(currentContext, cluster)))
-        .build();
-  }
+    private void setCurrentContext(String currentContext) {
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(currentContext));
+        this.currentContext = currentContext;
+    }
 
-  @VisibleForTesting
-  static String contextString(String project, String location, String cluster) {
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(project));
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(location));
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(cluster));
-    return String.format(KUBECONTEXT_FORMAT, project, location, cluster);
-  }
+    /**
+     * Write a Yaml dump of this {@link KubeConfig}'s data to the specified {@link Writer}.
+     * NOTE(craigatgoogle): The logic here is taken directly from the `gcloud containers clutsers
+     * get-credentials` command's implementation: <a
+     * href="https://github.com/google-cloud-sdk/google-cloud-sdk/blob/2cc7b066a0621fe5d78ac9e69157de56a142e126/lib/surface/container/clusters/get_credentials.py#L87">link</a>.
+     *
+     * @return A string containing a Yaml dump of this {@link KubeConfig}.
+     * @throws IOException If an error was encountered while exporting to Yaml.
+     */
+    public String toYaml() throws IOException {
+        return new Yaml()
+                .dumpAsMap(new ImmutableMap.Builder<String, Object>()
+                        .put("apiVersion", API_VERSION)
+                        .put("kind", CONFIG_KIND)
+                        .put("current-context", getCurrentContext())
+                        .put("clusters", getClusters())
+                        .put("contexts", getContexts())
+                        .put("users", getUsers())
+                        .build());
+    }
 
-  @VisibleForTesting
-  static String clusterServer(Cluster cluster) {
-    Preconditions.checkNotNull(cluster);
-    return String.format(KUBESERVER_FORMAT, cluster.getEndpoint());
-  }
+    /** Builder for {@link KubeConfig}. */
+    public static class Builder {
+        private KubeConfig config;
 
-  private static ImmutableMap<String, Object> context(String currentContext) {
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(currentContext));
-    return new ImmutableMap.Builder<String, Object>()
-        .put("name", currentContext)
-        .put(
-            "context",
-            new ImmutableMap.Builder<String, Object>()
-                .put("cluster", currentContext)
-                .put("user", currentContext)
-                .put("namespace", "default")
-                .build())
-        .build();
-  }
+        public Builder() {
+            config = new KubeConfig();
+        }
 
-  private static ImmutableMap<String, Object> user(
-      String currentContext, Cluster cluster, String accessToken) {
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(currentContext));
-    Preconditions.checkNotNull(cluster);
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(accessToken));
+        public Builder currentContext(String currentContext) {
+            config.setCurrentContext(currentContext);
+            return this;
+        }
 
-    return new ImmutableMap.Builder<String, Object>()
-        .put("name", currentContext)
-        .put("user", new ImmutableMap.Builder<String, Object>().put("token", accessToken).build())
-        .build();
-  }
+        public Builder users(ImmutableList<Object> users) {
+            config.setUsers(users);
+            return this;
+        }
 
-  private static ImmutableMap<String, Object> cluster(String currentContext, Cluster cluster) {
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(currentContext));
-    Preconditions.checkNotNull(cluster);
-    return new ImmutableMap.Builder<String, Object>()
-        .put("name", currentContext)
-        .put(
-            "cluster",
-            new ImmutableMap.Builder<String, Object>()
-                .put("server", clusterServer(cluster))
+        public Builder contexts(ImmutableList<Object> contexts) {
+            config.setContexts(contexts);
+            return this;
+        }
+
+        public Builder clusters(ImmutableList<Object> clusters) {
+            config.setClusters(clusters);
+            return this;
+        }
+
+        public KubeConfig build() {
+            Preconditions.checkArgument(!Strings.isNullOrEmpty(config.getCurrentContext()));
+            return config;
+        }
+    }
+
+    /**
+     * Creates a {@link KubeConfig} from the specified {@link Cluster}.
+     *
+     * @param projectId The ID of the project the cluster resides in.
+     * @param cluster The cluster data will be drawn from.
+     * @param accessToken Access token for GKE API access.
+     * @return A {@link KubeConfig} from the specified {@link Cluster}.
+     */
+    public static KubeConfig fromCluster(String projectId, Cluster cluster, String accessToken) {
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(projectId));
+        Preconditions.checkNotNull(cluster);
+
+        final String currentContext = contextString(projectId, cluster.getLocation(), cluster.getName());
+        return new KubeConfig.Builder()
+                .currentContext(currentContext)
+                .contexts(ImmutableList.<Object>of(context(currentContext)))
+                .users(ImmutableList.<Object>of(user(currentContext, cluster, accessToken)))
+                .clusters(ImmutableList.<Object>of(cluster(currentContext, cluster)))
+                .build();
+    }
+
+    @VisibleForTesting
+    static String contextString(String project, String location, String cluster) {
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(project));
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(location));
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(cluster));
+        return String.format(KUBECONTEXT_FORMAT, project, location, cluster);
+    }
+
+    @VisibleForTesting
+    static String clusterServer(Cluster cluster) {
+        Preconditions.checkNotNull(cluster);
+        return String.format(KUBESERVER_FORMAT, cluster.getEndpoint());
+    }
+
+    private static ImmutableMap<String, Object> context(String currentContext) {
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(currentContext));
+        return new ImmutableMap.Builder<String, Object>()
+                .put("name", currentContext)
                 .put(
-                    "certificate-authority-data", cluster.getMasterAuth().getClusterCaCertificate())
-                .build())
-        .build();
-  }
+                        "context",
+                        new ImmutableMap.Builder<String, Object>()
+                                .put("cluster", currentContext)
+                                .put("user", currentContext)
+                                .put("namespace", "default")
+                                .build())
+                .build();
+    }
+
+    private static ImmutableMap<String, Object> user(String currentContext, Cluster cluster, String accessToken) {
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(currentContext));
+        Preconditions.checkNotNull(cluster);
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(accessToken));
+
+        return new ImmutableMap.Builder<String, Object>()
+                .put("name", currentContext)
+                .put(
+                        "user",
+                        new ImmutableMap.Builder<String, Object>()
+                                .put("token", accessToken)
+                                .build())
+                .build();
+    }
+
+    private static ImmutableMap<String, Object> cluster(String currentContext, Cluster cluster) {
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(currentContext));
+        Preconditions.checkNotNull(cluster);
+        return new ImmutableMap.Builder<String, Object>()
+                .put("name", currentContext)
+                .put(
+                        "cluster",
+                        new ImmutableMap.Builder<String, Object>()
+                                .put("server", clusterServer(cluster))
+                                .put(
+                                        "certificate-authority-data",
+                                        cluster.getMasterAuth().getClusterCaCertificate())
+                                .build())
+                .build();
+    }
 }

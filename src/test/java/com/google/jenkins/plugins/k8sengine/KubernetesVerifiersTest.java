@@ -28,59 +28,53 @@ import org.mockito.Mockito;
 
 /** Tests {@link com.google.jenkins.plugins.k8sengine.KubernetesVerifiers} */
 public class KubernetesVerifiersTest {
-  private static final String VERIFIABLE_DEPLOYMENT_OUTPUT = "verifiableDeploymentOutput.json";
-  private static final String UNVERIFIABLE_DEPLOYMENT_OUTPUT = "unverifiableDeploymentOutput.json";
+    private static final String VERIFIABLE_DEPLOYMENT_OUTPUT = "verifiableDeploymentOutput.json";
+    private static final String UNVERIFIABLE_DEPLOYMENT_OUTPUT = "unverifiableDeploymentOutput.json";
 
-  @Test
-  public void testGoodDeploymentVerified() throws Exception {
-    Object goodDeploymentOutput = readTestFile(VERIFIABLE_DEPLOYMENT_OUTPUT);
-    KubectlWrapper kubectl = Mockito.mock(KubectlWrapper.class);
-    Mockito.when(kubectl.getObject("deployment", "nginx-deployment"))
-        .thenReturn(goodDeploymentOutput);
+    @Test
+    public void testGoodDeploymentVerified() throws Exception {
+        Object goodDeploymentOutput = readTestFile(VERIFIABLE_DEPLOYMENT_OUTPUT);
+        KubectlWrapper kubectl = Mockito.mock(KubectlWrapper.class);
+        Mockito.when(kubectl.getObject("deployment", "nginx-deployment")).thenReturn(goodDeploymentOutput);
 
-    Manifests.ManifestObject goodDeployment = Mockito.mock(Manifests.ManifestObject.class);
-    Mockito.when(goodDeployment.getKind()).thenReturn("deployment");
-    Mockito.when(goodDeployment.getName()).thenReturn(Optional.<String>of("nginx-deployment"));
-    Mockito.when(goodDeployment.getApiVersion()).thenReturn("apps/v1");
-    KubernetesVerifiers.VerificationResult result =
-        KubernetesVerifiers.verify(kubectl, goodDeployment);
-    assertTrue(result.isVerified());
-    Integer availableReplicas = JsonPath.read(goodDeploymentOutput, "status.availableReplicas");
-    Integer minimumReplicas = JsonPath.read(goodDeploymentOutput, "spec.replicas");
-    String shouldBeInLog =
-        String.format(
-            "AvailableReplicas = %s, MinimumReplicas = %s", availableReplicas, minimumReplicas);
-    String verificationLog = result.toString();
-    assertTrue(verificationLog.contains(shouldBeInLog));
-  }
+        Manifests.ManifestObject goodDeployment = Mockito.mock(Manifests.ManifestObject.class);
+        Mockito.when(goodDeployment.getKind()).thenReturn("deployment");
+        Mockito.when(goodDeployment.getName()).thenReturn(Optional.<String>of("nginx-deployment"));
+        Mockito.when(goodDeployment.getApiVersion()).thenReturn("apps/v1");
+        KubernetesVerifiers.VerificationResult result = KubernetesVerifiers.verify(kubectl, goodDeployment);
+        assertTrue(result.isVerified());
+        Integer availableReplicas = JsonPath.read(goodDeploymentOutput, "status.availableReplicas");
+        Integer minimumReplicas = JsonPath.read(goodDeploymentOutput, "spec.replicas");
+        String shouldBeInLog =
+                String.format("AvailableReplicas = %s, MinimumReplicas = %s", availableReplicas, minimumReplicas);
+        String verificationLog = result.toString();
+        assertTrue(verificationLog.contains(shouldBeInLog));
+    }
 
-  @Test
-  public void testBadDeploymentNotVerified() throws Exception {
-    Object badDeploymentOutput = readTestFile(UNVERIFIABLE_DEPLOYMENT_OUTPUT);
-    KubectlWrapper kubectl = Mockito.mock(KubectlWrapper.class);
-    Mockito.when(kubectl.getObject("deployment", "nginx-deployment-unverifiable"))
-        .thenReturn(badDeploymentOutput);
+    @Test
+    public void testBadDeploymentNotVerified() throws Exception {
+        Object badDeploymentOutput = readTestFile(UNVERIFIABLE_DEPLOYMENT_OUTPUT);
+        KubectlWrapper kubectl = Mockito.mock(KubectlWrapper.class);
+        Mockito.when(kubectl.getObject("deployment", "nginx-deployment-unverifiable"))
+                .thenReturn(badDeploymentOutput);
 
-    Manifests.ManifestObject badDeployment = Mockito.mock(Manifests.ManifestObject.class);
-    Mockito.when(badDeployment.getKind()).thenReturn("deployment");
-    Mockito.when(badDeployment.getName())
-        .thenReturn(Optional.<String>of("nginx-deployment-unverifiable"));
-    Mockito.when(badDeployment.getApiVersion()).thenReturn("apps/v1");
-    KubernetesVerifiers.VerificationResult result =
-        KubernetesVerifiers.verify(kubectl, badDeployment);
-    assertFalse(result.isVerified());
+        Manifests.ManifestObject badDeployment = Mockito.mock(Manifests.ManifestObject.class);
+        Mockito.when(badDeployment.getKind()).thenReturn("deployment");
+        Mockito.when(badDeployment.getName()).thenReturn(Optional.<String>of("nginx-deployment-unverifiable"));
+        Mockito.when(badDeployment.getApiVersion()).thenReturn("apps/v1");
+        KubernetesVerifiers.VerificationResult result = KubernetesVerifiers.verify(kubectl, badDeployment);
+        assertFalse(result.isVerified());
 
-    Integer minimumReplicas = JsonPath.read(badDeploymentOutput, "spec.replicas");
-    Integer availableReplicas = 0;
-    String shouldBeInLog =
-        String.format(
-            "AvailableReplicas = %s, MinimumReplicas = %s", availableReplicas, minimumReplicas);
-    String verificationLog = result.toString();
-    assertTrue(verificationLog.contains(shouldBeInLog));
-  }
+        Integer minimumReplicas = JsonPath.read(badDeploymentOutput, "spec.replicas");
+        Integer availableReplicas = 0;
+        String shouldBeInLog =
+                String.format("AvailableReplicas = %s, MinimumReplicas = %s", availableReplicas, minimumReplicas);
+        String verificationLog = result.toString();
+        assertTrue(verificationLog.contains(shouldBeInLog));
+    }
 
-  private static Object readTestFile(String name) throws IOException {
-    String jsonString = Resources.toString(Resources.getResource(name), StandardCharsets.UTF_8);
-    return Configuration.defaultConfiguration().jsonProvider().parse(jsonString);
-  }
+    private static Object readTestFile(String name) throws IOException {
+        String jsonString = Resources.toString(Resources.getResource(name), StandardCharsets.UTF_8);
+        return Configuration.defaultConfiguration().jsonProvider().parse(jsonString);
+    }
 }

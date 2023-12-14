@@ -43,132 +43,128 @@ import org.yaml.snakeyaml.constructor.SafeConstructor;
 /** Tests {@link KubeConfig}. */
 @RunWith(MockitoJUnitRunner.class)
 public class KubeConfigTest {
-  @Test
-  public void testContextStringReturnsProperly() {
-    String result = KubeConfig.contextString("testProject", "us-central1-c", "testCluster");
-    assertNotNull(result);
-    assertEquals(result, "gke_testProject_us-central1-c_testCluster");
-  }
+    @Test
+    public void testContextStringReturnsProperly() {
+        String result = KubeConfig.contextString("testProject", "us-central1-c", "testCluster");
+        assertNotNull(result);
+        assertEquals(result, "gke_testProject_us-central1-c_testCluster");
+    }
 
-  @Test
-  public void testClusterServerReturnsProperly() {
-    Cluster cluster = Mockito.mock(Cluster.class);
-    Mockito.when(cluster.getEndpoint()).thenReturn("testEndpoint");
-    String result = KubeConfig.clusterServer(cluster);
-    assertNotNull(result);
-    assertEquals(result, "https://testEndpoint");
-  }
+    @Test
+    public void testClusterServerReturnsProperly() {
+        Cluster cluster = Mockito.mock(Cluster.class);
+        Mockito.when(cluster.getEndpoint()).thenReturn("testEndpoint");
+        String result = KubeConfig.clusterServer(cluster);
+        assertNotNull(result);
+        assertEquals(result, "https://testEndpoint");
+    }
 
-  @Test
-  public void testFromClusterReturnsProperly() throws Exception {
-    Cluster cluster = Mockito.mock(Cluster.class);
-    Mockito.when(cluster.getEndpoint()).thenReturn("testEndpoint");
-    Mockito.when(cluster.getLocation()).thenReturn("us-central1-c");
-    Mockito.when(cluster.getName()).thenReturn("testCluster");
-    MasterAuth auth = Mockito.mock(MasterAuth.class);
-    Mockito.when(cluster.getMasterAuth()).thenReturn(auth);
-    Mockito.when(auth.getClusterCaCertificate()).thenReturn("testCaCert");
+    @Test
+    public void testFromClusterReturnsProperly() throws Exception {
+        Cluster cluster = Mockito.mock(Cluster.class);
+        Mockito.when(cluster.getEndpoint()).thenReturn("testEndpoint");
+        Mockito.when(cluster.getLocation()).thenReturn("us-central1-c");
+        Mockito.when(cluster.getName()).thenReturn("testCluster");
+        MasterAuth auth = Mockito.mock(MasterAuth.class);
+        Mockito.when(cluster.getMasterAuth()).thenReturn(auth);
+        Mockito.when(auth.getClusterCaCertificate()).thenReturn("testCaCert");
 
-    KubeConfig result = KubeConfig.fromCluster("testProject", cluster, "testAccessToken");
-    assertNotNull(result);
+        KubeConfig result = KubeConfig.fromCluster("testProject", cluster, "testAccessToken");
+        assertNotNull(result);
 
-    String currentContext = result.getCurrentContext();
-    assertNotNull(currentContext);
-    assertEquals(
-        currentContext, KubeConfig.contextString("testProject", "us-central1-c", "testCluster"));
-    assertNotNull(result.getUsers());
-    assertEquals(result.getUsers().size(), 1);
-    assertNotNull(result.getContexts());
-    assertEquals(result.getContexts().size(), 1);
-    assertNotNull(result.getClusters());
-    assertEquals(result.getClusters().size(), 1);
-    // NOTE: The verification of the contents happens in the toYaml test
-  }
+        String currentContext = result.getCurrentContext();
+        assertNotNull(currentContext);
+        assertEquals(currentContext, KubeConfig.contextString("testProject", "us-central1-c", "testCluster"));
+        assertNotNull(result.getUsers());
+        assertEquals(result.getUsers().size(), 1);
+        assertNotNull(result.getContexts());
+        assertEquals(result.getContexts().size(), 1);
+        assertNotNull(result.getClusters());
+        assertEquals(result.getClusters().size(), 1);
+        // NOTE: The verification of the contents happens in the toYaml test
+    }
 
-  @Test
-  public void testToYamlReturnsProperly() throws Exception {
-    Cluster cluster = Mockito.mock(Cluster.class);
-    Mockito.when(cluster.getEndpoint()).thenReturn("testEndpoint");
-    Mockito.when(cluster.getLocation()).thenReturn("us-central1-c");
-    Mockito.when(cluster.getName()).thenReturn("testCluster");
-    MasterAuth auth = Mockito.mock(MasterAuth.class);
-    Mockito.when(cluster.getMasterAuth()).thenReturn(auth);
-    Mockito.when(auth.getClusterCaCertificate()).thenReturn("testCaCert");
-    KubeConfig config = KubeConfig.fromCluster("testProject", cluster, "testAccessToken");
-    String result = config.toYaml();
+    @Test
+    public void testToYamlReturnsProperly() throws Exception {
+        Cluster cluster = Mockito.mock(Cluster.class);
+        Mockito.when(cluster.getEndpoint()).thenReturn("testEndpoint");
+        Mockito.when(cluster.getLocation()).thenReturn("us-central1-c");
+        Mockito.when(cluster.getName()).thenReturn("testCluster");
+        MasterAuth auth = Mockito.mock(MasterAuth.class);
+        Mockito.when(cluster.getMasterAuth()).thenReturn(auth);
+        Mockito.when(auth.getClusterCaCertificate()).thenReturn("testCaCert");
+        KubeConfig config = KubeConfig.fromCluster("testProject", cluster, "testAccessToken");
+        String result = config.toYaml();
 
-    StringWriter writer = new StringWriter();
-    PrintWriter printWriter = new PrintWriter(writer);
-    BufferedReader reader =
-        Files.newBufferedReader(
-            Paths.get(KubeConfigTest.class.getResource("/expectedKubeConfig.yml").toURI()));
-    reader.lines().forEach(printWriter::println);
-    printWriter.flush();
-    String expected = writer.toString();
-    assertTrue(yamlEquals(expected, result));
-  }
+        StringWriter writer = new StringWriter();
+        PrintWriter printWriter = new PrintWriter(writer);
+        BufferedReader reader = Files.newBufferedReader(Paths.get(
+                KubeConfigTest.class.getResource("/expectedKubeConfig.yml").toURI()));
+        reader.lines().forEach(printWriter::println);
+        printWriter.flush();
+        String expected = writer.toString();
+        assertTrue(yamlEquals(expected, result));
+    }
 
-  private static boolean yamlEquals(String expectedYaml, String testYaml) throws IOException {
-    Yaml yaml = new Yaml(new SafeConstructor(new LoaderOptions()));
-    Map<String, Object> testConfig = yaml.load(new BufferedReader(new StringReader(testYaml)));
-    Map<String, Object> expectedConfig =
-        yaml.load(new BufferedReader(new StringReader(expectedYaml)));
+    private static boolean yamlEquals(String expectedYaml, String testYaml) throws IOException {
+        Yaml yaml = new Yaml(new SafeConstructor(new LoaderOptions()));
+        Map<String, Object> testConfig = yaml.load(new BufferedReader(new StringReader(testYaml)));
+        Map<String, Object> expectedConfig = yaml.load(new BufferedReader(new StringReader(expectedYaml)));
 
-    TriFunction<TriFunction, Object, Object, Boolean> deepCollectionEquals =
-        (f, expected, test) -> {
-          if (!expected.getClass().equals(test.getClass())) {
-            return false;
-          }
-
-          if (expected instanceof Map) {
-            @SuppressWarnings("unchecked")
-            Map<String, Object> expectedMap = (Map<String, Object>) expected;
-            @SuppressWarnings("unchecked")
-            Map<String, Object> testMap = (Map<String, Object>) test;
-            for (String key : expectedMap.keySet()) {
-
-              @SuppressWarnings("unchecked")
-              Object result = f.apply(f, expectedMap.get(key), testMap.get(key));
-              if (!(Boolean) result) {
+        TriFunction<TriFunction, Object, Object, Boolean> deepCollectionEquals = (f, expected, test) -> {
+            if (!expected.getClass().equals(test.getClass())) {
                 return false;
-              }
-            }
-          }
-
-          if (expected instanceof List) {
-            Iterator expectedItr = ((List) expected).listIterator();
-            Iterator testItr = ((List) test).listIterator();
-            while (expectedItr.hasNext()) {
-              if (!testItr.hasNext()) {
-                return false;
-              }
-
-              @SuppressWarnings("unchecked")
-              Object result = f.apply(f, expectedItr.next(), testItr.next());
-              if (!(Boolean) result) {
-                return false;
-              }
             }
 
-            if (testItr.hasNext()) {
-              return false;
-            }
-          }
+            if (expected instanceof Map) {
+                @SuppressWarnings("unchecked")
+                Map<String, Object> expectedMap = (Map<String, Object>) expected;
+                @SuppressWarnings("unchecked")
+                Map<String, Object> testMap = (Map<String, Object>) test;
+                for (String key : expectedMap.keySet()) {
 
-          return expected.equals(test);
+                    @SuppressWarnings("unchecked")
+                    Object result = f.apply(f, expectedMap.get(key), testMap.get(key));
+                    if (!(Boolean) result) {
+                        return false;
+                    }
+                }
+            }
+
+            if (expected instanceof List) {
+                Iterator expectedItr = ((List) expected).listIterator();
+                Iterator testItr = ((List) test).listIterator();
+                while (expectedItr.hasNext()) {
+                    if (!testItr.hasNext()) {
+                        return false;
+                    }
+
+                    @SuppressWarnings("unchecked")
+                    Object result = f.apply(f, expectedItr.next(), testItr.next());
+                    if (!(Boolean) result) {
+                        return false;
+                    }
+                }
+
+                if (testItr.hasNext()) {
+                    return false;
+                }
+            }
+
+            return expected.equals(test);
         };
 
-    return deepCollectionEquals.apply(deepCollectionEquals, expectedConfig, testConfig);
-  }
-
-  @FunctionalInterface
-  interface TriFunction<A, B, C, R> {
-
-    R apply(A a, B b, C c);
-
-    default <V> TriFunction<A, B, C, V> andThen(Function<? super R, ? extends V> after) {
-      Objects.requireNonNull(after);
-      return (A a, B b, C c) -> after.apply(apply(a, b, c));
+        return deepCollectionEquals.apply(deepCollectionEquals, expectedConfig, testConfig);
     }
-  }
+
+    @FunctionalInterface
+    interface TriFunction<A, B, C, R> {
+
+        R apply(A a, B b, C c);
+
+        default <V> TriFunction<A, B, C, V> andThen(Function<? super R, ? extends V> after) {
+            Objects.requireNonNull(after);
+            return (A a, B b, C c) -> after.apply(apply(a, b, c));
+        }
+    }
 }

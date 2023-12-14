@@ -38,38 +38,37 @@ import org.jvnet.hudson.test.JenkinsRule;
 /** Integration tests for {@link ClientUtil}. * */
 public class ClientUtilIT {
 
-  private static Logger LOGGER = Logger.getLogger(ClientUtilIT.class.getName());
+    private static Logger LOGGER = Logger.getLogger(ClientUtilIT.class.getName());
 
-  @ClassRule public static JenkinsRule jenkinsRule = new JenkinsRule();
+    @ClassRule
+    public static JenkinsRule jenkinsRule = new JenkinsRule();
 
-  private static String credentialsId;
+    private static String credentialsId;
 
-  @BeforeClass
-  public static void init() throws Exception {
-    LOGGER.info("Starting ClientUtil test.");
-    String projectId = System.getenv("GOOGLE_PROJECT_ID");
-    assertNotNull("GOOGLE_PROJECT_ID env var must be set", projectId);
-    ServiceAccountConfig sac = getServiceAccountConfig();
-    credentialsId = projectId;
-    Credentials c = new GoogleRobotPrivateKeyCredentials(credentialsId, sac, null);
-    CredentialsStore store =
-        new SystemCredentialsProvider.ProviderImpl().getStore(jenkinsRule.jenkins);
-    store.addCredentials(Domain.global(), c);
-  }
+    @BeforeClass
+    public static void init() throws Exception {
+        LOGGER.info("Starting ClientUtil test.");
+        String projectId = System.getenv("GOOGLE_PROJECT_ID");
+        assertNotNull("GOOGLE_PROJECT_ID env var must be set", projectId);
+        ServiceAccountConfig sac = getServiceAccountConfig();
+        credentialsId = projectId;
+        Credentials c = new GoogleRobotPrivateKeyCredentials(credentialsId, sac, null);
+        CredentialsStore store = new SystemCredentialsProvider.ProviderImpl().getStore(jenkinsRule.jenkins);
+        store.addCredentials(Domain.global(), c);
+    }
 
-  @Test
-  public void testGetClientFactoryValidCreds() throws AbortException {
-    ClientFactory factory =
-        ClientUtil.getClientFactory(
-            jenkinsRule.jenkins, ImmutableList.of(), credentialsId, Optional.empty());
-    assertNotNull(factory);
-    assertNotNull(factory.containerClient());
-  }
+    @Test
+    public void testGetClientFactoryValidCreds() throws AbortException {
+        ClientFactory factory =
+                ClientUtil.getClientFactory(jenkinsRule.jenkins, ImmutableList.of(), credentialsId, Optional.empty());
+        assertNotNull(factory);
+        assertNotNull(factory.containerClient());
+    }
 
-  @Test
-  public void testGetClientFactoryShortValidCreds() throws AbortException {
-    ClientFactory factory = ClientUtil.getClientFactory(jenkinsRule.jenkins, credentialsId);
-    assertNotNull(factory);
-    assertNotNull(factory.containerClient());
-  }
+    @Test
+    public void testGetClientFactoryShortValidCreds() throws AbortException {
+        ClientFactory factory = ClientUtil.getClientFactory(jenkinsRule.jenkins, credentialsId);
+        assertNotNull(factory);
+        assertNotNull(factory.containerClient());
+    }
 }

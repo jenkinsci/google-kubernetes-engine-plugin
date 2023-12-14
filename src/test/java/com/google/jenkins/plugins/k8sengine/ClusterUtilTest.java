@@ -22,54 +22,53 @@ import org.junit.Test;
 
 /** Tests for verifying the behavior of {@link ClusterUtil methods} */
 public class ClusterUtilTest {
-  @Test(expected = NullPointerException.class)
-  public void testToNameAndLocationNullCluster() {
-    ClusterUtil.toNameAndLocation(null);
-  }
+    @Test(expected = NullPointerException.class)
+    public void testToNameAndLocationNullCluster() {
+        ClusterUtil.toNameAndLocation(null);
+    }
 
-  @Test(expected = IllegalArgumentException.class)
-  public void testToNameAndLocationNullName() {
-    ClusterUtil.toNameAndLocation(null, "us-west1-a");
-  }
+    @Test(expected = IllegalArgumentException.class)
+    public void testToNameAndLocationNullName() {
+        ClusterUtil.toNameAndLocation(null, "us-west1-a");
+    }
 
-  @Test(expected = IllegalArgumentException.class)
-  public void testToNameAndLocationEmptyName() {
-    ClusterUtil.toNameAndLocation("", "us-west1-a");
-  }
+    @Test(expected = IllegalArgumentException.class)
+    public void testToNameAndLocationEmptyName() {
+        ClusterUtil.toNameAndLocation("", "us-west1-a");
+    }
 
-  @Test(expected = IllegalArgumentException.class)
-  public void testToNameAndLocationNullLocation() {
-    ClusterUtil.toNameAndLocation("test-cluster", null);
-  }
+    @Test(expected = IllegalArgumentException.class)
+    public void testToNameAndLocationNullLocation() {
+        ClusterUtil.toNameAndLocation("test-cluster", null);
+    }
 
-  @Test(expected = IllegalArgumentException.class)
-  public void testToNameAndLocationEmptyLocation() {
-    ClusterUtil.toNameAndLocation("test-cluster", "");
-  }
+    @Test(expected = IllegalArgumentException.class)
+    public void testToNameAndLocationEmptyLocation() {
+        ClusterUtil.toNameAndLocation("test-cluster", "");
+    }
 
-  @Test
-  public void testToNameAndLocationValidInputs() {
-    assertEquals(
-        "test-cluster (us-west1-a)", ClusterUtil.toNameAndLocation("test-cluster", "us-west1-a"));
-  }
+    @Test
+    public void testToNameAndLocationValidInputs() {
+        assertEquals("test-cluster (us-west1-a)", ClusterUtil.toNameAndLocation("test-cluster", "us-west1-a"));
+    }
 
-  @Test(expected = IllegalArgumentException.class)
-  public void testValuesFromNameAndLocationNullInput() {
-    ClusterUtil.valuesFromNameAndLocation(null);
-  }
+    @Test(expected = IllegalArgumentException.class)
+    public void testValuesFromNameAndLocationNullInput() {
+        ClusterUtil.valuesFromNameAndLocation(null);
+    }
 
-  @Test(expected = IllegalArgumentException.class)
-  public void testValuesFromNameAndLocationEmptyInput() {
-    ClusterUtil.valuesFromNameAndLocation("");
-  }
+    @Test(expected = IllegalArgumentException.class)
+    public void testValuesFromNameAndLocationEmptyInput() {
+        ClusterUtil.valuesFromNameAndLocation("");
+    }
 
-  @Test(expected = IllegalArgumentException.class)
-  public void testValuesFromNameAndLocationMalformedInput() {
-    ClusterUtil.valuesFromNameAndLocation("test us-west1-a");
-  }
+    @Test(expected = IllegalArgumentException.class)
+    public void testValuesFromNameAndLocationMalformedInput() {
+        ClusterUtil.valuesFromNameAndLocation("test us-west1-a");
+    }
 
-  @Test
-  public void testValuesFromNameAndLocationValidInput() {
-    ClusterUtil.valuesFromNameAndLocation("test-cluster (us-west1-a)");
-  }
+    @Test
+    public void testValuesFromNameAndLocationValidInput() {
+        ClusterUtil.valuesFromNameAndLocation("test-cluster (us-west1-a)");
+    }
 }
