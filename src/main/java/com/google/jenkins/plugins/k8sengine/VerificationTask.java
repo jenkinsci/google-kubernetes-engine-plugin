@@ -76,7 +76,8 @@ public class VerificationTask {
    * @return Self-reference after performing verify.
    */
   private VerificationTask verify() {
-    consoleLogger.println(String.format("Verifying: %s ", manifestObject.describe()));
+    consoleLogger.println(
+        Messages.KubernetesEngineBuilder_VerifyingLogPrefix(manifestObject.describe()));
     currentResult = KubernetesVerifiers.verify(kubectl, manifestObject);
     if (isVerified()) {
       consoleLogger.println(currentResult.toString());
