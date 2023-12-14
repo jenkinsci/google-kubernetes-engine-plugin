@@ -58,7 +58,7 @@ public class KubernetesEngineBuilderClusterTest {
 
   @Test
   public void testDoFillClusterItemsEmptyWithEmptyCredentialsId() throws IOException {
-    DescriptorImpl descriptor = setUpClusterDescriptor(ImmutableList.of(), null, null);
+    DescriptorImpl descriptor = setUpClusterDescriptor3(ImmutableList.of(), null, null);
     ListBoxModel expected =
         initExpected(ImmutableList.of(EMPTY_NAME), ImmutableList.of(EMPTY_VALUE));
     ListBoxModel result = descriptor.doFillClusterItems(jenkins, null, null, TEST_PROJECT_ID);
@@ -68,7 +68,7 @@ public class KubernetesEngineBuilderClusterTest {
 
   @Test
   public void testDoFillClusterItemsEmptyWithEmptyProjectId() throws IOException {
-    DescriptorImpl descriptor = setUpClusterDescriptor(ImmutableList.of(), null, null);
+    DescriptorImpl descriptor = setUpClusterDescriptor3(ImmutableList.of(), null, null);
     ListBoxModel expected =
         initExpected(ImmutableList.of(EMPTY_NAME), ImmutableList.of(EMPTY_VALUE));
     ListBoxModel result = descriptor.doFillClusterItems(jenkins, null, TEST_CREDENTIALS_ID, null);
@@ -184,7 +184,7 @@ public class KubernetesEngineBuilderClusterTest {
 
   @Test
   public void testDoCheckClusterMessageWithEmptyCredentialsId() throws IOException {
-    DescriptorImpl descriptor = setUpClusterDescriptor(ImmutableList.of(), null, null);
+    DescriptorImpl descriptor = setUpClusterDescriptor3(ImmutableList.of(), null, null);
     FormValidation result = descriptor.doCheckCluster(jenkins, TEST_CLUSTER, null, TEST_PROJECT_ID);
     assertNotNull(result);
     assertEquals(
@@ -193,7 +193,7 @@ public class KubernetesEngineBuilderClusterTest {
 
   @Test
   public void testDoCheckClusterMessageWithEmptyProjectId() throws IOException {
-    DescriptorImpl descriptor = setUpClusterDescriptor(ImmutableList.of(), null, null);
+    DescriptorImpl descriptor = setUpClusterDescriptor2(ImmutableList.of(), null, null);
     FormValidation result =
         descriptor.doCheckCluster(jenkins, TEST_CLUSTER, TEST_CREDENTIALS_ID, null);
     assertNotNull(result);
@@ -287,6 +287,51 @@ public class KubernetesEngineBuilderClusterTest {
     initialClusters.forEach(c -> clusters.add(ClusterUtil.fromNameAndLocation(c)));
     Mockito.when(containerClient.listAllClusters(anyString()))
         .thenReturn(ImmutableList.copyOf(clusters));
+    return descriptor;
+  }
+
+  private DescriptorImpl setUpClusterDescriptor2(
+      List<String> initialClusters, AbortException abortException, IOException ioException)
+      throws IOException {
+    DescriptorImpl descriptor = Mockito.spy(DescriptorImpl.class);
+    if (abortException != null) {
+      Mockito.doThrow(abortException)
+          .when(descriptor)
+          .getClientFactory(any(Jenkins.class), anyString());
+      return descriptor;
+    }
+    ClientFactory clientFactory = Mockito.mock(ClientFactory.class);
+    Mockito.doReturn(clientFactory)
+        .when(descriptor)
+        .getClientFactory(any(Jenkins.class), anyString());
+    ContainerClient containerClient = Mockito.mock(ContainerClient.class);
+    if (ioException != null) {
+      Mockito.when(containerClient.listAllClusters(anyString())).thenThrow(ioException);
+      return descriptor;
+    }
+    List<Cluster> clusters = new ArrayList<>();
+    initialClusters.forEach(c -> clusters.add(ClusterUtil.fromNameAndLocation(c)));
+    return descriptor;
+  }
+
+  private DescriptorImpl setUpClusterDescriptor3(
+      List<String> initialClusters, AbortException abortException, IOException ioException)
+      throws IOException {
+    DescriptorImpl descriptor = Mockito.spy(DescriptorImpl.class);
+    if (abortException != null) {
+      Mockito.doThrow(abortException)
+          .when(descriptor)
+          .getClientFactory(any(Jenkins.class), anyString());
+      return descriptor;
+    }
+    ClientFactory clientFactory = Mockito.mock(ClientFactory.class);
+    ContainerClient containerClient = Mockito.mock(ContainerClient.class);
+    if (ioException != null) {
+      Mockito.when(containerClient.listAllClusters(anyString())).thenThrow(ioException);
+      return descriptor;
+    }
+    List<Cluster> clusters = new ArrayList<>();
+    initialClusters.forEach(c -> clusters.add(ClusterUtil.fromNameAndLocation(c)));
     return descriptor;
   }
 }
