@@ -80,7 +80,7 @@
       <dependency>
         <groupId>io.jenkins.tools.bom</groupId>
         <artifactId>bom-2.401.x</artifactId>
-        <version>2643.vfa_93ff299d20</version>
+        <version>2671.va_73a_b_4c103fb_</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
@@ -158,7 +158,7 @@
     <dependency>
       <groupId>com.google.http-client</groupId>
       <artifactId>google-http-client-jackson2</artifactId>
-      <version>1.35.0</version>
+      <version>1.43.3</version>
       <exclusions>
         <!-- Provided by jackson2-api plugin -->
         <exclusion>
@@ -232,16 +232,6 @@
     <dependency>
       <groupId>org.jenkins-ci.plugins</groupId>
       <artifactId>google-oauth-plugin</artifactId>
-      <exclusions>
-        <exclusion>
-          <groupId>com.google.guava</groupId>
-          <artifactId>guava</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>com.google.http-client</groupId>
-          <artifactId>google-http-client-jackson2</artifactId>
-        </exclusion>
-      </exclusions>
     </dependency>
     <dependency>
       <groupId>org.jenkins-ci.plugins</groupId>
