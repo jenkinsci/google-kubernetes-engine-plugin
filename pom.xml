@@ -70,7 +70,7 @@
     <google.api.version>1.25.0</google.api.version>
     <google.http.version>1.42.2</google.http.version>
     <cloudresourcemanager.revision>572</cloudresourcemanager.revision>
-    <container.revision>93</container.revision>
+    <container.revision>v1-rev20240214-2.0.0</container.revision>
     <gcp-plugin-core.version>0.3.0</gcp-plugin-core.version>
     <spotless.check.skip>false</spotless.check.skip>
   </properties>
@@ -107,7 +107,7 @@
     <dependency>
       <groupId>com.google.apis</groupId>
       <artifactId>google-api-services-container</artifactId>
-      <version>v1-rev${container.revision}-${google.api.version}</version>
+      <version>v1-rev${container.revision}</version>
       <exclusions>
         <exclusion>
           <groupId>com.google.api-client</groupId>
