@@ -69,7 +69,7 @@
     <jenkins.version>2.401.3</jenkins.version>
     <google.api.version>1.25.0</google.api.version>
     <google.http.version>1.42.2</google.http.version>
-    <cloudresourcemanager.revision>572</cloudresourcemanager.revision>
+    <cloudresourcemanager.revision>v3-rev20240303-2.0.0</cloudresourcemanager.revision>
     <container.revision>93</container.revision>
     <gcp-plugin-core.version>0.3.0</gcp-plugin-core.version>
     <spotless.check.skip>false</spotless.check.skip>
@@ -96,7 +96,7 @@
     <dependency>
       <groupId>com.google.apis</groupId>
       <artifactId>google-api-services-cloudresourcemanager</artifactId>
-      <version>v1-rev${cloudresourcemanager.revision}-${google.api.version}</version>
+      <version>v1-rev${cloudresourcemanager.revision}</version>
       <exclusions>
         <exclusion>
           <groupId>com.google.api-client</groupId>
