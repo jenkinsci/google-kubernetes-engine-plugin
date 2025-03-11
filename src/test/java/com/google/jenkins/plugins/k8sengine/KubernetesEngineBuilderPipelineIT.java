@@ -22,7 +22,7 @@ import static com.google.jenkins.plugins.k8sengine.ITUtil.formatRandomName;
 import static com.google.jenkins.plugins.k8sengine.ITUtil.getLocation;
 import static com.google.jenkins.plugins.k8sengine.ITUtil.getServiceAccountConfig;
 import static com.google.jenkins.plugins.k8sengine.ITUtil.loadResource;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import com.cloudbees.plugins.credentials.Credentials;
 import com.cloudbees.plugins.credentials.CredentialsStore;
@@ -43,18 +43,17 @@ import java.util.logging.Logger;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.jvnet.hudson.test.JenkinsRule;
+import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
 
 /** Tests the {@link KubernetesEngineBuilder} for use-cases involving the Jenkins Pipeline DSL. */
-public class KubernetesEngineBuilderPipelineIT {
+@WithJenkins
+class KubernetesEngineBuilderPipelineIT {
+
     private static final Logger LOGGER = Logger.getLogger(KubernetesEngineBuilderPipelineIT.class.getName());
     private static final String TEST_DEPLOYMENT_MANIFEST = "testDeployment.yml";
-
-    @ClassRule
-    public static JenkinsRule jenkinsRule = new JenkinsRule();
 
     private static EnvVars envVars;
     private static String clusterName;
@@ -63,22 +62,26 @@ public class KubernetesEngineBuilderPipelineIT {
     private static String credentialsId;
     private static ContainerClient client;
 
-    @BeforeClass
-    public static void init() throws Exception {
+    private static JenkinsRule jenkinsRule;
+
+    @BeforeAll
+    static void init(JenkinsRule rule) throws Exception {
         LOGGER.info("Initializing KubernetesEngineBuilderPipelineIT");
 
+        jenkinsRule = rule;
+
         projectId = System.getenv("GOOGLE_PROJECT_ID");
-        assertNotNull("GOOGLE_PROJECT_ID env var must be set", projectId);
+        assertNotNull(projectId, "GOOGLE_PROJECT_ID env var must be set");
 
         testLocation = getLocation();
 
         clusterName = System.getenv("GOOGLE_GKE_CLUSTER");
-        assertNotNull("GOOGLE_GKE_CLUSTER env var must be set", clusterName);
+        assertNotNull(clusterName, "GOOGLE_GKE_CLUSTER env var must be set");
 
         LOGGER.info("Creating credentials");
         ServiceAccountConfig sac = getServiceAccountConfig();
         credentialsId = projectId;
-        Credentials c = (Credentials) new GoogleRobotPrivateKeyCredentials(credentialsId, sac, null);
+        Credentials c = new GoogleRobotPrivateKeyCredentials(credentialsId, sac, null);
         CredentialsStore store = new SystemCredentialsProvider.ProviderImpl().getStore(jenkinsRule.jenkins);
         store.addCredentials(Domain.global(), c);
 
@@ -94,7 +97,7 @@ public class KubernetesEngineBuilderPipelineIT {
     }
 
     @Test
-    public void testWorkspaceDeclarativePipelineDeploysProperly() throws Exception {
+    void testWorkspaceDeclarativePipelineDeploysProperly() throws Exception {
         envVars.put("MANIFEST_PATTERN", TEST_DEPLOYMENT_MANIFEST);
         envVars.put("NAMESPACE", "default");
         WorkflowJob testProject = jenkinsRule.createProject(WorkflowJob.class, formatRandomName("test"));
@@ -118,7 +121,7 @@ public class KubernetesEngineBuilderPipelineIT {
     }
 
     @Test
-    public void testGitDeclarativePipelineDeploysProperly() throws Exception {
+    void testGitDeclarativePipelineDeploysProperly() throws Exception {
         envVars.put("GIT_URL", "https://github.com/jenkinsci/google-kubernetes-engine-plugin.git");
         envVars.put("MANIFEST_PATTERN", "docs/resources/manifest.yaml");
         envVars.put("NAMESPACE", "default");
@@ -141,7 +144,7 @@ public class KubernetesEngineBuilderPipelineIT {
     }
 
     @Test
-    public void testMalformedDeclarativePipelineFails() throws Exception {
+    void testMalformedDeclarativePipelineFails() throws Exception {
         envVars.put("MANIFEST_PATTERN", TEST_DEPLOYMENT_MANIFEST);
         envVars.put("NAMESPACE", "default");
         WorkflowJob testProject = jenkinsRule.createProject(WorkflowJob.class, formatRandomName("test"));
@@ -157,7 +160,7 @@ public class KubernetesEngineBuilderPipelineIT {
     }
 
     @Test
-    public void testNoNamespaceDeclarativePipelineDeploysProperly() throws Exception {
+    void testNoNamespaceDeclarativePipelineDeploysProperly() throws Exception {
         envVars.put("MANIFEST_PATTERN", TEST_DEPLOYMENT_MANIFEST);
         WorkflowJob testProject = jenkinsRule.createProject(WorkflowJob.class, formatRandomName("test"));
         testProject.setDefinition(
@@ -180,7 +183,7 @@ public class KubernetesEngineBuilderPipelineIT {
     }
 
     @Test
-    public void testCustomNamespaceDeclarativePipelineDeploysProperly() throws Exception {
+    void testCustomNamespaceDeclarativePipelineDeploysProperly() throws Exception {
         envVars.put("MANIFEST_PATTERN", TEST_DEPLOYMENT_MANIFEST);
         envVars.put("NAMESPACE", "test");
         WorkflowJob testProject = jenkinsRule.createProject(WorkflowJob.class, formatRandomName("test"));
@@ -216,6 +219,6 @@ public class KubernetesEngineBuilderPipelineIT {
                 .namespace(namespace)
                 .build();
         FilePath manifestFile = workspace.child(manifestPattern);
-        kubectl.runKubectlCommand("delete", ImmutableList.<String>of(kind, name));
+        kubectl.runKubectlCommand("delete", ImmutableList.of(kind, name));
     }
 }

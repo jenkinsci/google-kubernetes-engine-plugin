@@ -14,10 +14,10 @@
 
 package com.google.jenkins.plugins.k8sengine;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyString;
 
 import hudson.FilePath;
@@ -26,18 +26,18 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.yaml.snakeyaml.Yaml;
 
 /** Tests the Kubernetes metrics label behaviors within {@link KubernetesEngineBuilder}. */
-@RunWith(MockitoJUnitRunner.class)
-public class KubernetesEngineBuilderMetricsLabelTest {
+@ExtendWith(MockitoExtension.class)
+class KubernetesEngineBuilderMetricsLabelTest {
+
     @Test
-    @SuppressWarnings("unchecked")
-    public void testAddMetricsLabelProperlyAddsLabel() throws IOException, InterruptedException {
+    void testAddMetricsLabelProperlyAddsLabel() throws IOException, InterruptedException {
         FilePath manifestFile = Mockito.mock(FilePath.class);
         Mockito.when(manifestFile.read())
                 .thenReturn(new ByteArrayInputStream(String.join(
@@ -53,13 +53,13 @@ public class KubernetesEngineBuilderMetricsLabelTest {
         Mockito.doAnswer(invocation -> {
                     Yaml yaml = new Yaml();
                     Manifests.ManifestObject manifest = new Manifests.ManifestObject(
-                            (Map<String, Object>) yaml.load((String) invocation.getArguments()[0]), manifestFile);
+                            yaml.load((String) invocation.getArguments()[0]), manifestFile);
                     Map<String, String> labels = manifest.getOrCreateLabels();
                     assertNotNull(labels);
                     assertNotNull(labels.get(KubernetesEngineBuilder.METRICS_LABEL_KEY));
                     assertEquals(
-                            labels.get(KubernetesEngineBuilder.METRICS_LABEL_KEY),
-                            KubernetesEngineBuilder.METRICS_LABEL_VALUE);
+                            KubernetesEngineBuilder.METRICS_LABEL_VALUE,
+                            labels.get(KubernetesEngineBuilder.METRICS_LABEL_KEY));
                     return null;
                 })
                 .when(manifestFile)
@@ -68,8 +68,7 @@ public class KubernetesEngineBuilderMetricsLabelTest {
     }
 
     @Test
-    @SuppressWarnings("unchecked")
-    public void testAddMetricsLabelProperlyAppendsToExistingManagedByLabel() throws IOException, InterruptedException {
+    void testAddMetricsLabelProperlyAppendsToExistingManagedByLabel() throws IOException, InterruptedException {
         FilePath manifestFile = Mockito.mock(FilePath.class);
         Mockito.when(manifestFile.read())
                 .thenReturn(new ByteArrayInputStream(String.join(
@@ -86,7 +85,7 @@ public class KubernetesEngineBuilderMetricsLabelTest {
         Mockito.doAnswer(invocation -> {
                     Yaml yaml = new Yaml();
                     Manifests.ManifestObject manifest = new Manifests.ManifestObject(
-                            (Map<String, Object>) yaml.load((String) invocation.getArguments()[0]), manifestFile);
+                            yaml.load((String) invocation.getArguments()[0]), manifestFile);
                     Map<String, String> labels = manifest.getOrCreateLabels();
                     assertNotNull(labels);
                     assertNotNull(labels.get(KubernetesEngineBuilder.METRICS_LABEL_KEY));
@@ -103,8 +102,7 @@ public class KubernetesEngineBuilderMetricsLabelTest {
     }
 
     @Test
-    @SuppressWarnings("unchecked")
-    public void testAddMetricsLabelProperlyAddsToMissingLabels() throws IOException, InterruptedException {
+    void testAddMetricsLabelProperlyAddsToMissingLabels() throws IOException, InterruptedException {
         FilePath manifestFile = Mockito.mock(FilePath.class);
         Mockito.when(manifestFile.read())
                 .thenReturn(new ByteArrayInputStream(
@@ -114,13 +112,13 @@ public class KubernetesEngineBuilderMetricsLabelTest {
         Mockito.doAnswer(invocation -> {
                     Yaml yaml = new Yaml();
                     Manifests.ManifestObject manifest = new Manifests.ManifestObject(
-                            (Map<String, Object>) yaml.load((String) invocation.getArguments()[0]), manifestFile);
+                            yaml.load((String) invocation.getArguments()[0]), manifestFile);
                     Map<String, String> labels = manifest.getOrCreateLabels();
                     assertNotNull(labels);
                     assertNotNull(labels.get(KubernetesEngineBuilder.METRICS_LABEL_KEY));
                     assertEquals(
-                            labels.get(KubernetesEngineBuilder.METRICS_LABEL_KEY),
-                            KubernetesEngineBuilder.METRICS_LABEL_VALUE);
+                            KubernetesEngineBuilder.METRICS_LABEL_VALUE,
+                            labels.get(KubernetesEngineBuilder.METRICS_LABEL_KEY));
                     return null;
                 })
                 .when(manifestFile)
@@ -129,8 +127,7 @@ public class KubernetesEngineBuilderMetricsLabelTest {
     }
 
     @Test
-    @SuppressWarnings("unchecked")
-    public void testAddMetricsLabelProperlyHandlesExistingMetricsLabel() throws IOException, InterruptedException {
+    void testAddMetricsLabelProperlyHandlesExistingMetricsLabel() throws IOException, InterruptedException {
         FilePath manifestFile = Mockito.mock(FilePath.class);
         Mockito.when(manifestFile.read())
                 .thenReturn(new ByteArrayInputStream(String.join(
@@ -145,13 +142,13 @@ public class KubernetesEngineBuilderMetricsLabelTest {
         Mockito.doAnswer(invocation -> {
                     Yaml yaml = new Yaml();
                     Manifests.ManifestObject manifest = new Manifests.ManifestObject(
-                            (Map<String, Object>) yaml.load((String) invocation.getArguments()[0]), manifestFile);
+                            yaml.load((String) invocation.getArguments()[0]), manifestFile);
                     Map<String, String> labels = manifest.getOrCreateLabels();
                     assertNotNull(labels);
                     assertNotNull(labels.get(KubernetesEngineBuilder.METRICS_LABEL_KEY));
                     assertEquals(
-                            labels.get(KubernetesEngineBuilder.METRICS_LABEL_KEY),
-                            KubernetesEngineBuilder.METRICS_LABEL_VALUE);
+                            KubernetesEngineBuilder.METRICS_LABEL_VALUE,
+                            labels.get(KubernetesEngineBuilder.METRICS_LABEL_KEY));
                     return null;
                 })
                 .when(manifestFile)
@@ -161,7 +158,7 @@ public class KubernetesEngineBuilderMetricsLabelTest {
 
     @Test
     @SuppressWarnings("unchecked")
-    public void testAddMetricsLabelProperlyHandlesMultipleObjects() throws IOException, InterruptedException {
+    void testAddMetricsLabelProperlyHandlesMultipleObjects() throws IOException, InterruptedException {
         FilePath manifestFile = Mockito.mock(FilePath.class);
         Mockito.when(manifestFile.read())
                 .thenReturn(new ByteArrayInputStream(String.join(
@@ -193,8 +190,8 @@ public class KubernetesEngineBuilderMetricsLabelTest {
                         assertNotNull(labels);
                         assertNotNull(labels.get(KubernetesEngineBuilder.METRICS_LABEL_KEY));
                         assertEquals(
-                                labels.get(KubernetesEngineBuilder.METRICS_LABEL_KEY),
-                                KubernetesEngineBuilder.METRICS_LABEL_VALUE);
+                                KubernetesEngineBuilder.METRICS_LABEL_VALUE,
+                                labels.get(KubernetesEngineBuilder.METRICS_LABEL_KEY));
                     }
                     return null;
                 })
@@ -204,8 +201,7 @@ public class KubernetesEngineBuilderMetricsLabelTest {
     }
 
     @Test
-    @SuppressWarnings("unchecked")
-    public void testAddMetricsLabelDoesNotAddLabelProperly() throws IOException, InterruptedException {
+    void testAddMetricsLabelDoesNotAddLabelProperly() throws IOException, InterruptedException {
         FilePath manifestFile = Mockito.mock(FilePath.class);
         Mockito.when(manifestFile.read())
                 .thenReturn(new ByteArrayInputStream(String.join(
@@ -221,7 +217,7 @@ public class KubernetesEngineBuilderMetricsLabelTest {
         Mockito.doAnswer(invocation -> {
                     Yaml yaml = new Yaml();
                     Manifests.ManifestObject manifest = new Manifests.ManifestObject(
-                            (Map<String, Object>) yaml.load((String) invocation.getArguments()[0]), manifestFile);
+                            yaml.load((String) invocation.getArguments()[0]), manifestFile);
                     Map<String, String> labels = manifest.getOrCreateLabels();
                     assertNotNull(labels);
                     assertNull(labels.get(KubernetesEngineBuilder.METRICS_LABEL_KEY));

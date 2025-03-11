@@ -16,9 +16,9 @@ package com.google.jenkins.plugins.k8sengine;
 
 import static com.google.jenkins.plugins.k8sengine.KubernetesEngineBuilder.EMPTY_NAME;
 import static com.google.jenkins.plugins.k8sengine.KubernetesEngineBuilder.EMPTY_VALUE;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 
@@ -36,14 +36,18 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import jenkins.model.Jenkins;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
-@RunWith(MockitoJUnitRunner.class)
-public class KubernetesEngineBuilderTest {
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
+class KubernetesEngineBuilderTest {
+
     static final String TEST_PROJECT_ID = "test-project-id";
     static final String OTHER_PROJECT_ID = "other-project-id";
     static final String TEST_CREDENTIALS_ID = "test-credentials-id";
@@ -52,13 +56,13 @@ public class KubernetesEngineBuilderTest {
 
     // TODO(#49): Separate out tests into separate classes for better organization.
 
-    @BeforeClass
-    public static void init() {
+    @BeforeAll
+    static void init() {
         jenkins = Mockito.mock(Jenkins.class);
     }
 
     @Test
-    public void testDoFillProjectIdItemsErrorMessageWithAbortException() throws IOException {
+    void testDoFillProjectIdItemsErrorMessageWithAbortException() throws IOException {
         DescriptorImpl descriptor = setUpProjectDescriptor(ImmutableList.of(), "", new AbortException(), null);
         ListBoxModel expected = initExpected(
                 ImmutableList.of(Messages.KubernetesEngineBuilder_CredentialAuthFailed()),
@@ -69,7 +73,7 @@ public class KubernetesEngineBuilderTest {
     }
 
     @Test
-    public void testDoFillProjectIdItemsErrorMessageWithIOException() throws IOException {
+    void testDoFillProjectIdItemsErrorMessageWithIOException() throws IOException {
         DescriptorImpl descriptor = setUpProjectDescriptor(ImmutableList.of(), "", null, new IOException());
         ListBoxModel expected = initExpected(
                 ImmutableList.of(Messages.KubernetesEngineBuilder_ProjectIDFillError()), ImmutableList.of(EMPTY_VALUE));
@@ -79,7 +83,7 @@ public class KubernetesEngineBuilderTest {
     }
 
     @Test
-    public void testDoFillProjectIdItemsEmptyWithEmptyCredentialsId() throws IOException {
+    void testDoFillProjectIdItemsEmptyWithEmptyCredentialsId() throws IOException {
         DescriptorImpl descriptor = setUpProjectDescriptor(ImmutableList.of(), "", null, null);
         ListBoxModel expected = initExpected(ImmutableList.of(EMPTY_NAME), ImmutableList.of(EMPTY_VALUE));
         ListBoxModel result = descriptor.doFillProjectIdItems(jenkins, null, null);
@@ -88,7 +92,7 @@ public class KubernetesEngineBuilderTest {
     }
 
     @Test
-    public void testDoFillProjectIdItemsWithValidCredentialsId() throws IOException {
+    void testDoFillProjectIdItemsWithValidCredentialsId() throws IOException {
         DescriptorImpl descriptor = setUpProjectDescriptor(
                 ImmutableList.of(OTHER_PROJECT_ID, TEST_PROJECT_ID), TEST_PROJECT_ID, null, null);
 
@@ -102,7 +106,7 @@ public class KubernetesEngineBuilderTest {
     }
 
     @Test
-    public void testDoFillProjectIdItemsWithValidCredentialsIdAndPreviousValueAndDefault() throws IOException {
+    void testDoFillProjectIdItemsWithValidCredentialsIdAndPreviousValueAndDefault() throws IOException {
         DescriptorImpl descriptor = setUpProjectDescriptor(
                 ImmutableList.of(OTHER_PROJECT_ID, TEST_PROJECT_ID), TEST_PROJECT_ID, null, null);
         ListBoxModel expected = initExpected(
@@ -114,7 +118,7 @@ public class KubernetesEngineBuilderTest {
     }
 
     @Test
-    public void testDoFillProjectIdItemsWithValidCredentialsIdAndPreviousValueAndEmptyDefault() throws IOException {
+    void testDoFillProjectIdItemsWithValidCredentialsIdAndPreviousValueAndEmptyDefault() throws IOException {
         DescriptorImpl descriptor =
                 setUpProjectDescriptor(ImmutableList.of(OTHER_PROJECT_ID, TEST_PROJECT_ID), "", null, null);
         ListBoxModel expected = initExpected(
@@ -126,7 +130,7 @@ public class KubernetesEngineBuilderTest {
     }
 
     @Test
-    public void testDoFillProjectIdItemsWithValidCredentialsIdMissingDefaultProject() throws IOException {
+    void testDoFillProjectIdItemsWithValidCredentialsIdMissingDefaultProject() throws IOException {
         DescriptorImpl descriptor =
                 setUpProjectDescriptor(ImmutableList.of(OTHER_PROJECT_ID), TEST_PROJECT_ID, null, null);
         ListBoxModel expected = initExpected(
@@ -138,7 +142,7 @@ public class KubernetesEngineBuilderTest {
     }
 
     @Test
-    public void testDoFillProjectIdItemsWithValidCredentialsAndEmptyProject() throws IOException {
+    void testDoFillProjectIdItemsWithValidCredentialsAndEmptyProject() throws IOException {
         DescriptorImpl descriptor = setUpProjectDescriptor(
                 ImmutableList.of(OTHER_PROJECT_ID, TEST_PROJECT_ID), TEST_PROJECT_ID, null, null);
         ListBoxModel expected = initExpected(
@@ -150,7 +154,7 @@ public class KubernetesEngineBuilderTest {
     }
 
     @Test
-    public void testDoCheckProjectIdMessageWithEmptyProjectID() throws IOException {
+    void testDoCheckProjectIdMessageWithEmptyProjectID() throws IOException {
         DescriptorImpl descriptor = setUpProjectDescriptor(ImmutableList.of(), "", null, null);
         FormValidation result = descriptor.doCheckProjectId(jenkins, null, TEST_CREDENTIALS_ID);
         assertNotNull(result);
@@ -158,7 +162,7 @@ public class KubernetesEngineBuilderTest {
     }
 
     @Test
-    public void testDoCheckProjectIdMessageWithEmptyCredentialsID() throws IOException {
+    void testDoCheckProjectIdMessageWithEmptyCredentialsID() throws IOException {
         DescriptorImpl descriptor = setUpProjectDescriptor(ImmutableList.of(), "", null, null);
         FormValidation result = descriptor.doCheckProjectId(jenkins, TEST_PROJECT_ID, null);
         assertNotNull(result);
@@ -166,7 +170,7 @@ public class KubernetesEngineBuilderTest {
     }
 
     @Test
-    public void testDoCheckProjectIdMessageWithAbortException() throws IOException {
+    void testDoCheckProjectIdMessageWithAbortException() throws IOException {
         DescriptorImpl descriptor = setUpProjectDescriptor(ImmutableList.of(), "", new AbortException(), null);
         FormValidation result = descriptor.doCheckProjectId(jenkins, TEST_PROJECT_ID, TEST_CREDENTIALS_ID);
         assertNotNull(result);
@@ -174,7 +178,7 @@ public class KubernetesEngineBuilderTest {
     }
 
     @Test
-    public void testDoCheckProjectIdMessageWithIOException() throws IOException {
+    void testDoCheckProjectIdMessageWithIOException() throws IOException {
         DescriptorImpl descriptor = setUpProjectDescriptor(ImmutableList.of(), "", null, new IOException());
         FormValidation result = descriptor.doCheckProjectId(jenkins, TEST_PROJECT_ID, TEST_CREDENTIALS_ID);
         assertNotNull(result);
@@ -182,7 +186,7 @@ public class KubernetesEngineBuilderTest {
     }
 
     @Test
-    public void testDoCheckProjectIdMessageWithAbortExceptionAndEmptyProjectId() throws IOException {
+    void testDoCheckProjectIdMessageWithAbortExceptionAndEmptyProjectId() throws IOException {
         DescriptorImpl descriptor = setUpProjectDescriptor(ImmutableList.of(), "", new AbortException(), null);
         FormValidation result = descriptor.doCheckProjectId(jenkins, null, TEST_CREDENTIALS_ID);
         assertNotNull(result);
@@ -190,7 +194,7 @@ public class KubernetesEngineBuilderTest {
     }
 
     @Test
-    public void testDoCheckProjectIdMessageWithIOExceptionAndEmptyProjectId() throws IOException {
+    void testDoCheckProjectIdMessageWithIOExceptionAndEmptyProjectId() throws IOException {
         DescriptorImpl descriptor = setUpProjectDescriptor(ImmutableList.of(), "", null, new IOException());
         FormValidation result = descriptor.doCheckProjectId(jenkins, null, TEST_CREDENTIALS_ID);
         assertNotNull(result);
@@ -198,7 +202,7 @@ public class KubernetesEngineBuilderTest {
     }
 
     @Test
-    public void testDoCheckProjectIdMessageWithNoProjects() throws IOException {
+    void testDoCheckProjectIdMessageWithNoProjects() throws IOException {
         DescriptorImpl descriptor = setUpProjectDescriptor(ImmutableList.of(), "", null, null);
         FormValidation result = descriptor.doCheckProjectId(jenkins, TEST_PROJECT_ID, TEST_CREDENTIALS_ID);
         assertNotNull(result);
@@ -206,7 +210,7 @@ public class KubernetesEngineBuilderTest {
     }
 
     @Test
-    public void testDoCheckProjectIdMessageWithWrongProjects() throws IOException {
+    void testDoCheckProjectIdMessageWithWrongProjects() throws IOException {
         DescriptorImpl descriptor = setUpProjectDescriptor(ImmutableList.of(OTHER_PROJECT_ID), "", null, null);
         FormValidation result = descriptor.doCheckProjectId(jenkins, TEST_PROJECT_ID, TEST_CREDENTIALS_ID);
         assertNotNull(result);
@@ -214,7 +218,7 @@ public class KubernetesEngineBuilderTest {
     }
 
     @Test
-    public void testDoCheckProjectIdMessageWithValidProject() throws IOException {
+    void testDoCheckProjectIdMessageWithValidProject() throws IOException {
         DescriptorImpl descriptor =
                 setUpProjectDescriptor(ImmutableList.of(OTHER_PROJECT_ID, TEST_PROJECT_ID), "", null, null);
         FormValidation result = descriptor.doCheckProjectId(jenkins, TEST_PROJECT_ID, TEST_CREDENTIALS_ID);
@@ -223,7 +227,7 @@ public class KubernetesEngineBuilderTest {
     }
 
     @Test
-    public void testDoCheckVerifyTimeoutInMinutesNAN() {
+    void testDoCheckVerifyTimeoutInMinutesNAN() {
         DescriptorImpl descriptor = Mockito.spy(DescriptorImpl.class);
         FormValidation result = descriptor.doCheckVerifyTimeoutInMinutes("abc");
         assertNotNull(result);
@@ -231,7 +235,7 @@ public class KubernetesEngineBuilderTest {
     }
 
     @Test
-    public void testDoCheckVerifyTimeoutInMinutesZero() {
+    void testDoCheckVerifyTimeoutInMinutesZero() {
         DescriptorImpl descriptor = Mockito.spy(DescriptorImpl.class);
         FormValidation result = descriptor.doCheckVerifyTimeoutInMinutes("0");
         assertNotNull(result);
@@ -239,7 +243,7 @@ public class KubernetesEngineBuilderTest {
     }
 
     @Test
-    public void testDoCheckVerifyTimeoutInMinutesEmpty() {
+    void testDoCheckVerifyTimeoutInMinutesEmpty() {
         DescriptorImpl descriptor = Mockito.spy(DescriptorImpl.class);
         FormValidation result = descriptor.doCheckVerifyTimeoutInMinutes("");
         assertNotNull(result);

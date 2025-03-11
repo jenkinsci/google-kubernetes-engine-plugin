@@ -24,8 +24,8 @@ import static com.google.jenkins.plugins.k8sengine.KubernetesEngineBuilderTest.T
 import static com.google.jenkins.plugins.k8sengine.KubernetesEngineBuilderTest.assertListBoxModelEquals;
 import static com.google.jenkins.plugins.k8sengine.KubernetesEngineBuilderTest.assertValueSelected;
 import static com.google.jenkins.plugins.k8sengine.KubernetesEngineBuilderTest.initExpected;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 
@@ -41,23 +41,24 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import jenkins.model.Jenkins;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
-public class KubernetesEngineBuilderClusterTest {
+class KubernetesEngineBuilderClusterTest {
+
     private static final String TEST_CLUSTER = "testCluster (us-west1-a)";
     private static final String OTHER_CLUSTER = "otherCluster (us-east1-b)";
 
     private static Jenkins jenkins;
 
-    @BeforeClass
-    public static void init() {
+    @BeforeAll
+    static void init() {
         jenkins = Mockito.mock(Jenkins.class);
     }
 
     @Test
-    public void testDoFillClusterItemsEmptyWithEmptyCredentialsId() throws IOException {
+    void testDoFillClusterItemsEmptyWithEmptyCredentialsId() throws IOException {
         DescriptorImpl descriptor = setUpClusterDescriptor(ImmutableList.of(), null, null);
         ListBoxModel expected = initExpected(ImmutableList.of(EMPTY_NAME), ImmutableList.of(EMPTY_VALUE));
         ListBoxModel result = descriptor.doFillClusterItems(jenkins, null, null, TEST_PROJECT_ID);
@@ -66,7 +67,7 @@ public class KubernetesEngineBuilderClusterTest {
     }
 
     @Test
-    public void testDoFillClusterItemsEmptyWithEmptyProjectId() throws IOException {
+    void testDoFillClusterItemsEmptyWithEmptyProjectId() throws IOException {
         DescriptorImpl descriptor = setUpClusterDescriptor(ImmutableList.of(), null, null);
         ListBoxModel expected = initExpected(ImmutableList.of(EMPTY_NAME), ImmutableList.of(EMPTY_VALUE));
         ListBoxModel result = descriptor.doFillClusterItems(jenkins, null, TEST_CREDENTIALS_ID, null);
@@ -75,7 +76,7 @@ public class KubernetesEngineBuilderClusterTest {
     }
 
     @Test
-    public void testDoFillClusterItemsErrorMessageWithAbortException() throws IOException {
+    void testDoFillClusterItemsErrorMessageWithAbortException() throws IOException {
         DescriptorImpl descriptor = setUpClusterDescriptor(ImmutableList.of(), new AbortException(), null);
         ListBoxModel expected = initExpected(
                 ImmutableList.of(Messages.KubernetesEngineBuilder_CredentialAuthFailed()),
@@ -86,7 +87,7 @@ public class KubernetesEngineBuilderClusterTest {
     }
 
     @Test
-    public void testDoFillClusterItemsWithIOException() throws IOException {
+    void testDoFillClusterItemsWithIOException() throws IOException {
         DescriptorImpl descriptor = setUpClusterDescriptor(ImmutableList.of(), null, new IOException());
         ListBoxModel expected = initExpected(
                 ImmutableList.of(Messages.KubernetesEngineBuilder_ClusterFillError()), ImmutableList.of(EMPTY_VALUE));
@@ -96,7 +97,7 @@ public class KubernetesEngineBuilderClusterTest {
     }
 
     @Test
-    public void testDoFillClusterItemsWithInvalidCluster() throws IOException {
+    void testDoFillClusterItemsWithInvalidCluster() throws IOException {
         DescriptorImpl descriptor = setUpClusterDescriptor(ImmutableList.of(TEST_CLUSTER), null, null);
         ListBoxModel expected =
                 initExpected(ImmutableList.of(EMPTY_NAME, TEST_CLUSTER), ImmutableList.of(EMPTY_VALUE, TEST_CLUSTER));
@@ -107,7 +108,7 @@ public class KubernetesEngineBuilderClusterTest {
     }
 
     @Test
-    public void testDoFillClusterItemsEmptyWithValidInputsNoClusters() throws IOException {
+    void testDoFillClusterItemsEmptyWithValidInputsNoClusters() throws IOException {
         DescriptorImpl descriptor = setUpClusterDescriptor(ImmutableList.of(), null, null);
         ListBoxModel expected = initExpected(ImmutableList.of(EMPTY_NAME), ImmutableList.of(EMPTY_VALUE));
         ListBoxModel result = descriptor.doFillClusterItems(jenkins, null, TEST_CREDENTIALS_ID, OTHER_PROJECT_ID);
@@ -116,7 +117,7 @@ public class KubernetesEngineBuilderClusterTest {
     }
 
     @Test
-    public void testDoFillClusterItemsWithValidInputsOneCluster() throws IOException {
+    void testDoFillClusterItemsWithValidInputsOneCluster() throws IOException {
         DescriptorImpl descriptor = setUpClusterDescriptor(ImmutableList.of(TEST_CLUSTER), null, null);
         ListBoxModel expected =
                 initExpected(ImmutableList.of(EMPTY_NAME, TEST_CLUSTER), ImmutableList.of(EMPTY_VALUE, TEST_CLUSTER));
@@ -127,7 +128,7 @@ public class KubernetesEngineBuilderClusterTest {
     }
 
     @Test
-    public void testDoFillClusterItemsWithValidInputsMultipleClusters() throws IOException {
+    void testDoFillClusterItemsWithValidInputsMultipleClusters() throws IOException {
         DescriptorImpl descriptor = setUpClusterDescriptor(ImmutableList.of(OTHER_CLUSTER, TEST_CLUSTER), null, null);
         ListBoxModel expected = initExpected(
                 ImmutableList.of(EMPTY_NAME, OTHER_CLUSTER, TEST_CLUSTER),
@@ -139,7 +140,7 @@ public class KubernetesEngineBuilderClusterTest {
     }
 
     @Test
-    public void testDoFillClusterItemsWithValidInputsMultipleClustersAndPreviousValue() throws IOException {
+    void testDoFillClusterItemsWithValidInputsMultipleClustersAndPreviousValue() throws IOException {
         DescriptorImpl descriptor = setUpClusterDescriptor(ImmutableList.of(OTHER_CLUSTER, TEST_CLUSTER), null, null);
         ListBoxModel expected = initExpected(
                 ImmutableList.of(EMPTY_NAME, OTHER_CLUSTER, TEST_CLUSTER),
@@ -152,7 +153,7 @@ public class KubernetesEngineBuilderClusterTest {
     }
 
     @Test
-    public void testDoCheckClusterMessageWithEmptyCluster() throws IOException {
+    void testDoCheckClusterMessageWithEmptyCluster() throws IOException {
         DescriptorImpl descriptor = setUpClusterDescriptor(ImmutableList.of(), null, null);
         FormValidation result = descriptor.doCheckCluster(jenkins, null, TEST_CREDENTIALS_ID, TEST_PROJECT_ID);
         assertNotNull(result);
@@ -160,7 +161,7 @@ public class KubernetesEngineBuilderClusterTest {
     }
 
     @Test
-    public void testDoCheckClusterMessageWithEmptyCredentialsId() throws IOException {
+    void testDoCheckClusterMessageWithEmptyCredentialsId() throws IOException {
         DescriptorImpl descriptor = setUpClusterDescriptor(ImmutableList.of(), null, null);
         FormValidation result = descriptor.doCheckCluster(jenkins, TEST_CLUSTER, null, TEST_PROJECT_ID);
         assertNotNull(result);
@@ -168,7 +169,7 @@ public class KubernetesEngineBuilderClusterTest {
     }
 
     @Test
-    public void testDoCheckClusterMessageWithEmptyProjectId() throws IOException {
+    void testDoCheckClusterMessageWithEmptyProjectId() throws IOException {
         DescriptorImpl descriptor = setUpClusterDescriptor(ImmutableList.of(), null, null);
         FormValidation result = descriptor.doCheckCluster(jenkins, TEST_CLUSTER, TEST_CREDENTIALS_ID, null);
         assertNotNull(result);
@@ -176,7 +177,7 @@ public class KubernetesEngineBuilderClusterTest {
     }
 
     @Test
-    public void testDoCheckClusterMessageWithValidInputsNoClusters() throws IOException {
+    void testDoCheckClusterMessageWithValidInputsNoClusters() throws IOException {
         DescriptorImpl descriptor = setUpClusterDescriptor(ImmutableList.of(), null, null);
         FormValidation result = descriptor.doCheckCluster(jenkins, TEST_CLUSTER, TEST_CREDENTIALS_ID, TEST_PROJECT_ID);
         assertNotNull(result);
@@ -184,7 +185,7 @@ public class KubernetesEngineBuilderClusterTest {
     }
 
     @Test
-    public void testDoCheckClusterOkWithValidInputs() throws IOException {
+    void testDoCheckClusterOkWithValidInputs() throws IOException {
         DescriptorImpl descriptor = setUpClusterDescriptor(ImmutableList.of(OTHER_CLUSTER, TEST_CLUSTER), null, null);
         FormValidation result = descriptor.doCheckCluster(jenkins, TEST_CLUSTER, TEST_CREDENTIALS_ID, TEST_PROJECT_ID);
         assertNotNull(result);
@@ -192,7 +193,7 @@ public class KubernetesEngineBuilderClusterTest {
     }
 
     @Test
-    public void testDoCheckClusterMessageWithAbortException() throws IOException {
+    void testDoCheckClusterMessageWithAbortException() throws IOException {
         DescriptorImpl descriptor = setUpClusterDescriptor(ImmutableList.of(), new AbortException(), null);
         FormValidation result = descriptor.doCheckCluster(jenkins, TEST_CLUSTER, TEST_CREDENTIALS_ID, TEST_PROJECT_ID);
         assertNotNull(result);
@@ -200,7 +201,7 @@ public class KubernetesEngineBuilderClusterTest {
     }
 
     @Test
-    public void testDoCheckClusterMessageWithIOException() throws IOException {
+    void testDoCheckClusterMessageWithIOException() throws IOException {
         DescriptorImpl descriptor = setUpClusterDescriptor(ImmutableList.of(), null, new IOException());
         FormValidation result = descriptor.doCheckCluster(jenkins, TEST_CLUSTER, TEST_CREDENTIALS_ID, TEST_PROJECT_ID);
         assertNotNull(result);
@@ -208,7 +209,7 @@ public class KubernetesEngineBuilderClusterTest {
     }
 
     @Test
-    public void testDoCheckClusterMessageWithAbortExceptionAndEmptyCluster() throws IOException {
+    void testDoCheckClusterMessageWithAbortExceptionAndEmptyCluster() throws IOException {
         DescriptorImpl descriptor = setUpClusterDescriptor(ImmutableList.of(), new AbortException(), null);
         FormValidation result = descriptor.doCheckCluster(jenkins, null, TEST_CREDENTIALS_ID, TEST_PROJECT_ID);
         assertNotNull(result);
@@ -216,7 +217,7 @@ public class KubernetesEngineBuilderClusterTest {
     }
 
     @Test
-    public void testDoCheckClusterMessageWithIOExceptionAndEmptyCluster() throws IOException {
+    void testDoCheckClusterMessageWithIOExceptionAndEmptyCluster() throws IOException {
         DescriptorImpl descriptor = setUpClusterDescriptor(ImmutableList.of(), null, new IOException());
         FormValidation result = descriptor.doCheckCluster(jenkins, null, TEST_CREDENTIALS_ID, TEST_PROJECT_ID);
         assertNotNull(result);
