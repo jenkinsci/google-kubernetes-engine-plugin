@@ -46,10 +46,9 @@ public class KubernetesVerifiersTest {
         Integer availableReplicas = JsonPath.read(goodDeploymentOutput, "status.availableReplicas");
         Integer updatedReplicas = JsonPath.read(goodDeploymentOutput, "status.updatedReplicas");
         Integer desiredReplicas = JsonPath.read(goodDeploymentOutput, "spec.replicas");
-        String shouldBeInLog =
-                String.format(
-                        "AvailableReplicas = %s, UpdatedReplicas = %s, DesiredReplicas = %s",
-                        availableReplicas, updatedReplicas, desiredReplicas);
+        String shouldBeInLog = String.format(
+                "AvailableReplicas = %s, UpdatedReplicas = %s, DesiredReplicas = %s",
+                availableReplicas, updatedReplicas, desiredReplicas);
         String verificationLog = result.toString();
         assertTrue(verificationLog.contains(shouldBeInLog));
     }
@@ -71,10 +70,9 @@ public class KubernetesVerifiersTest {
         Integer desiredReplicas = JsonPath.read(badDeploymentOutput, "spec.replicas");
         Integer updatedReplicas = JsonPath.read(badDeploymentOutput, "status.updatedReplicas");
         Integer availableReplicas = 0;
-        String shouldBeInLog =
-                String.format(
-                        "AvailableReplicas = %s, UpdatedReplicas = %s, DesiredReplicas = %s",
-                        availableReplicas, updatedReplicas, desiredReplicas);
+        String shouldBeInLog = String.format(
+                "AvailableReplicas = %s, UpdatedReplicas = %s, DesiredReplicas = %s",
+                availableReplicas, updatedReplicas, desiredReplicas);
         String verificationLog = result.toString();
         assertTrue(verificationLog.contains(shouldBeInLog));
     }
