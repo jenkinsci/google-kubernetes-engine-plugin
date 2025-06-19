@@ -137,9 +137,11 @@ public class KubernetesVerifiers {
      * available replicas (status.availableReplicas).
      */
     private static class DeploymentVerifier implements Verifier {
-        private static final String AVAILABLE_REPLICAS = "availableReplicas";
-        private static final String MINIMUM_REPLICAS_JSONPATH = "spec.replicas";
         private static final String STATUS_JSONPATH = "status";
+        private static final String AVAILABLE_REPLICAS = "availableReplicas";
+        private static final String UPDATED_REPLICAS = "updatedReplicas";
+        private static final String REPLICAS = "replicas";
+        private static final String DESIRED_REPLICAS_JSONPATH = "spec.replicas";
 
         /**
          * Verifies that the deployment was applied to the GKE cluster.
@@ -162,18 +164,24 @@ public class KubernetesVerifiers {
                 return errorResult(e, object);
             }
 
-            Integer minReplicas = JsonPath.read(json, MINIMUM_REPLICAS_JSONPATH);
+            Integer desiredReplicas = JsonPath.read(json, DESIRED_REPLICAS_JSONPATH);
             Map<String, Object> status = JsonPath.read(json, STATUS_JSONPATH);
             Integer availableReplicas = (Integer) status.getOrDefault(AVAILABLE_REPLICAS, 0);
-            boolean verified = minReplicas != null
-                    && availableReplicas != null
-                    && minReplicas.intValue() <= availableReplicas.intValue();
+            Integer updatedReplicas = (Integer) status.getOrDefault(UPDATED_REPLICAS, 0);
+            Integer replicas = (Integer) status.getOrDefault(REPLICAS, 0);
+            boolean verified = desiredReplicas != null
+                    && updatedReplicas.intValue() >= desiredReplicas.intValue()
+                    && replicas.intValue() <= updatedReplicas.intValue()
+                    && availableReplicas.intValue() == updatedReplicas.intValue();
 
             log.append("AvailableReplicas = ")
                     .append(availableReplicas)
                     .append(",")
-                    .append(" MinimumReplicas = ")
-                    .append(minReplicas)
+                    .append(" UpdatedReplicas = ")
+                    .append(updatedReplicas)
+                    .append(",")
+                    .append(" DesiredReplicas = ")
+                    .append(desiredReplicas)
                     .append("\n");
 
             return new VerificationResult(log.toString(), verified, object);

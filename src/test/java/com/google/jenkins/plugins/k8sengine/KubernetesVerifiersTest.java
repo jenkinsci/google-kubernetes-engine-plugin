@@ -44,9 +44,11 @@ public class KubernetesVerifiersTest {
         KubernetesVerifiers.VerificationResult result = KubernetesVerifiers.verify(kubectl, goodDeployment);
         assertTrue(result.isVerified());
         Integer availableReplicas = JsonPath.read(goodDeploymentOutput, "status.availableReplicas");
-        Integer minimumReplicas = JsonPath.read(goodDeploymentOutput, "spec.replicas");
-        String shouldBeInLog =
-                String.format("AvailableReplicas = %s, MinimumReplicas = %s", availableReplicas, minimumReplicas);
+        Integer updatedReplicas = JsonPath.read(goodDeploymentOutput, "status.updatedReplicas");
+        Integer desiredReplicas = JsonPath.read(goodDeploymentOutput, "spec.replicas");
+        String shouldBeInLog = String.format(
+                "AvailableReplicas = %s, UpdatedReplicas = %s, DesiredReplicas = %s",
+                availableReplicas, updatedReplicas, desiredReplicas);
         String verificationLog = result.toString();
         assertTrue(verificationLog.contains(shouldBeInLog));
     }
@@ -65,10 +67,12 @@ public class KubernetesVerifiersTest {
         KubernetesVerifiers.VerificationResult result = KubernetesVerifiers.verify(kubectl, badDeployment);
         assertFalse(result.isVerified());
 
-        Integer minimumReplicas = JsonPath.read(badDeploymentOutput, "spec.replicas");
+        Integer desiredReplicas = JsonPath.read(badDeploymentOutput, "spec.replicas");
+        Integer updatedReplicas = JsonPath.read(badDeploymentOutput, "status.updatedReplicas");
         Integer availableReplicas = 0;
-        String shouldBeInLog =
-                String.format("AvailableReplicas = %s, MinimumReplicas = %s", availableReplicas, minimumReplicas);
+        String shouldBeInLog = String.format(
+                "AvailableReplicas = %s, UpdatedReplicas = %s, DesiredReplicas = %s",
+                availableReplicas, updatedReplicas, desiredReplicas);
         String verificationLog = result.toString();
         assertTrue(verificationLog.contains(shouldBeInLog));
     }
