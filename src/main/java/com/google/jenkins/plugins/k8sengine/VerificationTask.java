@@ -113,7 +113,7 @@ public class VerificationTask {
                 .apply((Publisher<VerificationTask>) Flux.fromIterable(verificationTasks))
                 .filter((task) -> !task.isVerified()) // Don't try to verify objects that are already verified
                 .map((task) -> task.verify())
-                .subscribeOn(Schedulers.elastic()) // parallelize the verification
+                .subscribeOn(Schedulers.boundedElastic()) // parallelize the verification
                 .doOnError((error) -> {
                     LOGGER.log(Level.SEVERE, "Unexpected error in verifyObjects()", error);
                     error.printStackTrace(consoleLogger); // report error
