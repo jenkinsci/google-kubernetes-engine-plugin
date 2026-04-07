@@ -16,76 +16,98 @@
 
 package com.google.jenkins.plugins.k8sengine.client;
 
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
 import com.google.common.collect.ImmutableList;
 import hudson.AbortException;
 import java.util.Optional;
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.jvnet.hudson.test.JenkinsRule;
+import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
 
 /** Test suite for {@link ClientUtil}. */
-public class ClientUtilTest {
-
-    @ClassRule
-    public static JenkinsRule jenkinsRule = new JenkinsRule();
+@WithJenkins
+class ClientUtilTest {
 
     private static final String TEST_CREDENTIALS_ID = "test-project";
 
-    @Test(expected = NullPointerException.class)
-    public void testGetClientFactoryNullJenkins() throws AbortException {
-        ClientUtil.getClientFactory(null, ImmutableList.of(), TEST_CREDENTIALS_ID, Optional.empty());
+    private static JenkinsRule jenkinsRule;
+
+    @BeforeAll
+    static void init(JenkinsRule rule) {
+        jenkinsRule = rule;
     }
 
-    @Test(expected = NullPointerException.class)
-    public void testGetClientFactoryShortNullJenkins() throws AbortException {
-        ClientUtil.getClientFactory(null, TEST_CREDENTIALS_ID);
+    @Test
+    void testGetClientFactoryNullJenkins() {
+        assertThrows(
+                NullPointerException.class,
+                () -> ClientUtil.getClientFactory(null, ImmutableList.of(), TEST_CREDENTIALS_ID, Optional.empty()));
     }
 
-    @Test(expected = NullPointerException.class)
-    public void testGetClientFactoryNullDomainRequirements() throws AbortException {
-        ClientUtil.getClientFactory(jenkinsRule.jenkins, null, TEST_CREDENTIALS_ID, Optional.empty());
+    @Test
+    void testGetClientFactoryShortNullJenkins() {
+        assertThrows(NullPointerException.class, () -> ClientUtil.getClientFactory(null, TEST_CREDENTIALS_ID));
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void testGetClientFactoryNullCredentialsId() throws AbortException {
-        ClientUtil.getClientFactory(jenkinsRule.jenkins, ImmutableList.of(), null, Optional.empty());
+    @Test
+    void testGetClientFactoryNullDomainRequirements() {
+        assertThrows(
+                NullPointerException.class,
+                () -> ClientUtil.getClientFactory(jenkinsRule.jenkins, null, TEST_CREDENTIALS_ID, Optional.empty()));
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void testGetClientFactoryShortNullCredentialsId() throws AbortException {
-        ClientUtil.getClientFactory(jenkinsRule.jenkins, null);
+    @Test
+    void testGetClientFactoryNullCredentialsId() {
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> ClientUtil.getClientFactory(jenkinsRule.jenkins, ImmutableList.of(), null, Optional.empty()));
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void testGetClientFactoryEmptyCredentialsId() throws AbortException {
-        ClientUtil.getClientFactory(jenkinsRule.jenkins, ImmutableList.of(), "", Optional.empty());
+    @Test
+    void testGetClientFactoryShortNullCredentialsId() {
+        assertThrows(IllegalArgumentException.class, () -> ClientUtil.getClientFactory(jenkinsRule.jenkins, null));
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void testGetClientFactoryShortEmptyCredentialsId() throws AbortException {
-        ClientUtil.getClientFactory(jenkinsRule.jenkins, "");
+    @Test
+    void testGetClientFactoryEmptyCredentialsId() {
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> ClientUtil.getClientFactory(jenkinsRule.jenkins, ImmutableList.of(), "", Optional.empty()));
     }
 
-    @Test(expected = NullPointerException.class)
-    public void testGetClientFactoryFailsWithInvalidCredentialsId() throws Throwable {
-        try {
-            ClientUtil.getClientFactory(jenkinsRule.jenkins, ImmutableList.of(), "fake", Optional.empty());
-        } catch (AbortException e) {
-            throw e.getCause();
-        }
+    @Test
+    void testGetClientFactoryShortEmptyCredentialsId() {
+        assertThrows(IllegalArgumentException.class, () -> ClientUtil.getClientFactory(jenkinsRule.jenkins, ""));
     }
 
-    @Test(expected = NullPointerException.class)
-    public void testGetClientFactoryShortFailsWithInvalidCredentialsId() throws Throwable {
-        try {
-            ClientUtil.getClientFactory(jenkinsRule.jenkins, "fake");
-        } catch (AbortException e) {
-            throw e.getCause();
-        }
+    @Test
+    void testGetClientFactoryFailsWithInvalidCredentialsId() {
+        assertThrows(NullPointerException.class, () -> {
+            try {
+                ClientUtil.getClientFactory(jenkinsRule.jenkins, ImmutableList.of(), "fake", Optional.empty());
+            } catch (AbortException e) {
+                throw e.getCause();
+            }
+        });
     }
 
-    @Test(expected = NullPointerException.class)
-    public void testGetClientFactoryTransportNull() throws AbortException {
-        ClientUtil.getClientFactory(jenkinsRule.jenkins, ImmutableList.of(), TEST_CREDENTIALS_ID, null);
+    @Test
+    void testGetClientFactoryShortFailsWithInvalidCredentialsId() {
+        assertThrows(NullPointerException.class, () -> {
+            try {
+                ClientUtil.getClientFactory(jenkinsRule.jenkins, "fake");
+            } catch (AbortException e) {
+                throw e.getCause();
+            }
+        });
+    }
+
+    @Test
+    void testGetClientFactoryTransportNull() {
+        assertThrows(
+                NullPointerException.class,
+                () -> ClientUtil.getClientFactory(jenkinsRule.jenkins, ImmutableList.of(), TEST_CREDENTIALS_ID, null));
     }
 }

@@ -16,7 +16,7 @@
 
 package com.google.jenkins.plugins.k8sengine;
 
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import com.cloudbees.plugins.credentials.SecretBytes;
 import com.google.common.io.ByteStreams;
@@ -29,9 +29,9 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.UUID;
 import java.util.logging.Logger;
-import org.junit.rules.TemporaryFolder;
 
 /** Provides a library of utility functions for integration tests. */
 public class ITUtil {
@@ -50,13 +50,12 @@ public class ITUtil {
      * specified {@link Project}.
      *
      * @param testProject The {@link Project} the test workspace for.
-     * @return The {@link TemporaryFolder} serving as the test workspace.
+     * @return The {@link File} serving as the test workspace.
      * @throws IOException If an error occurred while creating the test workspace.
      */
-    static TemporaryFolder createTestWorkspace(Project testProject) throws IOException {
-        TemporaryFolder testWorkspace = new TemporaryFolder();
-        testWorkspace.create();
-        testProject.setCustomWorkspace(testWorkspace.getRoot().toString());
+    static File createTestWorkspace(Project testProject) throws IOException {
+        File testWorkspace = Files.createTempDirectory(testProject.getName()).toFile();
+        testProject.setCustomWorkspace(testWorkspace.toString());
         return testWorkspace;
     }
 
@@ -69,7 +68,7 @@ public class ITUtil {
      * @throws IOException If an error occurred while copying test file.
      * @throws InterruptedException If an error occurred while copying test file.
      */
-    static void copyTestFileToDir(Class testClass, String toDir, String testFile)
+    static void copyTestFileToDir(Class<?> testClass, String toDir, String testFile)
             throws IOException, InterruptedException {
         FilePath dirPath = new FilePath(new File(toDir));
         String testFileContents = loadResource(testClass, testFile);
@@ -85,7 +84,7 @@ public class ITUtil {
      * @return The contents of the loaded resource.
      * @throws IOException If an error occurred during loading.
      */
-    static String loadResource(Class testClass, String name) throws IOException {
+    static String loadResource(Class<?> testClass, String name) throws IOException {
         return new String(ByteStreams.toByteArray(testClass.getResourceAsStream(name)));
     }
 
@@ -114,7 +113,7 @@ public class ITUtil {
         if (location == null) {
             location = System.getenv("GOOGLE_PROJECT_ZONE");
         }
-        assertNotNull("GOOGLE_PROJECT_LOCATION env var must be set", location);
+        assertNotNull(location, "GOOGLE_PROJECT_LOCATION env var must be set");
         return location;
     }
 
@@ -126,7 +125,7 @@ public class ITUtil {
      */
     public static ServiceAccountConfig getServiceAccountConfig() {
         String serviceAccountKeyJson = System.getenv("GOOGLE_CREDENTIALS");
-        assertNotNull("GOOGLE_CREDENTIALS env var must be set", serviceAccountKeyJson);
+        assertNotNull(serviceAccountKeyJson, "GOOGLE_CREDENTIALS env var must be set");
         SecretBytes bytes = SecretBytes.fromBytes(serviceAccountKeyJson.getBytes(StandardCharsets.UTF_8));
         JsonServiceAccountConfig config = new JsonServiceAccountConfig();
         config.setSecretJsonKey(bytes);

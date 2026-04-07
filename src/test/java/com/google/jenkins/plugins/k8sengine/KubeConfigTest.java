@@ -14,14 +14,13 @@
 
 package com.google.jenkins.plugins.k8sengine;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.google.api.services.container.model.Cluster;
 import com.google.api.services.container.model.MasterAuth;
 import java.io.BufferedReader;
-import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringReader;
 import java.io.StringWriter;
@@ -32,35 +31,36 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.yaml.snakeyaml.LoaderOptions;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.SafeConstructor;
 
 /** Tests {@link KubeConfig}. */
-@RunWith(MockitoJUnitRunner.class)
-public class KubeConfigTest {
+@ExtendWith(MockitoExtension.class)
+class KubeConfigTest {
+
     @Test
-    public void testContextStringReturnsProperly() {
+    void testContextStringReturnsProperly() {
         String result = KubeConfig.contextString("testProject", "us-central1-c", "testCluster");
         assertNotNull(result);
-        assertEquals(result, "gke_testProject_us-central1-c_testCluster");
+        assertEquals("gke_testProject_us-central1-c_testCluster", result);
     }
 
     @Test
-    public void testClusterServerReturnsProperly() {
+    void testClusterServerReturnsProperly() {
         Cluster cluster = Mockito.mock(Cluster.class);
         Mockito.when(cluster.getEndpoint()).thenReturn("testEndpoint");
         String result = KubeConfig.clusterServer(cluster);
         assertNotNull(result);
-        assertEquals(result, "https://testEndpoint");
+        assertEquals("https://testEndpoint", result);
     }
 
     @Test
-    public void testFromClusterReturnsProperly() throws Exception {
+    void testFromClusterReturnsProperly() {
         Cluster cluster = Mockito.mock(Cluster.class);
         Mockito.when(cluster.getEndpoint()).thenReturn("testEndpoint");
         Mockito.when(cluster.getLocation()).thenReturn("us-central1-c");
@@ -76,16 +76,16 @@ public class KubeConfigTest {
         assertNotNull(currentContext);
         assertEquals(currentContext, KubeConfig.contextString("testProject", "us-central1-c", "testCluster"));
         assertNotNull(result.getUsers());
-        assertEquals(result.getUsers().size(), 1);
+        assertEquals(1, result.getUsers().size());
         assertNotNull(result.getContexts());
-        assertEquals(result.getContexts().size(), 1);
+        assertEquals(1, result.getContexts().size());
         assertNotNull(result.getClusters());
-        assertEquals(result.getClusters().size(), 1);
+        assertEquals(1, result.getClusters().size());
         // NOTE: The verification of the contents happens in the toYaml test
     }
 
     @Test
-    public void testToYamlReturnsProperly() throws Exception {
+    void testToYamlReturnsProperly() throws Exception {
         Cluster cluster = Mockito.mock(Cluster.class);
         Mockito.when(cluster.getEndpoint()).thenReturn("testEndpoint");
         Mockito.when(cluster.getLocation()).thenReturn("us-central1-c");
@@ -106,7 +106,7 @@ public class KubeConfigTest {
         assertTrue(yamlEquals(expected, result));
     }
 
-    private static boolean yamlEquals(String expectedYaml, String testYaml) throws IOException {
+    private static boolean yamlEquals(String expectedYaml, String testYaml) {
         Yaml yaml = new Yaml(new SafeConstructor(new LoaderOptions()));
         Map<String, Object> testConfig = yaml.load(new BufferedReader(new StringReader(testYaml)));
         Map<String, Object> expectedConfig = yaml.load(new BufferedReader(new StringReader(expectedYaml)));

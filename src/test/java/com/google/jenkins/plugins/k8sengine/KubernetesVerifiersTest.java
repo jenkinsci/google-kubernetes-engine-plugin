@@ -14,8 +14,8 @@
 
 package com.google.jenkins.plugins.k8sengine;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.google.common.io.Resources;
 import com.jayway.jsonpath.Configuration;
@@ -23,23 +23,24 @@ import com.jayway.jsonpath.JsonPath;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Optional;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 /** Tests {@link com.google.jenkins.plugins.k8sengine.KubernetesVerifiers} */
-public class KubernetesVerifiersTest {
+class KubernetesVerifiersTest {
+
     private static final String VERIFIABLE_DEPLOYMENT_OUTPUT = "verifiableDeploymentOutput.json";
     private static final String UNVERIFIABLE_DEPLOYMENT_OUTPUT = "unverifiableDeploymentOutput.json";
 
     @Test
-    public void testGoodDeploymentVerified() throws Exception {
+    void testGoodDeploymentVerified() throws Exception {
         Object goodDeploymentOutput = readTestFile(VERIFIABLE_DEPLOYMENT_OUTPUT);
         KubectlWrapper kubectl = Mockito.mock(KubectlWrapper.class);
         Mockito.when(kubectl.getObject("deployment", "nginx-deployment")).thenReturn(goodDeploymentOutput);
 
         Manifests.ManifestObject goodDeployment = Mockito.mock(Manifests.ManifestObject.class);
         Mockito.when(goodDeployment.getKind()).thenReturn("deployment");
-        Mockito.when(goodDeployment.getName()).thenReturn(Optional.<String>of("nginx-deployment"));
+        Mockito.when(goodDeployment.getName()).thenReturn(Optional.of("nginx-deployment"));
         Mockito.when(goodDeployment.getApiVersion()).thenReturn("apps/v1");
         KubernetesVerifiers.VerificationResult result = KubernetesVerifiers.verify(kubectl, goodDeployment);
         assertTrue(result.isVerified());
@@ -54,7 +55,7 @@ public class KubernetesVerifiersTest {
     }
 
     @Test
-    public void testBadDeploymentNotVerified() throws Exception {
+    void testBadDeploymentNotVerified() throws Exception {
         Object badDeploymentOutput = readTestFile(UNVERIFIABLE_DEPLOYMENT_OUTPUT);
         KubectlWrapper kubectl = Mockito.mock(KubectlWrapper.class);
         Mockito.when(kubectl.getObject("deployment", "nginx-deployment-unverifiable"))
@@ -62,7 +63,7 @@ public class KubernetesVerifiersTest {
 
         Manifests.ManifestObject badDeployment = Mockito.mock(Manifests.ManifestObject.class);
         Mockito.when(badDeployment.getKind()).thenReturn("deployment");
-        Mockito.when(badDeployment.getName()).thenReturn(Optional.<String>of("nginx-deployment-unverifiable"));
+        Mockito.when(badDeployment.getName()).thenReturn(Optional.of("nginx-deployment-unverifiable"));
         Mockito.when(badDeployment.getApiVersion()).thenReturn("apps/v1");
         KubernetesVerifiers.VerificationResult result = KubernetesVerifiers.verify(kubectl, badDeployment);
         assertFalse(result.isVerified());

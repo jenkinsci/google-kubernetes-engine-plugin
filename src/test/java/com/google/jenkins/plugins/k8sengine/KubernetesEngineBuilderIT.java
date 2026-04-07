@@ -22,8 +22,8 @@ import static com.google.jenkins.plugins.k8sengine.ITUtil.dumpLog;
 import static com.google.jenkins.plugins.k8sengine.ITUtil.formatRandomName;
 import static com.google.jenkins.plugins.k8sengine.ITUtil.getLocation;
 import static com.google.jenkins.plugins.k8sengine.ITUtil.getServiceAccountConfig;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.cloudbees.plugins.credentials.Credentials;
 import com.cloudbees.plugins.credentials.CredentialsStore;
@@ -44,20 +44,18 @@ import java.util.Map;
 import java.util.Set;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.jvnet.hudson.test.JenkinsRule;
+import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
 
 /** Tests {@link KubernetesEngineBuilder}. */
-public class KubernetesEngineBuilderIT {
+@WithJenkins
+class KubernetesEngineBuilderIT {
     private static final Logger LOGGER = Logger.getLogger(KubernetesEngineBuilderIT.class.getName());
     private static final String TEST_DEPLOYMENT_MANIFEST = "testDeployment.yml";
     private static final String TEST_DEPLOYMENT_MALFORMED_MANIFEST = "testMalformedDeployment.yml";
     private static final String TEST_DEPLOYMENT_UNVERIFIABLE_MANIFEST = "testUnverifiableDeployment.yml";
-
-    @ClassRule
-    public static JenkinsRule jenkinsRule = new JenkinsRule();
 
     private static String clusterName;
     private static String projectId;
@@ -65,17 +63,21 @@ public class KubernetesEngineBuilderIT {
     private static String credentialsId;
     private static ContainerClient client;
 
-    @BeforeClass
-    public static void init() throws Exception {
+    private static JenkinsRule jenkinsRule;
+
+    @BeforeAll
+    static void init(JenkinsRule rule) throws Exception {
         LOGGER.info("Initializing KubernetesEngineBuilderIT");
 
+        jenkinsRule = rule;
+
         projectId = System.getenv("GOOGLE_PROJECT_ID");
-        assertNotNull("GOOGLE_PROJECT_ID env var must be set", projectId);
+        assertNotNull(projectId, "GOOGLE_PROJECT_ID env var must be set");
 
         testLocation = getLocation();
 
         clusterName = System.getenv("GOOGLE_GKE_CLUSTER");
-        assertNotNull("GOOGLE_GKE_CLUSTER env var must be set", clusterName);
+        assertNotNull(clusterName, "GOOGLE_GKE_CLUSTER env var must be set");
 
         LOGGER.info("Creating credentials");
         ServiceAccountConfig sac = getServiceAccountConfig();
@@ -89,7 +91,7 @@ public class KubernetesEngineBuilderIT {
     }
 
     @Test
-    public void testServiceDeploymentSucceeds() throws Exception {
+    void testServiceDeploymentSucceeds() throws Exception {
         LOGGER.info("Testing service deployment succeeds");
         FreeStyleProject testJenkinsProject = jenkinsRule.createFreeStyleProject(formatRandomName("test"));
         createTestWorkspace(testJenkinsProject);
@@ -122,7 +124,7 @@ public class KubernetesEngineBuilderIT {
     }
 
     @Test
-    public void testWellFormedFailedDeploymentNotVerified() throws Exception {
+    void testWellFormedFailedDeploymentNotVerified() throws Exception {
         LOGGER.info("Testing well-formed unverifiable deployment fails verification");
         FreeStyleProject testJenkinsProject = jenkinsRule.createFreeStyleProject(formatRandomName("test"));
         createTestWorkspace(testJenkinsProject);
@@ -143,7 +145,7 @@ public class KubernetesEngineBuilderIT {
     }
 
     @Test
-    public void testServiceDeploymentFailsBadCluster() throws Exception {
+    void testServiceDeploymentFailsBadCluster() throws Exception {
         LOGGER.info("Testing service deployment fails bad cluster");
         FreeStyleProject testJenkinsProject = jenkinsRule.createFreeStyleProject(formatRandomName("test"));
         createTestWorkspace(testJenkinsProject);
@@ -163,7 +165,7 @@ public class KubernetesEngineBuilderIT {
     }
 
     @Test
-    public void testServiceDeploymentFailsBadProjectId() throws Exception {
+    void testServiceDeploymentFailsBadProjectId() throws Exception {
         LOGGER.info("Testing service deployment fails bad project id");
         FreeStyleProject testJenkinsProject = jenkinsRule.createFreeStyleProject(formatRandomName("test"));
         createTestWorkspace(testJenkinsProject);
@@ -183,7 +185,7 @@ public class KubernetesEngineBuilderIT {
     }
 
     @Test
-    public void testServiceDeploymentFailsBadCredentialId() throws Exception {
+    void testServiceDeploymentFailsBadCredentialId() throws Exception {
         LOGGER.info("Testing service deployment fails bad credential id");
         FreeStyleProject testJenkinsProject = jenkinsRule.createFreeStyleProject(formatRandomName("test"));
         createTestWorkspace(testJenkinsProject);
@@ -203,7 +205,7 @@ public class KubernetesEngineBuilderIT {
     }
 
     @Test
-    public void testServiceDeploymentFailsBadManifestPattern() throws Exception {
+    void testServiceDeploymentFailsBadManifestPattern() throws Exception {
         LOGGER.info("Testing service deployment fails bad manifest pattern");
         FreeStyleProject testJenkinsProject = jenkinsRule.createFreeStyleProject(formatRandomName("test"));
         createTestWorkspace(testJenkinsProject);
@@ -223,7 +225,7 @@ public class KubernetesEngineBuilderIT {
     }
 
     @Test
-    public void testServiceDeploymentFailsMalformedManifest() throws Exception {
+    void testServiceDeploymentFailsMalformedManifest() throws Exception {
         LOGGER.info("Testing service fails malformed manifest");
         FreeStyleProject testJenkinsProject = jenkinsRule.createFreeStyleProject(formatRandomName("test"));
         createTestWorkspace(testJenkinsProject);
@@ -261,7 +263,7 @@ public class KubernetesEngineBuilderIT {
                     .build();
             Set<String> objectKinds = new HashSet<>();
             Manifests manifests = Manifests.fromFile(workspace.child(gkeBuilder.getManifestPattern()));
-            manifests.getObjectManifests().stream().forEach(mo -> objectKinds.add(mo.getKind()));
+            manifests.getObjectManifests().forEach(mo -> objectKinds.add(mo.getKind()));
             for (String kind : objectKinds) {
                 kubectl.runKubectlCommand(
                         "delete",

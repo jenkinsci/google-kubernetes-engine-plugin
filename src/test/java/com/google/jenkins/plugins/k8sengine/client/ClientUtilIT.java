@@ -17,7 +17,7 @@
 package com.google.jenkins.plugins.k8sengine.client;
 
 import static com.google.jenkins.plugins.k8sengine.ITUtil.getServiceAccountConfig;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import com.cloudbees.plugins.credentials.Credentials;
 import com.cloudbees.plugins.credentials.CredentialsStore;
@@ -30,26 +30,27 @@ import com.google.jenkins.plugins.credentials.oauth.ServiceAccountConfig;
 import hudson.AbortException;
 import java.util.Optional;
 import java.util.logging.Logger;
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.jvnet.hudson.test.JenkinsRule;
+import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
 
 /** Integration tests for {@link ClientUtil}. * */
-public class ClientUtilIT {
+@WithJenkins
+class ClientUtilIT {
 
-    private static Logger LOGGER = Logger.getLogger(ClientUtilIT.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(ClientUtilIT.class.getName());
 
-    @ClassRule
-    public static JenkinsRule jenkinsRule = new JenkinsRule();
+    private static JenkinsRule jenkinsRule;
 
     private static String credentialsId;
 
-    @BeforeClass
-    public static void init() throws Exception {
+    @BeforeAll
+    static void init(JenkinsRule rule) throws Exception {
         LOGGER.info("Starting ClientUtil test.");
+        jenkinsRule = rule;
         String projectId = System.getenv("GOOGLE_PROJECT_ID");
-        assertNotNull("GOOGLE_PROJECT_ID env var must be set", projectId);
+        assertNotNull(projectId, "GOOGLE_PROJECT_ID env var must be set");
         ServiceAccountConfig sac = getServiceAccountConfig();
         credentialsId = projectId;
         Credentials c = new GoogleRobotPrivateKeyCredentials(credentialsId, sac, null);
@@ -58,7 +59,7 @@ public class ClientUtilIT {
     }
 
     @Test
-    public void testGetClientFactoryValidCreds() throws AbortException {
+    void testGetClientFactoryValidCreds() throws AbortException {
         ClientFactory factory =
                 ClientUtil.getClientFactory(jenkinsRule.jenkins, ImmutableList.of(), credentialsId, Optional.empty());
         assertNotNull(factory);
@@ -66,7 +67,7 @@ public class ClientUtilIT {
     }
 
     @Test
-    public void testGetClientFactoryShortValidCreds() throws AbortException {
+    void testGetClientFactoryShortValidCreds() throws AbortException {
         ClientFactory factory = ClientUtil.getClientFactory(jenkinsRule.jenkins, credentialsId);
         assertNotNull(factory);
         assertNotNull(factory.containerClient());

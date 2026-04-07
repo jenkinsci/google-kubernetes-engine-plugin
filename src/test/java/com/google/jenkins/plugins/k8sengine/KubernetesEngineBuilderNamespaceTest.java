@@ -16,18 +16,18 @@
 
 package com.google.jenkins.plugins.k8sengine;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import com.google.jenkins.plugins.k8sengine.KubernetesEngineBuilder.DescriptorImpl;
 import hudson.util.FormValidation;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /** Tests for handling of namespaces in {@link KubernetesEngineBuilder}. */
-public class KubernetesEngineBuilderNamespaceTest {
+class KubernetesEngineBuilderNamespaceTest {
 
     @Test
-    public void testDoCheckNamespaceOKWithNull() {
+    void testDoCheckNamespaceOKWithNull() {
         DescriptorImpl descriptor = new DescriptorImpl();
         FormValidation result = descriptor.doCheckNamespace(null);
         assertNotNull(result);
@@ -35,7 +35,7 @@ public class KubernetesEngineBuilderNamespaceTest {
     }
 
     @Test
-    public void testDoCheckNamespaceOKWithEmptyString() {
+    void testDoCheckNamespaceOKWithEmptyString() {
         DescriptorImpl descriptor = new DescriptorImpl();
         FormValidation result = descriptor.doCheckNamespace("");
         assertNotNull(result);
@@ -43,7 +43,7 @@ public class KubernetesEngineBuilderNamespaceTest {
     }
 
     @Test
-    public void testDoCheckNamespaceWithOKProperlyFormedString() {
+    void testDoCheckNamespaceWithOKProperlyFormedString() {
         DescriptorImpl descriptor = new DescriptorImpl();
         FormValidation result = descriptor.doCheckNamespace("test-a-23-b");
         assertNotNull(result);
@@ -51,7 +51,7 @@ public class KubernetesEngineBuilderNamespaceTest {
     }
 
     @Test
-    public void testDoCheckNamespaceErrorWithValidCharactersMalformedString() {
+    void testDoCheckNamespaceErrorWithValidCharactersMalformedString() {
         DescriptorImpl descriptor = new DescriptorImpl();
         FormValidation result = descriptor.doCheckNamespace("-test");
         assertNotNull(result);
@@ -59,7 +59,7 @@ public class KubernetesEngineBuilderNamespaceTest {
     }
 
     @Test
-    public void testDoCheckNamespaceErrorWithInvalidCharacters() {
+    void testDoCheckNamespaceErrorWithInvalidCharacters() {
         DescriptorImpl descriptor = new DescriptorImpl();
         FormValidation result = descriptor.doCheckNamespace("*");
         assertNotNull(result);

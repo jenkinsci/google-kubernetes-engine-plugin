@@ -251,11 +251,6 @@
       <groupId>org.jenkins-ci.plugins.workflow</groupId>
       <artifactId>workflow-step-api</artifactId>
     </dependency>
-    <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
-      <scope>test</scope>
-    </dependency>
     <!-- Required for InjectedTest. Git 4.4.5 for org.jvnet.hudson.test.PluginAutomaticTestBuilder$OtherTests.testPluginActive -->
     <dependency>
       <groupId>org.jenkins-ci.plugins</groupId>
@@ -269,7 +264,7 @@
     </dependency>
     <dependency>
       <groupId>org.mockito</groupId>
-      <artifactId>mockito-core</artifactId>
+      <artifactId>mockito-junit-jupiter</artifactId>
       <scope>test</scope>
     </dependency>
   </dependencies>
