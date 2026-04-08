@@ -75,6 +75,7 @@
     <container.revision>93</container.revision>
     <gcp-plugin-core.version>0.3.0</gcp-plugin-core.version>
     <spotless.check.skip>false</spotless.check.skip>
+    <ban-junit4-imports.skip>false</ban-junit4-imports.skip>
   </properties>
 
   <dependencyManagement>
