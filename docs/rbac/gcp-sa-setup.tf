@@ -19,26 +19,6 @@ provider "google" {
   region  = "${var.region}"
 }
 
-# Create a custom IAM role to bind to our GCP service account
-
-# Declare a special IAM role
-resource "google_project_iam_custom_role" "gke-deployer" {
-  role_id     = "gke_deployer"
-  title       = "Minimal IAM role for GKE access"
-  description = "Bare minimum permissions to access the kubernetes API for using the Jenkins GKE plugin."
-  project     = "${var.project}"
-
-  permissions = [
-    "compute.zones.list",
-    "container.apiServices.get",
-    "container.apiServices.list",
-    "container.clusters.get",
-    "container.clusters.getCredentials",
-    "container.clusters.list",
-    "resourcemanager.projects.get",
-  ]
-}
-
 # Create our service account called jenkins-gke-deployer.
 # More information: https://www.terraform.io/docs/providers/google/r/google_service_account.html
 resource "google_service_account" "jenkins-gke-deployer" {
@@ -46,9 +26,9 @@ resource "google_service_account" "jenkins-gke-deployer" {
   display_name = "${var.sa_name}"
 }
 
-# Assign the special IAM role to the service account
+# Assign Kubernetes Engine Cluster Viewer IAM role to the service account
 resource "google_project_iam_member" "jenkins-deployer-gke-access" {
   project = "${var.project}"
-  role    = "projects/${var.project}/roles/${google_project_iam_custom_role.gke-deployer.role_id}"
+  role    = "roles/container.clusterViewer"
   member  = "serviceAccount:${google_service_account.jenkins-gke-deployer.email}"
 }

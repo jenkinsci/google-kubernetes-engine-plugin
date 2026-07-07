@@ -86,16 +86,11 @@ section.
     ```bash
     gcloud iam service-accounts create $SA
     ```
-1. Create custom GCP IAM Role with minimal permissions using the custom role defined within [rbac/IAMrole.yaml](rbac/IAMrole.yaml):
-    ```bash
-    gcloud iam roles create gke_deployer --project $PROJECT --file \
-    rbac/IAMrole.yaml
-	```
-1. Grant the IAM role to your GCP service account:
+1. Grant Kubernetes Engine Cluster Viewer IAM role to your GCP service account:
     ```bash
     gcloud projects add-iam-policy-binding $PROJECT \
     --member serviceAccount:$SA_EMAIL \
-    --role projects/$PROJECT/roles/gke_deployer
+    --role roles/container.clusterViewer
     ```
 1. Download a JSON Service Account key for your newly created service account. Take note of where
 the file was created, you will upload it to Jenkins in a subsequent step:
@@ -136,8 +131,7 @@ account permissions for deploying to your GKE cluster.
     pushd rbac/
     ```
 
-1. The [gcp-sa-setup.tf](rbac/gcp-sa-setup.tf) Terraform plan will create a custom GCP IAM role with
-restricted permissions, create a GCP service account, and grant said service account the custom role.
+1. The [gcp-sa-setup.tf](rbac/gcp-sa-setup.tf) Terraform plan will create a GCP service account, and will grant said service account the minimal permissions required.
 (NOTE: This only needs to be done once).
     ```bash
     export TF_VAR_PROJECT=${PROJECT}
