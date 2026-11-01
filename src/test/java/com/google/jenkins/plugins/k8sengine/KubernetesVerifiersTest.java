@@ -36,12 +36,10 @@ class KubernetesVerifiersTest {
     void testGoodDeploymentVerified() throws Exception {
         Object goodDeploymentOutput = readTestFile(VERIFIABLE_DEPLOYMENT_OUTPUT);
         KubectlWrapper kubectl = Mockito.mock(KubectlWrapper.class);
-        Mockito.when(kubectl.getObject("deployment", "nginx-deployment")).thenReturn(goodDeploymentOutput);
 
         Manifests.ManifestObject goodDeployment = Mockito.mock(Manifests.ManifestObject.class);
-        Mockito.when(goodDeployment.getKind()).thenReturn("deployment");
-        Mockito.when(goodDeployment.getName()).thenReturn(Optional.of("nginx-deployment"));
-        Mockito.when(goodDeployment.getApiVersion()).thenReturn("apps/v1");
+        setupKubectlWrapperGetObjectAndGetApiVersionAndGetKindAnd1MoreStubs(
+                kubectl, goodDeployment, "nginx-deployment", goodDeploymentOutput);
         KubernetesVerifiers.VerificationResult result = KubernetesVerifiers.verify(kubectl, goodDeployment);
         assertTrue(result.isVerified());
         Integer availableReplicas = JsonPath.read(goodDeploymentOutput, "status.availableReplicas");
@@ -58,13 +56,10 @@ class KubernetesVerifiersTest {
     void testBadDeploymentNotVerified() throws Exception {
         Object badDeploymentOutput = readTestFile(UNVERIFIABLE_DEPLOYMENT_OUTPUT);
         KubectlWrapper kubectl = Mockito.mock(KubectlWrapper.class);
-        Mockito.when(kubectl.getObject("deployment", "nginx-deployment-unverifiable"))
-                .thenReturn(badDeploymentOutput);
 
         Manifests.ManifestObject badDeployment = Mockito.mock(Manifests.ManifestObject.class);
-        Mockito.when(badDeployment.getKind()).thenReturn("deployment");
-        Mockito.when(badDeployment.getName()).thenReturn(Optional.of("nginx-deployment-unverifiable"));
-        Mockito.when(badDeployment.getApiVersion()).thenReturn("apps/v1");
+        setupKubectlWrapperGetObjectAndGetApiVersionAndGetKindAnd1MoreStubs(
+                kubectl, badDeployment, "nginx-deployment-unverifiable", badDeploymentOutput);
         KubernetesVerifiers.VerificationResult result = KubernetesVerifiers.verify(kubectl, badDeployment);
         assertFalse(result.isVerified());
 
@@ -81,5 +76,17 @@ class KubernetesVerifiersTest {
     private static Object readTestFile(String name) throws IOException {
         String jsonString = Resources.toString(Resources.getResource(name), StandardCharsets.UTF_8);
         return Configuration.defaultConfiguration().jsonProvider().parse(jsonString);
+    }
+
+    private void setupKubectlWrapperGetObjectAndGetApiVersionAndGetKindAnd1MoreStubs(
+            KubectlWrapper kubectl,
+            Manifests.ManifestObject badDeployment,
+            String getObjectArg2,
+            Object getObjectReturnValue)
+            throws Exception {
+        Mockito.when(kubectl.getObject("deployment", getObjectArg2)).thenReturn(getObjectReturnValue);
+        Mockito.when(badDeployment.getKind()).thenReturn("deployment");
+        Mockito.when(badDeployment.getName()).thenReturn(Optional.of(getObjectArg2));
+        Mockito.when(badDeployment.getApiVersion()).thenReturn("apps/v1");
     }
 }
